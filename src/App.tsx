@@ -1598,21 +1598,23 @@ function App() {
             >
               ×
             </button>
-            <input
-              className="stream-notebook-title"
-              value={world.streamTitles[currentStream.id]}
-              onChange={(event) =>
-                setWorld((current) => ({
-                  ...current,
-                  streamTitles: {
-                    ...current.streamTitles,
-                    [currentStream.id]: event.target.value,
-                  },
-                }))
-              }
-              aria-label="Element heading"
-            />
-            <p className="stream-prompt">{currentStream.prompt}</p>
+            <div className="comic-heading-panel">
+              <input
+                className="stream-notebook-title"
+                value={world.streamTitles[currentStream.id]}
+                onChange={(event) =>
+                  setWorld((current) => ({
+                    ...current,
+                    streamTitles: {
+                      ...current.streamTitles,
+                      [currentStream.id]: event.target.value,
+                    },
+                  }))
+                }
+                aria-label="Element heading"
+              />
+              <p className="stream-prompt">{currentStream.prompt}</p>
+            </div>
             <div className="new-growth-note">
               <textarea
                 value={note}

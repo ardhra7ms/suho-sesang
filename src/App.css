@@ -1772,66 +1772,98 @@ textarea {
   --comic-panel: #fff0c9;
   --comic-action: #e75582;
   --comic-action-ink: #173d2b;
+  --comic-gutter: #f7efe5;
 }
 
 .notebook-season-summer {
   --comic-panel: #ffdf70;
   --comic-action: #119bc1;
   --comic-action-ink: #211b0b;
+  --comic-gutter: #fff2c7;
 }
 
 .notebook-season-autumn {
   --comic-panel: #f2a62b;
   --comic-action: #fff0c4;
   --comic-action-ink: #4d1d13;
+  --comic-gutter: #ead9bd;
 }
 
 .notebook-season-winter {
   --comic-panel: #122c3c;
   --comic-action: #7ff0c7;
   --comic-action-ink: #081522;
+  --comic-gutter: #dce8e4;
 }
 
 .stream-notebook.themed-notebook,
 .element-notebook.themed-notebook {
-  background-color: var(--card-bg);
+  width: min(780px, 100%);
+  padding: 10px;
+  background-color: var(--comic-gutter);
   background-image: none;
-  border: 2px solid var(--card-ink);
-  border-radius: 4px 10px 3px 7px;
+  border: 3px solid var(--card-ink);
+  border-radius: 2px;
   box-shadow: none;
+}
+
+.stream-notebook.themed-notebook {
+  display: grid;
+  grid-template-areas:
+    'heading heading'
+    'entry history';
+  grid-template-columns: minmax(0, 1.16fr) minmax(240px, 0.84fr);
+  gap: 10px;
+}
+
+.stream-notebook.themed-notebook .comic-heading-panel {
+  grid-area: heading;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+  align-items: center;
+  gap: 28px;
+  min-height: 174px;
+  padding: 32px 34px 24px;
+  overflow: hidden;
+  border: 2px solid var(--card-ink);
+  background: var(--card-bg);
 }
 
 .element-notebook.themed-notebook .notebook-source {
   display: block;
-  margin: 0 0 22px;
+  margin: 0 0 10px;
+  padding: 28px 30px 22px;
+  border: 2px solid var(--card-ink);
+  background: var(--card-bg);
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .notebook-title,
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-notebook-title {
-  padding: 0 48px 10px 0;
+  padding: 0;
   border: 0;
-  border-bottom: 2px solid var(--card-ink);
   color: var(--card-ink);
-  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
-  font-size: clamp(2rem, 5.5vw, 3.4rem);
-  font-style: italic;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(2.3rem, 6vw, 4rem);
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.015em;
+  line-height: 0.94;
   text-align: left;
   text-transform: uppercase;
+  background: transparent;
+  transform: rotate(-0.4deg);
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-prompt {
   position: relative;
   width: fit-content;
   max-width: calc(100% - 16px);
-  margin: 18px 0 34px 8px;
-  padding: 10px 18px;
+  margin: 4px 8px 12px 0;
+  padding: 14px 20px;
   border: 2px solid var(--card-ink);
-  border-radius: 51% 49% 46% 54% / 58% 45% 55% 42%;
+  border-radius: 48% 52% 45% 55% / 56% 46% 54% 44%;
   color: var(--card-ink);
-  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
   font-style: italic;
   font-weight: 700;
   background: var(--comic-panel);
@@ -1862,12 +1894,13 @@ textarea {
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note {
+  grid-area: entry;
   margin-right: 0;
   margin-left: 0;
-  padding: 0;
-  border: 0;
+  padding: 22px 20px 18px;
+  border: 2px solid var(--card-ink);
   border-radius: 0;
-  background: transparent;
+  background: var(--card-bg);
   box-shadow: none;
 }
 
@@ -1875,7 +1908,7 @@ textarea {
   min-height: 92px;
   padding: 14px 16px;
   border: 2px solid var(--card-ink);
-  border-radius: 2px 6px 3px 4px;
+  border-radius: 44% 56% 48% 52% / 12% 10% 14% 11%;
   color: var(--comic-action-ink);
   background: var(--comic-panel);
 }
@@ -1889,14 +1922,13 @@ textarea {
 :is(.stream-notebook, .element-notebook).themed-notebook .empty-notes,
 :is(.stream-notebook, .element-notebook).themed-notebook .empty-stream-notes {
   padding: 18px 4px 8px;
-  border: 0;
-  border-top: 2px solid var(--card-ink);
-  border-radius: 0;
+  border: 2px solid var(--card-ink);
+  border-radius: 49% 51% 46% 54% / 55% 47% 53% 45%;
   color: var(--card-ink);
-  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
   font-style: italic;
-  text-align: left;
-  background: transparent;
+  text-align: center;
+  background: var(--comic-panel);
   box-shadow: none;
 }
 
@@ -1906,7 +1938,7 @@ textarea {
   border: 1.5px solid var(--card-ink);
   border-radius: 48% 52% 43% 57% / 55% 44% 56% 45%;
   color: var(--card-ink);
-  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
   font-style: italic;
   font-weight: 800;
   background: transparent;
@@ -1947,17 +1979,46 @@ textarea {
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-note-history {
-  margin-right: 5px;
+  grid-area: history;
+  margin: 0;
+  padding: 20px 18px;
+  border: 2px solid var(--card-ink);
+  background: var(--card-bg);
+}
+
+.element-notebook.themed-notebook .element-notes {
+  gap: 10px;
+  margin: 0;
+}
+
+.element-notebook.themed-notebook .element-note {
+  min-height: 180px;
+  padding: 22px 20px;
   margin-left: 0;
+  background: var(--card-bg);
+}
+
+.element-notebook.themed-notebook .element-note:nth-child(even) {
+  transform: rotate(0.35deg);
+}
+
+.element-notebook.themed-notebook .element-note:nth-child(odd) {
+  transform: rotate(-0.3deg);
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-note-history h3 {
+  width: fit-content;
+  margin: -20px 0 18px -18px;
+  padding: 6px 10px;
+  border-right: 2px solid var(--card-ink);
+  border-bottom: 2px solid var(--card-ink);
   color: var(--card-ink);
-  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
   font-style: italic;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  background: var(--comic-action);
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .close-button {
@@ -1973,7 +2034,7 @@ textarea {
   border: 0;
   border-radius: 0;
   color: var(--card-ink);
-  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
   font-size: 1.7rem;
   font-weight: 900;
   line-height: 1;
@@ -1992,9 +2053,24 @@ textarea {
     box-shadow: 0 -6px 0 var(--card-ink);
   }
 
+  .stream-notebook.themed-notebook {
+    grid-template-areas:
+      'heading'
+      'entry'
+      'history';
+    grid-template-columns: 1fr;
+  }
+
+  .stream-notebook.themed-notebook .comic-heading-panel {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    min-height: auto;
+    padding: 30px 22px 24px;
+  }
+
   :is(.stream-notebook, .element-notebook).themed-notebook .notebook-title,
   :is(.stream-notebook, .element-notebook).themed-notebook .stream-notebook-title {
-    font-size: clamp(2.2rem, 14vw, 3.7rem);
+    font-size: clamp(2.1rem, 13vw, 3.5rem);
   }
 }
 
@@ -2067,9 +2143,9 @@ textarea {
   --card-ink: #173d2b;
   --card-muted: rgba(23, 61, 43, 0.66);
   --card-accent: #e75582;
-  background: var(--card-bg);
+  background: var(--comic-gutter);
   border: 2px solid var(--card-ink);
-  border-radius: 3px 9px 2px 6px;
+  border-radius: 2px 6px 3px 4px;
   box-shadow: none;
 }
 
@@ -2079,9 +2155,9 @@ textarea {
   --card-ink: #211b0b;
   --card-muted: rgba(33, 27, 11, 0.7);
   --card-accent: #119bc1;
-  background: var(--card-bg);
+  background: var(--comic-gutter);
   border: 2px solid var(--card-ink);
-  border-radius: 7px 2px 8px 3px;
+  border-radius: 5px 2px 6px 3px;
   box-shadow: none;
 }
 
@@ -2091,9 +2167,9 @@ textarea {
   --card-ink: #fff0c4;
   --card-muted: rgba(255, 240, 196, 0.7);
   --card-accent: #f2a62b;
-  background: var(--card-bg);
+  background: var(--comic-gutter);
   border: 2px solid #4d1d13;
-  border-radius: 2px 8px 3px 5px;
+  border-radius: 2px 5px 3px 4px;
   box-shadow: none;
 }
 
@@ -2105,10 +2181,7 @@ textarea {
   --card-accent: #7ff0c7;
   border: 2px solid rgba(175, 255, 231, 0.76);
   border-radius: 6px 2px 7px 3px;
-  background:
-    radial-gradient(circle at 80% 18%, rgba(57, 218, 172, 0.34), transparent 28%),
-    radial-gradient(circle at 18% 82%, rgba(98, 105, 226, 0.32), transparent 31%),
-    rgba(8, 21, 34, 0.94);
+  background: var(--comic-gutter);
   box-shadow: none;
   backdrop-filter: blur(18px);
 }
