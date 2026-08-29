@@ -12,6 +12,7 @@ progress adds Growth to a calm palace garden, revealing new details over time.
 - A separate Tulip Room environment
 - Incremental discoveries tied to meaningful Growth milestones
 - A filterable element library with page-specific placement and drag positioning
+- Element-based notebooks with editable headings and multiple editable notes
 - Browser-only persistence with `localStorage`
 - Responsive, mobile-first layout and installable web app metadata
 

@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -31,6 +32,15 @@ type PlacedElement = {
   elementId: string
   x: number
   y: number
+  title?: string
+  notes?: ElementNote[]
+}
+
+type ElementNote = {
+  id: string
+  title: string
+  text: string
+  createdAt: string
 }
 
 type Stream = {
@@ -352,8 +362,13 @@ function App() {
   const [activeStream, setActiveStream] = useState<StreamId | null>(null)
   const [note, setNote] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
+  const [activeNoteSource, setActiveNoteSource] = useState<{
+    page: PageId
+    elementId: string
+  } | null>(null)
   const [newUnlock, setNewUnlock] = useState<string | null>(null)
   const [activeSeason, setActiveSeason] = useState<SeasonId>(loadSeason)
+  const dragMoved = useRef(false)
 
   const totalGrowth = useMemo(
     () => Object.values(world.growth).reduce((sum, value) => sum + value, 0),
@@ -441,6 +456,10 @@ function App() {
                   elementId,
                   x: 12 + (currentPlacements.length % 5) * 17,
                   y: 18 + (Math.floor(currentPlacements.length / 5) % 4) * 18,
+                  title:
+                    libraryElements.find((item) => item.id === elementId)?.name ??
+                    'Untitled',
+                  notes: [],
                 },
               ],
         },
@@ -467,6 +486,22 @@ function App() {
     }))
   }
 
+  const updatePlacedElement = (
+    page: PageId,
+    elementId: string,
+    update: (placement: PlacedElement) => PlacedElement,
+  ) => {
+    setWorld((current) => ({
+      ...current,
+      placements: {
+        ...current.placements,
+        [page]: current.placements[page].map((placement) =>
+          placement.elementId === elementId ? update(placement) : placement,
+        ),
+      },
+    }))
+  }
+
   const startDragging = (
     event: ReactPointerEvent<HTMLButtonElement>,
     page: PageId,
@@ -478,13 +513,22 @@ function App() {
 
     event.preventDefault()
     element.setPointerCapture(event.pointerId)
+    dragMoved.current = false
 
     const containerRect = container.getBoundingClientRect()
     const elementRect = element.getBoundingClientRect()
     const offsetX = event.clientX - elementRect.left
     const offsetY = event.clientY - elementRect.top
+    const startX = event.clientX
+    const startY = event.clientY
 
     const handleMove = (moveEvent: PointerEvent) => {
+      if (
+        Math.abs(moveEvent.clientX - startX) > 4 ||
+        Math.abs(moveEvent.clientY - startY) > 4
+      ) {
+        dragMoved.current = true
+      }
       const x = Math.max(
         0,
         Math.min(
@@ -540,6 +584,69 @@ function App() {
     )
   }
 
+  const activePlacement = activeNoteSource
+    ? world.placements[activeNoteSource.page].find(
+        (placement) => placement.elementId === activeNoteSource.elementId,
+      )
+    : undefined
+  const activePlacementElement = activePlacement
+    ? libraryElements.find((item) => item.id === activePlacement.elementId)
+    : undefined
+
+  const addElementNote = () => {
+    if (!activeNoteSource) return
+    updatePlacedElement(
+      activeNoteSource.page,
+      activeNoteSource.elementId,
+      (placement) => ({
+        ...placement,
+        notes: [
+          ...(placement.notes ?? []),
+          {
+            id: crypto.randomUUID(),
+            title: 'New note',
+            text: '',
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      }),
+    )
+  }
+
+  const updateElementNote = (
+    noteId: string,
+    field: 'title' | 'text',
+    value: string,
+  ) => {
+    if (!activeNoteSource) return
+    updatePlacedElement(
+      activeNoteSource.page,
+      activeNoteSource.elementId,
+      (placement) => ({
+        ...placement,
+        notes: (placement.notes ?? []).map((elementNote) =>
+          elementNote.id === noteId
+            ? { ...elementNote, [field]: value }
+            : elementNote,
+        ),
+      }),
+    )
+  }
+
+  const deleteElementNote = (noteId: string) => {
+    if (!activeNoteSource) return
+    updatePlacedElement(
+      activeNoteSource.page,
+      activeNoteSource.elementId,
+      (placement) => ({
+        ...placement,
+        notes: (placement.notes ?? []).filter(
+          (elementNote) => elementNote.id !== noteId,
+        ),
+      }),
+    )
+  }
+
   const placedElements = (page: PageId) => (
     <div className="placed-elements" aria-label="Placed elements">
       {world.placements[page].map((placement) => {
@@ -557,16 +664,31 @@ function App() {
             onPointerDown={(event) =>
               startDragging(event, page, placement.elementId)
             }
+            onClick={() => {
+              if (dragMoved.current) {
+                dragMoved.current = false
+                return
+              }
+              setActiveNoteSource({
+                page,
+                elementId: placement.elementId,
+              })
+            }}
             onKeyDown={(event) =>
               handlePlacedElementKey(event, page, placement)
             }
-            aria-label={`Move ${item.name}. Drag or use the arrow keys.`}
+            aria-label={`Open notes for ${
+              placement.title || item.name
+            }. Drag or use the arrow keys to move it.`}
           >
             <img
               src={`${import.meta.env.BASE_URL}${item.image}`}
               alt=""
               draggable="false"
             />
+            <span className="note-count" aria-hidden="true">
+              {placement.notes?.length || '+'}
+            </span>
           </button>
         )
       })}
@@ -924,6 +1046,103 @@ function App() {
               )}
             </section>
           </aside>
+        </div>
+      )}
+
+      {activeNoteSource && activePlacement && activePlacementElement && (
+        <div
+          className="overlay notebook-overlay"
+          onClick={() => setActiveNoteSource(null)}
+        >
+          <section
+            className="element-notebook"
+            onClick={(event) => event.stopPropagation()}
+            aria-label={`Notes for ${
+              activePlacement.title || activePlacementElement.name
+            }`}
+          >
+            <button
+              className="close-button"
+              type="button"
+              onClick={() => setActiveNoteSource(null)}
+              aria-label="Close element notes"
+            >
+              ×
+            </button>
+            <div className="notebook-source">
+              <img
+                src={`${import.meta.env.BASE_URL}${activePlacementElement.image}`}
+                alt=""
+              />
+              <div>
+                <span className="eyebrow">Notes held by this element</span>
+                <input
+                  className="notebook-title"
+                  value={activePlacement.title ?? activePlacementElement.name}
+                  onChange={(event) =>
+                    updatePlacedElement(
+                      activeNoteSource.page,
+                      activeNoteSource.elementId,
+                      (placement) => ({
+                        ...placement,
+                        title: event.target.value,
+                      }),
+                    )
+                  }
+                  aria-label="Element notes heading"
+                />
+              </div>
+            </div>
+
+            <div className="element-notes">
+              {(activePlacement.notes ?? []).length === 0 ? (
+                <p className="empty-notes">
+                  Nothing here yet. Add the first note this element will hold.
+                </p>
+              ) : (
+                (activePlacement.notes ?? []).map((elementNote) => (
+                  <article className="element-note" key={elementNote.id}>
+                    <input
+                      value={elementNote.title}
+                      onChange={(event) =>
+                        updateElementNote(
+                          elementNote.id,
+                          'title',
+                          event.target.value,
+                        )
+                      }
+                      aria-label="Note title"
+                    />
+                    <textarea
+                      value={elementNote.text}
+                      onChange={(event) =>
+                        updateElementNote(
+                          elementNote.id,
+                          'text',
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Write anything…"
+                      rows={3}
+                      aria-label={`${elementNote.title || 'Untitled'} note`}
+                    />
+                    <button
+                      className="delete-note"
+                      type="button"
+                      onClick={() => deleteElementNote(elementNote.id)}
+                      aria-label={`Delete ${elementNote.title || 'untitled note'}`}
+                    >
+                      remove
+                    </button>
+                  </article>
+                ))
+              )}
+            </div>
+
+            <button className="add-note-button" type="button" onClick={addElementNote}>
+              + add a note
+            </button>
+          </section>
         </div>
       )}
 
