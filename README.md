@@ -14,6 +14,7 @@ progress adds Growth to a calm palace garden, revealing new details over time.
 - Incremental discoveries tied to meaningful Growth milestones
 - A filterable element library with page-specific placement and drag positioning
 - Custom element notebooks with editable headings and multiple editable notes
+- Restorable note trash with explicit permanent deletion
 - Browser-only persistence with `localStorage`
 - Responsive, mobile-first layout and installable web app metadata
 

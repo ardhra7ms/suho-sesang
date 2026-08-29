@@ -28,6 +28,7 @@ type WorldState = {
   placements: Record<PageId, PlacedElement[]>
   streamTitles: Record<StreamId, string>
   streamPlacements: Record<PageId, Record<StreamId, ElementPosition>>
+  trash: TrashedNote[]
 }
 
 type ElementPosition = {
@@ -49,6 +50,23 @@ type ElementNote = {
   text: string
   createdAt: string
 }
+
+type TrashedNote =
+  | {
+      id: string
+      kind: 'activity'
+      deletedAt: string
+      activity: Activity
+    }
+  | {
+      id: string
+      kind: 'element'
+      deletedAt: string
+      page: PageId
+      elementId: string
+      elementName: string
+      note: ElementNote
+    }
 
 type Stream = {
   id: StreamId
@@ -207,6 +225,7 @@ const initialState: WorldState = {
     winter: { ...defaultStreamPositions },
     'tulip-room': { ...defaultStreamPositions },
   },
+  trash: [],
 }
 
 const milestones = [
@@ -403,6 +422,7 @@ function loadWorld(): WorldState {
           ...parsed.streamPlacements?.['tulip-room'],
         },
       },
+      trash: Array.isArray(parsed.trash) ? parsed.trash : [],
     }
   } catch {
     return initialState
@@ -425,6 +445,7 @@ function App() {
   const [activeStream, setActiveStream] = useState<StreamId | null>(null)
   const [note, setNote] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
+  const [trashOpen, setTrashOpen] = useState(false)
   const [activeNoteSource, setActiveNoteSource] = useState<{
     page: PageId
     elementId: string
@@ -499,6 +520,34 @@ function App() {
           : activity,
       ),
     }))
+  }
+
+  const trashActivityNote = (activityId: string) => {
+    setWorld((current) => {
+      const activity = current.activities.find((item) => item.id === activityId)
+      if (!activity) return current
+
+      return {
+        ...current,
+        growth: {
+          ...current.growth,
+          [activity.stream]: Math.max(
+            0,
+            current.growth[activity.stream] - activity.amount,
+          ),
+        },
+        activities: current.activities.filter((item) => item.id !== activityId),
+        trash: [
+          {
+            id: crypto.randomUUID(),
+            kind: 'activity',
+            deletedAt: new Date().toISOString(),
+            activity,
+          },
+          ...current.trash,
+        ],
+      }
+    })
   }
 
   const openLibrary = () => {
@@ -749,16 +798,92 @@ function App() {
 
   const deleteElementNote = (noteId: string) => {
     if (!activeNoteSource) return
-    updatePlacedElement(
-      activeNoteSource.page,
-      activeNoteSource.elementId,
-      (placement) => ({
-        ...placement,
-        notes: (placement.notes ?? []).filter(
-          (elementNote) => elementNote.id !== noteId,
-        ),
-      }),
-    )
+    setWorld((current) => {
+      const placement = current.placements[activeNoteSource.page].find(
+        (item) => item.elementId === activeNoteSource.elementId,
+      )
+      const elementNote = placement?.notes?.find((item) => item.id === noteId)
+      if (!placement || !elementNote) return current
+
+      return {
+        ...current,
+        placements: {
+          ...current.placements,
+          [activeNoteSource.page]: current.placements[
+            activeNoteSource.page
+          ].map((item) =>
+            item.elementId === activeNoteSource.elementId
+              ? {
+                  ...item,
+                  notes: (item.notes ?? []).filter(
+                    (noteItem) => noteItem.id !== noteId,
+                  ),
+                }
+              : item,
+          ),
+        },
+        trash: [
+          {
+            id: crypto.randomUUID(),
+            kind: 'element',
+            deletedAt: new Date().toISOString(),
+            page: activeNoteSource.page,
+            elementId: activeNoteSource.elementId,
+            elementName: placement.title ?? 'Untitled element',
+            note: elementNote,
+          },
+          ...current.trash,
+        ],
+      }
+    })
+  }
+
+  const restoreTrashedNote = (trashId: string) => {
+    setWorld((current) => {
+      const trashed = current.trash.find((item) => item.id === trashId)
+      if (!trashed) return current
+
+      if (trashed.kind === 'activity') {
+        return {
+          ...current,
+          growth: {
+            ...current.growth,
+            [trashed.activity.stream]:
+              current.growth[trashed.activity.stream] + trashed.activity.amount,
+          },
+          activities: [trashed.activity, ...current.activities],
+          trash: current.trash.filter((item) => item.id !== trashId),
+        }
+      }
+
+      const sourceExists = current.placements[trashed.page].some(
+        (placement) => placement.elementId === trashed.elementId,
+      )
+      if (!sourceExists) return current
+
+      return {
+        ...current,
+        placements: {
+          ...current.placements,
+          [trashed.page]: current.placements[trashed.page].map((placement) =>
+            placement.elementId === trashed.elementId
+              ? {
+                  ...placement,
+                  notes: [...(placement.notes ?? []), trashed.note],
+                }
+              : placement,
+          ),
+        },
+        trash: current.trash.filter((item) => item.id !== trashId),
+      }
+    })
+  }
+
+  const permanentlyDeleteNote = (trashId: string) => {
+    setWorld((current) => ({
+      ...current,
+      trash: current.trash.filter((item) => item.id !== trashId),
+    }))
   }
 
   const placedElements = (page: PageId) => (
@@ -1175,6 +1300,14 @@ function App() {
                         rows={2}
                         aria-label={`${world.streamTitles[currentStream.id]} note`}
                       />
+                      <button
+                        className="trash-note-button"
+                        type="button"
+                        onClick={() => trashActivityNote(activity.id)}
+                        aria-label={`Move this ${world.streamTitles[currentStream.id]} note to trash`}
+                      >
+                        remove
+                      </button>
                     </article>
                   ))
               )}
@@ -1327,7 +1460,7 @@ function App() {
                       className="delete-note"
                       type="button"
                       onClick={() => deleteElementNote(elementNote.id)}
-                      aria-label={`Delete ${elementNote.title || 'untitled note'}`}
+                      aria-label={`Move ${elementNote.title || 'untitled note'} to trash`}
                     >
                       remove
                     </button>
@@ -1340,6 +1473,96 @@ function App() {
               + add a note
             </button>
           </section>
+        </div>
+      )}
+
+      <button
+        className={`trash-bin-button ${world.trash.length > 0 ? 'has-notes' : ''}`}
+        type="button"
+        onClick={() => setTrashOpen(true)}
+        aria-label={`Open trash${world.trash.length ? `, ${world.trash.length} notes` : ''}`}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 8v10m4-10v10m4-10v10M5 5h14m-9-2h4m4 2-1 16H7L6 5" />
+        </svg>
+        {world.trash.length > 0 && <span>{world.trash.length}</span>}
+      </button>
+
+      {trashOpen && (
+        <div className="overlay" onClick={() => setTrashOpen(false)}>
+          <aside
+            className="trash-panel"
+            onClick={(event) => event.stopPropagation()}
+            aria-label="Deleted notes"
+          >
+            <button
+              className="close-button"
+              type="button"
+              onClick={() => setTrashOpen(false)}
+              aria-label="Close trash"
+            >
+              ×
+            </button>
+            <span className="eyebrow">Trash</span>
+            <h2>Notes set aside</h2>
+            {world.trash.length === 0 ? (
+              <p className="empty-trash">The bin is empty.</p>
+            ) : (
+              <div className="trash-list">
+                {world.trash.map((trashed) => {
+                  const sourceExists =
+                    trashed.kind === 'activity' ||
+                    world.placements[trashed.page].some(
+                      (placement) =>
+                        placement.elementId === trashed.elementId,
+                    )
+                  const title =
+                    trashed.kind === 'activity'
+                      ? world.streamTitles[trashed.activity.stream]
+                      : trashed.note.title || 'Untitled note'
+                  const text =
+                    trashed.kind === 'activity'
+                      ? trashed.activity.note || 'A quiet step forward'
+                      : trashed.note.text || 'Empty note'
+
+                  return (
+                    <article className="trashed-note" key={trashed.id}>
+                      <div>
+                        <span>
+                          {trashed.kind === 'activity'
+                            ? `Growth note · +${trashed.activity.amount}`
+                            : trashed.elementName}
+                        </span>
+                        <h3>{title}</h3>
+                        <p>{text}</p>
+                      </div>
+                      <div className="trash-actions">
+                        {sourceExists && (
+                          <button
+                            type="button"
+                            onClick={() => restoreTrashedNote(trashed.id)}
+                          >
+                            restore
+                          </button>
+                        )}
+                        <button
+                          className="delete-forever"
+                          type="button"
+                          onClick={() => permanentlyDeleteNote(trashed.id)}
+                        >
+                          delete forever
+                        </button>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+            <p className="trash-explanation">
+              Removing a Growth note also removes its points. Restoring it adds
+              them back.
+            </p>
+          </aside>
         </div>
       )}
 
