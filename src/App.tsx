@@ -1,9 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import './App.css'
 
 type StreamId = 'knowledge' | 'language' | 'creation' | 'journey' | 'wellness'
 type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter'
-type AppView = 'world' | 'library'
+type PageId = SeasonId | 'tulip-room'
+type AppView = 'world' | 'library' | 'tulip-room'
 type ElementCategory = 'seasonal' | 'photos' | 'drawings'
 
 type Activity = {
@@ -17,6 +24,13 @@ type Activity = {
 type WorldState = {
   growth: Record<StreamId, number>
   activities: Activity[]
+  placements: Record<PageId, PlacedElement[]>
+}
+
+type PlacedElement = {
+  elementId: string
+  x: number
+  y: number
 }
 
 type Stream = {
@@ -147,6 +161,13 @@ const initialState: WorldState = {
     wellness: 0,
   },
   activities: [],
+  placements: {
+    spring: [],
+    summer: [],
+    autumn: [],
+    winter: [],
+    'tulip-room': [],
+  },
 }
 
 const milestones = [
@@ -208,15 +229,6 @@ const libraryElements: LibraryElement[] = [
     category: 'drawings',
     detail: 'Animated element',
     shape: 'drawing',
-  },
-  {
-    id: 'suho-tulips',
-    name: 'Tulip room',
-    image: 'elements/suho-tulips.webp',
-    alt: 'Suho sitting in a room filled with yellow tulips',
-    category: 'photos',
-    detail: 'Saved image',
-    shape: 'portrait',
   },
   {
     id: 'cherry-path',
@@ -309,6 +321,15 @@ function loadWorld(): WorldState {
     return {
       growth: { ...initialState.growth, ...parsed.growth },
       activities: Array.isArray(parsed.activities) ? parsed.activities : [],
+      placements: {
+        spring: Array.isArray(parsed.placements?.spring) ? parsed.placements.spring : [],
+        summer: Array.isArray(parsed.placements?.summer) ? parsed.placements.summer : [],
+        autumn: Array.isArray(parsed.placements?.autumn) ? parsed.placements.autumn : [],
+        winter: Array.isArray(parsed.placements?.winter) ? parsed.placements.winter : [],
+        'tulip-room': Array.isArray(parsed.placements?.['tulip-room'])
+          ? parsed.placements['tulip-room']
+          : [],
+      },
     }
   } catch {
     return initialState
@@ -325,6 +346,8 @@ function loadSeason(): SeasonId {
 function App() {
   const [world, setWorld] = useState<WorldState>(loadWorld)
   const [view, setView] = useState<AppView>('world')
+  const [libraryReturnView, setLibraryReturnView] = useState<Exclude<AppView, 'library'>>('world')
+  const [targetPage, setTargetPage] = useState<PageId>('spring')
   const [elementFilter, setElementFilter] = useState<ElementCategory | 'all'>('all')
   const [activeStream, setActiveStream] = useState<StreamId | null>(null)
   const [note, setNote] = useState('')
@@ -369,6 +392,7 @@ function App() {
     )
 
     setWorld((current) => ({
+      ...current,
       growth: {
         ...current.growth,
         [stream]: current.growth[stream] + amount,
@@ -389,8 +413,172 @@ function App() {
     if (unlocked) setNewUnlock(unlocked.name)
   }
 
+  const openLibrary = () => {
+    const returnView = view === 'tulip-room' ? 'tulip-room' : 'world'
+    setLibraryReturnView(returnView)
+    setTargetPage(returnView === 'tulip-room' ? 'tulip-room' : activeSeason)
+    setView('library')
+  }
+
+  const toggleElement = (elementId: string) => {
+    setWorld((current) => {
+      const currentPlacements = current.placements[targetPage]
+      const isPlaced = currentPlacements.some(
+        (placement) => placement.elementId === elementId,
+      )
+
+      return {
+        ...current,
+        placements: {
+          ...current.placements,
+          [targetPage]: isPlaced
+            ? currentPlacements.filter(
+                (placement) => placement.elementId !== elementId,
+              )
+            : [
+                ...currentPlacements,
+                {
+                  elementId,
+                  x: 12 + (currentPlacements.length % 5) * 17,
+                  y: 18 + (Math.floor(currentPlacements.length / 5) % 4) * 18,
+                },
+              ],
+        },
+      }
+    })
+  }
+
+  const moveElement = (
+    page: PageId,
+    elementId: string,
+    x: number,
+    y: number,
+  ) => {
+    setWorld((current) => ({
+      ...current,
+      placements: {
+        ...current.placements,
+        [page]: current.placements[page].map((placement) =>
+          placement.elementId === elementId
+            ? { ...placement, x, y }
+            : placement,
+        ),
+      },
+    }))
+  }
+
+  const startDragging = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    page: PageId,
+    elementId: string,
+  ) => {
+    const element = event.currentTarget
+    const container = element.parentElement
+    if (!container) return
+
+    event.preventDefault()
+    element.setPointerCapture(event.pointerId)
+
+    const containerRect = container.getBoundingClientRect()
+    const elementRect = element.getBoundingClientRect()
+    const offsetX = event.clientX - elementRect.left
+    const offsetY = event.clientY - elementRect.top
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      const x = Math.max(
+        0,
+        Math.min(
+          92,
+          ((moveEvent.clientX - containerRect.left - offsetX) /
+            containerRect.width) *
+            100,
+        ),
+      )
+      const y = Math.max(
+        9,
+        Math.min(
+          88,
+          ((moveEvent.clientY - containerRect.top - offsetY) /
+            containerRect.height) *
+            100,
+        ),
+      )
+      moveElement(page, elementId, x, y)
+    }
+
+    const stopDragging = () => {
+      element.removeEventListener('pointermove', handleMove)
+      element.removeEventListener('pointerup', stopDragging)
+      element.removeEventListener('pointercancel', stopDragging)
+    }
+
+    element.addEventListener('pointermove', handleMove)
+    element.addEventListener('pointerup', stopDragging)
+    element.addEventListener('pointercancel', stopDragging)
+  }
+
+  const handlePlacedElementKey = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    page: PageId,
+    placement: PlacedElement,
+  ) => {
+    const movement: Partial<Record<typeof event.key, [number, number]>> = {
+      ArrowLeft: [-2, 0],
+      ArrowRight: [2, 0],
+      ArrowUp: [0, -2],
+      ArrowDown: [0, 2],
+    }
+    const delta = movement[event.key]
+    if (!delta) return
+
+    event.preventDefault()
+    moveElement(
+      page,
+      placement.elementId,
+      Math.max(0, Math.min(92, placement.x + delta[0])),
+      Math.max(9, Math.min(88, placement.y + delta[1])),
+    )
+  }
+
+  const placedElements = (page: PageId) => (
+    <div className="placed-elements" aria-label="Placed elements">
+      {world.placements[page].map((placement) => {
+        const item = libraryElements.find(
+          (element) => element.id === placement.elementId,
+        )
+        if (!item) return null
+
+        return (
+          <button
+            className={`placed-element placed-${item.category}`}
+            type="button"
+            key={item.id}
+            style={{ left: `${placement.x}%`, top: `${placement.y}%` }}
+            onPointerDown={(event) =>
+              startDragging(event, page, placement.elementId)
+            }
+            onKeyDown={(event) =>
+              handlePlacedElementKey(event, page, placement)
+            }
+            aria-label={`Move ${item.name}. Drag or use the arrow keys.`}
+          >
+            <img
+              src={`${import.meta.env.BASE_URL}${item.image}`}
+              alt=""
+              draggable="false"
+            />
+          </button>
+        )
+      })}
+    </div>
+  )
+
   return (
-    <main className={`app-shell ${view === 'library' ? 'library-open' : ''}`}>
+    <main
+      className={`app-shell ${view === 'library' ? 'library-open' : ''} ${
+        view === 'tulip-room' ? 'tulip-open' : ''
+      }`}
+    >
       <header className={`topbar ${view === 'library' ? 'library-topbar' : ''}`}>
         <a
           className="brand"
@@ -411,18 +599,30 @@ function App() {
         <nav className="season-switcher" aria-label="Seasons">
           {seasons.map((item) => (
             <button
-              className={item.id === activeSeason ? 'active' : ''}
+              className={
+                view === 'world' && item.id === activeSeason ? 'active' : ''
+              }
               type="button"
               key={item.id}
               onClick={() => {
                 setActiveSeason(item.id)
                 setView('world')
               }}
-              aria-current={item.id === activeSeason ? 'page' : undefined}
+              aria-current={
+                view === 'world' && item.id === activeSeason ? 'page' : undefined
+              }
             >
               {item.label}
             </button>
           ))}
+          <button
+            className={view === 'tulip-room' ? 'active' : ''}
+            type="button"
+            onClick={() => setView('tulip-room')}
+            aria-current={view === 'tulip-room' ? 'page' : undefined}
+          >
+            Tulip Room
+          </button>
         </nav>
         <div className="topbar-actions">
           {view === 'world' && (
@@ -440,9 +640,15 @@ function App() {
           <button
           className="library-button"
           type="button"
-          onClick={() => setView((current) => current === 'world' ? 'library' : 'world')}
+          onClick={() => {
+            if (view === 'library') {
+              setView(libraryReturnView)
+            } else {
+              openLibrary()
+            }
+          }}
           >
-          {view === 'world' ? 'elements' : 'world'}
+          {view === 'library' ? 'back' : 'elements'}
           </button>
         </div>
       </header>
@@ -457,23 +663,39 @@ function App() {
           </p>
           </header>
 
+          <div className="library-controls">
           <nav className="library-filters" aria-label="Filter elements">
-          {([
-            ['all', 'Everything'],
-            ['seasonal', 'From the worlds'],
-            ['photos', 'Photos'],
-            ['drawings', 'Drawings'],
-          ] as const).map(([id, label]) => (
-            <button
-              className={elementFilter === id ? 'active' : ''}
-              type="button"
-              key={id}
-              onClick={() => setElementFilter(id)}
-            >
-              {label}
-            </button>
-          ))}
+            {([
+              ['all', 'Everything'],
+              ['seasonal', 'From the worlds'],
+              ['photos', 'Photos'],
+              ['drawings', 'Drawings'],
+            ] as const).map(([id, label]) => (
+              <button
+                className={elementFilter === id ? 'active' : ''}
+                type="button"
+                key={id}
+                onClick={() => setElementFilter(id)}
+              >
+                {label}
+              </button>
+            ))}
           </nav>
+          <label className="library-destination">
+            <span>Add checked pieces to</span>
+            <select
+              value={targetPage}
+              onChange={(event) => setTargetPage(event.target.value as PageId)}
+            >
+              {seasons.map((item) => (
+                <option value={item.id} key={item.id}>
+                  {item.label}
+                </option>
+              ))}
+              <option value="tulip-room">Tulip Room</option>
+            </select>
+          </label>
+          </div>
 
           <div className="element-grid">
           {visibleElements.map((item) => (
@@ -485,6 +707,39 @@ function App() {
                   loading="lazy"
                 />
               </div>
+              <button
+                className={
+                  world.placements[targetPage].some(
+                    (placement) => placement.elementId === item.id,
+                  )
+                    ? 'element-check selected'
+                    : 'element-check'
+                }
+                type="button"
+                onClick={() => toggleElement(item.id)}
+                aria-pressed={world.placements[targetPage].some(
+                  (placement) => placement.elementId === item.id,
+                )}
+                aria-label={`${
+                  world.placements[targetPage].some(
+                    (placement) => placement.elementId === item.id,
+                  )
+                    ? 'Remove'
+                    : 'Add'
+                } ${item.name} ${
+                  world.placements[targetPage].some(
+                    (placement) => placement.elementId === item.id,
+                  )
+                    ? 'from'
+                    : 'to'
+                } ${
+                  targetPage === 'tulip-room'
+                    ? 'Tulip Room'
+                    : seasons.find((page) => page.id === targetPage)?.label
+                }`}
+              >
+                <span aria-hidden="true">✓</span>
+              </button>
               <div className="element-copy">
                 <h2>{item.name}</h2>
                 <p>{item.detail}</p>
@@ -492,6 +747,26 @@ function App() {
             </article>
           ))}
           </div>
+        </section>
+      ) : view === 'tulip-room' ? (
+        <section className="tulip-room-page" aria-labelledby="tulip-room-title">
+          <div
+            className="tulip-room-haze"
+            style={{
+              backgroundImage: `url("${import.meta.env.BASE_URL}elements/suho-tulips.webp")`,
+            }}
+            aria-hidden="true"
+          />
+          <img
+            className="tulip-room-image"
+            src={`${import.meta.env.BASE_URL}elements/suho-tulips.webp`}
+            alt="Suho sitting in a room filled with yellow tulips"
+          />
+          <header className="tulip-room-title">
+            <span>A room of its own</span>
+            <h1 id="tulip-room-title">Tulip Room</h1>
+          </header>
+          {placedElements('tulip-room')}
         </section>
       ) : (
         <>
@@ -516,6 +791,7 @@ function App() {
             aria-label="Open the garden record"
             onClick={() => setRecordOpen(true)}
           />
+          {placedElements(activeSeason)}
           </section>
 
           <section className="stream-dock" aria-label="Life streams">

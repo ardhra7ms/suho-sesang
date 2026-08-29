@@ -9,8 +9,9 @@ progress adds Growth to a calm palace garden, revealing new details over time.
   wellness
 - One-tap `+5`, `+10`, `+20`, and `+50` Growth updates with optional notes
 - Four switchable seasonal worlds
+- A separate Tulip Room environment
 - Incremental discoveries tied to meaningful Growth milestones
-- A filterable element library for seasonal details, photos, and drawings
+- A filterable element library with page-specific placement and drag positioning
 - Browser-only persistence with `localStorage`
 - Responsive, mobile-first layout and installable web app metadata
 

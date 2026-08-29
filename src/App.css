@@ -203,7 +203,6 @@ textarea {
   display: flex;
   justify-content: center;
   gap: 7px;
-  margin-bottom: 34px;
 }
 
 .library-filters button {
@@ -222,43 +221,65 @@ textarea {
   background: var(--ink);
 }
 
+.library-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 980px;
+  margin: 0 auto 38px;
+}
+
+.library-destination {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(38, 53, 45, 0.58);
+  font-size: 0.58rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.library-destination select {
+  min-height: 34px;
+  padding: 6px 28px 6px 11px;
+  border: 1px solid rgba(38, 53, 45, 0.24);
+  border-radius: 999px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.65rem;
+  background: rgba(255, 252, 239, 0.62);
+}
+
 .element-grid {
-  columns: 4 230px;
-  column-gap: 18px;
+  max-width: 980px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  gap: 30px 22px;
+  margin: 0 auto;
 }
 
 .element-card {
+  position: relative;
   width: 100%;
-  display: inline-block;
-  break-inside: avoid;
-  margin: 0 0 18px;
-  overflow: hidden;
-  border: 1px solid rgba(38, 53, 45, 0.12);
-  border-radius: 44px 12px 36px 16px;
-  background: rgba(247, 241, 223, 0.62);
-  box-shadow: 0 15px 35px rgba(40, 48, 37, 0.08);
-}
-
-.element-card:nth-child(3n + 2) {
-  border-radius: 14px 48px 18px 34px;
-}
-
-.element-card:nth-child(4n + 3) {
-  border-radius: 30px 20px 50px 12px;
+  min-width: 0;
 }
 
 .element-image {
   aspect-ratio: 1;
   overflow: hidden;
+  border: 1px solid rgba(38, 53, 45, 0.13);
+  border-radius: 52% 48% 43% 57% / 44% 56% 46% 54%;
   background: #d7d0bd;
+  box-shadow: 0 12px 28px rgba(40, 48, 37, 0.09);
 }
 
-.element-card.portrait .element-image {
-  aspect-ratio: 4 / 5;
+.element-card:nth-child(3n + 2) .element-image {
+  border-radius: 44% 56% 55% 45% / 53% 42% 58% 47%;
 }
 
-.element-card.landscape .element-image {
-  aspect-ratio: 4 / 3;
+.element-card:nth-child(4n + 3) .element-image {
+  border-radius: 59% 41% 48% 52% / 39% 55% 45% 61%;
 }
 
 .element-card.drawing .element-image {
@@ -282,7 +303,8 @@ textarea {
 }
 
 .element-copy {
-  padding: 13px 16px 16px;
+  padding: 11px 5px 0;
+  text-align: center;
 }
 
 .element-copy h2 {
@@ -301,6 +323,34 @@ textarea {
   text-transform: uppercase;
 }
 
+.element-check {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid rgba(255, 252, 239, 0.92);
+  border-radius: 50%;
+  color: transparent;
+  font-size: 0.72rem;
+  background: rgba(38, 53, 45, 0.38);
+  box-shadow: 0 3px 10px rgba(18, 27, 22, 0.2);
+  cursor: pointer;
+}
+
+.element-check.selected {
+  color: #fffcef;
+  background: #3f634d;
+}
+
+.element-check:focus-visible {
+  outline: 3px solid #d9a82e;
+  outline-offset: 2px;
+}
+
 .growth-status {
   font-size: 0.62rem;
   letter-spacing: 0.08em;
@@ -314,6 +364,56 @@ textarea {
   height: 100%;
   overflow: hidden;
   background: #384a47;
+}
+
+.placed-elements {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  pointer-events: none;
+}
+
+.placed-element {
+  position: absolute;
+  width: clamp(70px, 10vw, 132px);
+  aspect-ratio: 1;
+  padding: 0;
+  transform: translateZ(0);
+  overflow: visible;
+  border: 0;
+  color: transparent;
+  background: transparent;
+  filter: drop-shadow(0 5px 8px rgba(15, 24, 19, 0.22));
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.placed-element:active {
+  cursor: grabbing;
+}
+
+.placed-element:focus-visible {
+  outline: 2px dashed #fff6c8;
+  outline-offset: 4px;
+}
+
+.placed-element img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.placed-element.placed-photos img,
+.placed-element.placed-seasonal img {
+  overflow: hidden;
+  border: 2px solid rgba(255, 250, 231, 0.7);
+  border-radius: 52% 48% 43% 57% / 44% 56% 46% 54%;
+  object-fit: cover;
 }
 
 .season-background {
@@ -338,6 +438,62 @@ textarea {
 
 .season-winter {
   object-position: center 54%;
+}
+
+.tulip-room-page {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #b2a844;
+}
+
+.tulip-room-haze {
+  position: absolute;
+  inset: -35px;
+  background-position: center;
+  background-size: cover;
+  filter: blur(26px) saturate(0.9);
+  transform: scale(1.08);
+}
+
+.tulip-room-haze::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(38, 40, 20, 0.12);
+}
+
+.tulip-room-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 0 35px rgba(32, 35, 18, 0.22));
+}
+
+.tulip-room-title {
+  position: absolute;
+  z-index: 12;
+  bottom: 28px;
+  left: 28px;
+  color: #fff9df;
+  text-shadow: 0 2px 14px rgba(26, 29, 14, 0.72);
+}
+
+.tulip-room-title span {
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tulip-room-title h1 {
+  margin: 1px 0 0;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: clamp(2rem, 5vw, 4.4rem);
+  font-weight: 400;
+  line-height: 0.95;
 }
 
 .painting-hotspot {
@@ -756,15 +912,28 @@ textarea {
   }
 
   .season-switcher {
+    top: 72px;
+    right: 12px;
+    left: 12px;
+    justify-content: flex-start;
     gap: 1px;
+    padding: 5px;
+    transform: none;
+    overflow-x: auto;
+    border: 1px solid rgba(246, 241, 223, 0.22);
+    border-radius: 999px;
+    background: rgba(25, 39, 36, 0.48);
+    backdrop-filter: blur(10px);
+    scrollbar-width: none;
   }
 
   .season-switcher button {
+    flex: 0 0 auto;
     padding: 6px 7px;
     font-size: 0.56rem;
   }
 
-  .season-switcher button:not(.active) {
+  .season-switcher::-webkit-scrollbar {
     display: none;
   }
 
@@ -802,7 +971,6 @@ textarea {
   .library-filters {
     justify-content: flex-start;
     margin-right: -12px;
-    margin-bottom: 22px;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -815,30 +983,58 @@ textarea {
     flex: 0 0 auto;
   }
 
-  .element-grid {
-    columns: 2 135px;
-    column-gap: 10px;
+  .library-controls {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 28px;
   }
 
-  .element-card {
-    margin-bottom: 10px;
-    border-radius: 24px 8px 20px 10px;
+  .library-destination {
+    justify-content: space-between;
+  }
+
+  .library-destination select {
+    min-height: 38px;
+  }
+
+  .element-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 21px 9px;
+  }
+
+  .element-check {
+    top: -2px;
+    right: -1px;
+    width: 28px;
+    height: 28px;
   }
 
   .element-card.drawing .element-image {
-    padding: 7px;
+    padding: 5px;
   }
 
   .element-copy {
-    padding: 10px 11px 12px;
+    padding: 8px 2px 0;
   }
 
   .element-copy h2 {
-    font-size: 0.9rem;
+    font-size: 0.78rem;
   }
 
   .element-copy p {
+    margin-top: 3px;
     font-size: 0.46rem;
+    line-height: 1.25;
+  }
+
+  .placed-element {
+    width: clamp(62px, 20vw, 88px);
+  }
+
+  .tulip-room-title {
+    bottom: 22px;
+    left: 16px;
   }
 
   .stream-dock {
