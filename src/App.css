@@ -1477,40 +1477,27 @@ textarea {
 @media (max-width: 640px) {
   .app-shell:not(.library-open) {
     height: auto;
-    min-height: 165svh;
+    min-height: var(--world-depth);
     overflow: visible;
   }
 
   .app-shell:not(.library-open) .painting-world {
     position: relative;
-    height: 165svh;
-    min-height: 980px;
+    height: var(--world-depth);
+    min-height: 165svh;
     overflow: clip;
+    background-image: var(--season-image);
+    background-position: center top;
+    background-repeat: repeat-y;
+    background-size: 100% auto;
   }
 
   .app-shell:not(.library-open) .season-background {
-    position: sticky;
-    top: 0;
-    width: 100%;
-    height: 100svh;
-    object-fit: contain;
-    object-position: center top;
+    display: none;
   }
 
-  .app-shell:not(.library-open) .season-spring {
-    background: #8a9a73;
-  }
-
-  .app-shell:not(.library-open) .season-summer {
-    background: #79b8d4;
-  }
-
-  .app-shell:not(.library-open) .season-autumn {
-    background: #8e5b35;
-  }
-
-  .app-shell:not(.library-open) .season-winter {
-    background: #102334;
+  .app-shell:not(.library-open) .placed-element {
+    top: var(--mobile-y) !important;
   }
 
   .app-shell {

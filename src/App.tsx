@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
@@ -38,6 +39,15 @@ type WorldState = {
 type ElementPosition = {
   x: number
   y: number
+}
+
+type WorldStyle = CSSProperties & {
+  '--season-image': string
+  '--world-depth': string
+}
+
+type PlacedElementStyle = CSSProperties & {
+  '--mobile-y': string
 }
 
 type PlacedElement = {
@@ -248,6 +258,14 @@ const initialState: WorldState = {
   trash: [],
   elementFrames: {},
   deletedElementIds: [],
+}
+
+function getPlacedElementStyle(position: ElementPosition): PlacedElementStyle {
+  return {
+    left: `${position.x}%`,
+    top: `${position.y}%`,
+    '--mobile-y': `${position.y}svh`,
+  }
 }
 
 const milestones = [
@@ -577,6 +595,20 @@ function App() {
   const nextUnlock = milestones.find((milestone) => milestone.threshold > totalGrowth)
   const currentStream = streams.find((stream) => stream.id === activeStream)
   const season = seasons.find((item) => item.id === activeSeason)!
+  const worldDepth = useMemo(() => {
+    const customElementDepth = world.placements[activeSeason].reduce(
+      (deepest, placement) => Math.max(deepest, placement.y),
+      0,
+    )
+    const defaultElementDepth = Object.values(
+      world.streamPlacements[activeSeason],
+    ).reduce((deepest, position) => Math.max(deepest, position.y), 0)
+    return Math.max(165, Math.ceil(Math.max(customElementDepth, defaultElementDepth) + 35))
+  }, [activeSeason, world.placements, world.streamPlacements])
+  const worldStyle: WorldStyle = {
+    '--season-image': `url("${import.meta.env.BASE_URL}${season.image}")`,
+    '--world-depth': `${worldDepth}svh`,
+  }
   const allElements = useMemo(
     () =>
       [...libraryElements, ...userElements].filter(
@@ -933,44 +965,73 @@ function App() {
     element.setPointerCapture(event.pointerId)
     dragMoved.current = false
 
-    const containerRect = container.getBoundingClientRect()
     const elementRect = element.getBoundingClientRect()
     const offsetX = event.clientX - elementRect.left
     const offsetY = event.clientY - elementRect.top
     const startX = event.clientX
     const startY = event.clientY
+    const isMobile = window.matchMedia('(max-width: 640px)').matches
+    let latestClientX = event.clientX
+    let latestClientY = event.clientY
+    let scrollFrame = 0
     const isOverTrash = (pointerEvent: PointerEvent, rect: DOMRect) =>
       pointerEvent.clientX >= rect.left - 24 &&
       pointerEvent.clientX <= rect.right + 24 &&
       pointerEvent.clientY >= rect.top - 24 &&
       pointerEvent.clientY <= rect.bottom + 24
 
+    const updatePosition = (clientX: number, clientY: number) => {
+      const containerRect = container.getBoundingClientRect()
+      const maximumX =
+        ((containerRect.width - elementRect.width) / containerRect.width) * 100
+      const x = Math.max(
+        0,
+        Math.min(
+          maximumX,
+          ((clientX - containerRect.left - offsetX) /
+            containerRect.width) *
+            100,
+        ),
+      )
+      const rawY = isMobile
+        ? ((clientY - containerRect.top - offsetY) / window.innerHeight) * 100
+        : ((clientY - containerRect.top - offsetY) / containerRect.height) * 100
+      const maximumY =
+        ((containerRect.height - elementRect.height) / containerRect.height) * 100
+      const y = Math.max(9, isMobile ? rawY : Math.min(maximumY, rawY))
+      onMove(x, y)
+    }
+
+    const autoScroll = () => {
+      if (isMobile) {
+        const edgeSize = Math.min(110, window.innerHeight * 0.16)
+        const bottomDistance = window.innerHeight - latestClientY
+        const topDistance = latestClientY
+        const scrollAmount =
+          bottomDistance < edgeSize
+            ? Math.ceil((edgeSize - bottomDistance) / 14)
+            : topDistance < edgeSize
+              ? -Math.ceil((edgeSize - topDistance) / 14)
+              : 0
+
+        if (scrollAmount !== 0) {
+          window.scrollBy(0, scrollAmount)
+          updatePosition(latestClientX, latestClientY)
+        }
+      }
+      scrollFrame = window.requestAnimationFrame(autoScroll)
+    }
+
     const handleMove = (moveEvent: PointerEvent) => {
+      latestClientX = moveEvent.clientX
+      latestClientY = moveEvent.clientY
       if (
         Math.abs(moveEvent.clientX - startX) > 4 ||
         Math.abs(moveEvent.clientY - startY) > 4
       ) {
         dragMoved.current = true
       }
-      const x = Math.max(
-        0,
-        Math.min(
-          92,
-          ((moveEvent.clientX - containerRect.left - offsetX) /
-            containerRect.width) *
-            100,
-        ),
-      )
-      const y = Math.max(
-        9,
-        Math.min(
-          88,
-          ((moveEvent.clientY - containerRect.top - offsetY) /
-            containerRect.height) *
-            100,
-        ),
-      )
-      onMove(x, y)
+      updatePosition(moveEvent.clientX, moveEvent.clientY)
 
       const bin = document.querySelector<HTMLElement>('[data-trash-bin]')
       if (bin && onTrash) {
@@ -989,6 +1050,7 @@ function App() {
         isOverTrash(endEvent, binRect)
 
       bin?.classList.remove('is-drop-target')
+      window.cancelAnimationFrame(scrollFrame)
       element.removeEventListener('pointermove', handleMove)
       element.removeEventListener('pointerup', stopDragging)
       element.removeEventListener('pointercancel', stopDragging)
@@ -998,6 +1060,7 @@ function App() {
     element.addEventListener('pointermove', handleMove)
     element.addEventListener('pointerup', stopDragging)
     element.addEventListener('pointercancel', stopDragging)
+    scrollFrame = window.requestAnimationFrame(autoScroll)
   }
 
   const handlePlacedElementKey = (
@@ -1019,7 +1082,12 @@ function App() {
       page,
       placement.elementId,
       Math.max(0, Math.min(92, placement.x + delta[0])),
-      Math.max(9, Math.min(88, placement.y + delta[1])),
+      Math.max(
+        9,
+        window.matchMedia('(max-width: 640px)').matches
+          ? placement.y + delta[1]
+          : Math.min(88, placement.y + delta[1]),
+      ),
     )
   }
 
@@ -1043,7 +1111,12 @@ function App() {
       page,
       stream,
       Math.max(0, Math.min(92, position.x + delta[0])),
-      Math.max(9, Math.min(88, position.y + delta[1])),
+      Math.max(
+        9,
+        window.matchMedia('(max-width: 640px)').matches
+          ? position.y + delta[1]
+          : Math.min(88, position.y + delta[1]),
+      ),
     )
   }
 
@@ -1221,7 +1294,7 @@ function App() {
             }`}
             type="button"
             key={item.id}
-            style={{ left: `${placement.x}%`, top: `${placement.y}%` }}
+            style={getPlacedElementStyle(placement)}
             onPointerDown={(event) =>
               startDragging(
                 event,
@@ -1279,7 +1352,7 @@ function App() {
             className={`placed-element default-note-element placed-${item.category} frame-${defaultStreamFrames[stream.id]}`}
             type="button"
             key={stream.id}
-            style={{ left: `${position.x}%`, top: `${position.y}%` }}
+            style={getPlacedElementStyle(position)}
             onPointerDown={(event) =>
               startDragging(
                 event,
@@ -1316,7 +1389,10 @@ function App() {
   )
 
   return (
-    <main className={`app-shell ${view === 'library' ? 'library-open' : ''}`}>
+    <main
+      className={`app-shell ${view === 'library' ? 'library-open' : ''}`}
+      style={worldStyle}
+    >
       <header className={`topbar ${view === 'library' ? 'library-topbar' : ''}`}>
         <a
           className="brand"
