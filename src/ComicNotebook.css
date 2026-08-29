@@ -17,12 +17,12 @@
 }
 
 .comic-strip.notebook-season-spring {
-  --comic-page: #f8eddf;
+  --comic-page: #f2e6dc;
   --comic-ink: #173d2b;
-  --comic-fill: #f6ccd8;
-  --comic-paper: #fff0c9;
-  --comic-accent: #e75582;
-  --comic-accent-ink: #173d2b;
+  --comic-fill: #fffaf0;
+  --comic-paper: #f3d5dc;
+  --comic-accent: #d95b7d;
+  --comic-accent-ink: #102b1e;
   background: var(--comic-page);
   border: 2px solid var(--comic-ink);
   border-radius: 2px;
@@ -30,12 +30,12 @@
 }
 
 .comic-strip.notebook-season-summer {
-  --comic-page: #fff3c9;
-  --comic-ink: #211b0b;
-  --comic-fill: #fdc51b;
-  --comic-paper: #ffe488;
-  --comic-accent: #119bc1;
-  --comic-accent-ink: #211b0b;
+  --comic-page: #f8edc6;
+  --comic-ink: #2d280f;
+  --comic-fill: #fffaf0;
+  --comic-paper: #f6d56b;
+  --comic-accent: #2189a5;
+  --comic-accent-ink: #102a32;
   background: var(--comic-page);
   border: 2px solid var(--comic-ink);
   border-radius: 2px;
@@ -43,12 +43,12 @@
 }
 
 .comic-strip.notebook-season-autumn {
-  --comic-page: #ead9bd;
-  --comic-ink: #4d1d13;
-  --comic-fill: #9b341f;
-  --comic-paper: #f2a62b;
-  --comic-accent: #fff0c4;
-  --comic-accent-ink: #4d1d13;
+  --comic-page: #e9dcc7;
+  --comic-ink: #3e2418;
+  --comic-fill: #fff7e8;
+  --comic-paper: #e6ad61;
+  --comic-accent: #8f3f2e;
+  --comic-accent-ink: #fff7e8;
   background: var(--comic-page);
   border: 2px solid var(--comic-ink);
   border-radius: 2px;
@@ -56,12 +56,12 @@
 }
 
 .comic-strip.notebook-season-winter {
-  --comic-page: #dce8e4;
-  --comic-ink: #081522;
-  --comic-fill: #0d2635;
-  --comic-paper: #17394a;
-  --comic-accent: #7ff0c7;
-  --comic-accent-ink: #081522;
+  --comic-page: #dce7e8;
+  --comic-ink: #102731;
+  --comic-fill: #f4fbf9;
+  --comic-paper: #c2dfe1;
+  --comic-accent: #4ea98b;
+  --comic-accent-ink: #0b251d;
   background: var(--comic-page);
   border: 2px solid var(--comic-ink);
   border-radius: 2px;
@@ -91,22 +91,6 @@
   box-shadow: none;
 }
 
-.comic-strip.notebook-season-autumn .comic-heading-panel,
-.comic-strip.notebook-season-autumn .new-growth-note,
-.comic-strip.notebook-season-autumn .stream-note-history,
-.comic-strip.notebook-season-autumn .notebook-source,
-.comic-strip.notebook-season-autumn .element-note {
-  color: #fff0c4;
-}
-
-.comic-strip.notebook-season-winter .comic-heading-panel,
-.comic-strip.notebook-season-winter .new-growth-note,
-.comic-strip.notebook-season-winter .stream-note-history,
-.comic-strip.notebook-season-winter .notebook-source,
-.comic-strip.notebook-season-winter .element-note {
-  color: #effff8;
-}
-
 .comic-strip.stream-notebook .comic-heading-panel {
   grid-area: heading;
   display: grid;
@@ -124,7 +108,7 @@
   padding: 0;
   border: 0;
   color: inherit;
-  font-family: 'Segoe Print', 'Bradley Hand', 'Marker Felt', cursive;
+  font-family: 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif;
   font-size: clamp(2.25rem, 6vw, 4.35rem);
   font-style: normal;
   font-weight: 700;
@@ -143,7 +127,7 @@
   margin: 0 8px 12px 0;
   padding: 15px 22px;
   color: var(--comic-ink);
-  font-family: 'Segoe Print', 'Bradley Hand', 'Marker Felt', cursive;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
   font-size: 0.96rem;
   font-style: normal;
   font-weight: 600;
@@ -211,11 +195,6 @@
   outline: 0;
 }
 
-.comic-strip.stream-notebook.notebook-season-autumn .new-growth-note textarea,
-.comic-strip.stream-notebook.notebook-season-winter .new-growth-note textarea {
-  color: var(--comic-accent-ink);
-}
-
 .comic-strip.stream-notebook .growth-buttons {
   display: flex;
   align-items: center;
@@ -230,7 +209,7 @@
   min-width: 0;
   padding: 6px 11px;
   color: inherit;
-  font-family: 'Segoe Print', 'Bradley Hand', 'Marker Felt', cursive;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
   font-size: 0.82rem;
   font-style: normal;
   font-weight: 700;
@@ -280,7 +259,7 @@
   margin: 10px 0;
   padding: 24px 18px;
   color: var(--comic-ink);
-  font-family: 'Segoe Print', 'Bradley Hand', 'Marker Felt', cursive;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
   font-style: normal;
   text-align: center;
   background: var(--comic-paper);
@@ -297,7 +276,7 @@
 }
 
 .comic-strip.stream-notebook .stream-note strong {
-  font-family: 'Segoe Print', 'Bradley Hand', 'Marker Felt', cursive;
+  font-family: 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif;
 }
 
 .comic-strip.stream-notebook .stream-note textarea {
@@ -319,7 +298,7 @@
   place-items: center;
   padding: 0;
   color: var(--comic-ink);
-  font-family: 'Segoe Print', 'Bradley Hand', 'Marker Felt', cursive;
+  font-family: 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif;
   font-size: 1.45rem;
   font-weight: 700;
   line-height: 1;

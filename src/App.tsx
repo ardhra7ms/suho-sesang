@@ -1321,7 +1321,7 @@ function App() {
         <a
           className="brand"
           href="#"
-          aria-label="Suho Sesang home"
+          aria-label="suho's sesang home"
           onClick={(event) => {
             event.preventDefault()
             setView('world')
@@ -1332,7 +1332,7 @@ function App() {
             src={`${import.meta.env.BASE_URL}bunny.svg`}
             alt=""
           />
-          <strong>suho sesang</strong>
+          <strong>suho's sesang</strong>
         </a>
         <nav className="season-switcher" aria-label="Seasons">
           {seasons.map((item) => (

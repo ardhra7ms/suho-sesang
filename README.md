@@ -1,6 +1,6 @@
-# Suho Sesang
+# suho's sesang
 
-Suho Sesang (수호 세상) is a personal world that grows as you grow. Real-life
+suho's sesang (수호 세상) is a personal world that grows as you grow. Real-life
 progress adds Growth to a calm palace garden, revealing new details over time.
 
 ## Current foundation
