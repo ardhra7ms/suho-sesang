@@ -25,6 +25,17 @@ textarea {
   background: #263b39;
 }
 
+.app-shell.library-open {
+  height: auto;
+  min-height: 100svh;
+  overflow: visible;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(181, 194, 161, 0.28), transparent 28rem),
+    radial-gradient(circle at 90% 24%, rgba(174, 144, 113, 0.2), transparent 32rem),
+    #ede6d5;
+}
+
 .topbar {
   position: fixed;
   z-index: 20;
@@ -82,6 +93,41 @@ textarea {
   cursor: pointer;
 }
 
+.library-button {
+  padding: 7px 10px;
+  border: 1px solid rgba(246, 241, 223, 0.4);
+  border-radius: 999px;
+  color: inherit;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 0.8rem;
+  background: rgba(246, 241, 223, 0.08);
+  cursor: pointer;
+}
+
+.library-topbar {
+  color: var(--ink);
+  background: linear-gradient(#ede6d5 62%, rgba(237, 230, 213, 0));
+  text-shadow: none;
+}
+
+.library-topbar::after {
+  background: rgba(38, 53, 45, 0.17);
+}
+
+.library-topbar .season-switcher button {
+  color: rgba(38, 53, 45, 0.52);
+}
+
+.library-topbar .season-switcher button.active {
+  color: #f4efdf;
+  background: var(--ink);
+}
+
+.library-topbar .library-button {
+  border-color: rgba(38, 53, 45, 0.35);
+  background: rgba(255, 252, 239, 0.32);
+}
+
 .season-switcher {
   position: absolute;
   left: 50%;
@@ -109,6 +155,150 @@ textarea {
   display: flex;
   align-items: center;
   gap: 18px;
+}
+
+.element-library {
+  width: min(1240px, calc(100% - 40px));
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: 132px 0 80px;
+}
+
+.library-heading {
+  max-width: 630px;
+  margin: 0 auto 34px;
+  text-align: center;
+}
+
+.library-eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: rgba(38, 53, 45, 0.56);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.library-heading h1 {
+  margin: 0;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: clamp(2.7rem, 7vw, 5.7rem);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 0.94;
+}
+
+.library-heading p {
+  max-width: 430px;
+  margin: 18px auto 0;
+  color: rgba(38, 53, 45, 0.64);
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 1rem;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.library-filters {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 34px;
+}
+
+.library-filters button {
+  padding: 8px 13px;
+  border: 1px solid rgba(38, 53, 45, 0.2);
+  border-radius: 999px;
+  color: rgba(38, 53, 45, 0.68);
+  font-size: 0.65rem;
+  background: rgba(255, 252, 239, 0.26);
+  cursor: pointer;
+}
+
+.library-filters button.active {
+  border-color: var(--ink);
+  color: #f3eddd;
+  background: var(--ink);
+}
+
+.element-grid {
+  columns: 4 230px;
+  column-gap: 18px;
+}
+
+.element-card {
+  width: 100%;
+  display: inline-block;
+  break-inside: avoid;
+  margin: 0 0 18px;
+  overflow: hidden;
+  border: 1px solid rgba(38, 53, 45, 0.12);
+  border-radius: 44px 12px 36px 16px;
+  background: rgba(247, 241, 223, 0.62);
+  box-shadow: 0 15px 35px rgba(40, 48, 37, 0.08);
+}
+
+.element-card:nth-child(3n + 2) {
+  border-radius: 14px 48px 18px 34px;
+}
+
+.element-card:nth-child(4n + 3) {
+  border-radius: 30px 20px 50px 12px;
+}
+
+.element-image {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #d7d0bd;
+}
+
+.element-card.portrait .element-image {
+  aspect-ratio: 4 / 5;
+}
+
+.element-card.landscape .element-image {
+  aspect-ratio: 4 / 3;
+}
+
+.element-card.drawing .element-image {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(65, 61, 53, 0.8), transparent 75%),
+    #171714;
+}
+
+.element-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.element-card.drawing .element-image img {
+  object-fit: contain;
+}
+
+.element-copy {
+  padding: 13px 16px 16px;
+}
+
+.element-copy h2 {
+  margin: 0;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 1.03rem;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.element-copy p {
+  margin: 5px 0 0;
+  color: rgba(38, 53, 45, 0.56);
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .growth-status {
@@ -584,6 +774,71 @@ textarea {
 
   .topbar-actions {
     gap: 8px;
+  }
+
+  .library-button {
+    padding: 6px 9px;
+    font-size: 0.72rem;
+  }
+
+  .library-open .season-switcher {
+    display: none;
+  }
+
+  .element-library {
+    width: min(100% - 24px, 520px);
+    padding: 105px 0 50px;
+  }
+
+  .library-heading {
+    margin-bottom: 25px;
+  }
+
+  .library-heading p {
+    max-width: 310px;
+    font-size: 0.9rem;
+  }
+
+  .library-filters {
+    justify-content: flex-start;
+    margin-right: -12px;
+    margin-bottom: 22px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .library-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .library-filters button {
+    flex: 0 0 auto;
+  }
+
+  .element-grid {
+    columns: 2 135px;
+    column-gap: 10px;
+  }
+
+  .element-card {
+    margin-bottom: 10px;
+    border-radius: 24px 8px 20px 10px;
+  }
+
+  .element-card.drawing .element-image {
+    padding: 7px;
+  }
+
+  .element-copy {
+    padding: 10px 11px 12px;
+  }
+
+  .element-copy h2 {
+    font-size: 0.9rem;
+  }
+
+  .element-copy p {
+    font-size: 0.46rem;
   }
 
   .stream-dock {

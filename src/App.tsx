@@ -3,6 +3,8 @@ import './App.css'
 
 type StreamId = 'knowledge' | 'language' | 'creation' | 'journey' | 'wellness'
 type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter'
+type AppView = 'world' | 'library'
+type ElementCategory = 'seasonal' | 'photos' | 'drawings'
 
 type Activity = {
   id: string
@@ -23,6 +25,16 @@ type Stream = {
   prompt: string
   examples: string
   area: string
+}
+
+type LibraryElement = {
+  id: string
+  name: string
+  image: string
+  alt: string
+  category: ElementCategory
+  detail: string
+  shape?: 'portrait' | 'landscape' | 'square' | 'drawing'
 }
 
 const STORAGE_KEY = 'suho-sesang-world-v1'
@@ -146,6 +158,149 @@ const milestones = [
   { name: 'another bloom', threshold: 100 },
 ]
 
+const libraryElements: LibraryElement[] = [
+  {
+    id: 'spring-lilies',
+    name: 'Lilies at dusk',
+    image: 'elements/painting-spring-lilies.webp',
+    alt: 'A detail of water lilies from Claude Monet’s painting',
+    category: 'seasonal',
+    detail: 'Spring · from Water Lilies',
+    shape: 'landscape',
+  },
+  {
+    id: 'summer-whirlpool',
+    name: 'Turning tide',
+    image: 'elements/painting-summer-whirlpool.webp',
+    alt: 'A detail of the sea from Hiroshige’s Whirlpools of Awa',
+    category: 'seasonal',
+    detail: 'Summer · from The Whirlpools of Awa',
+  },
+  {
+    id: 'autumn-leaves',
+    name: 'Red canopy',
+    image: 'elements/painting-autumn-leaves.webp',
+    alt: 'A detail of vivid foliage from Tom Thomson’s painting',
+    category: 'seasonal',
+    detail: 'Autumn · from Autumn Foliage',
+  },
+  {
+    id: 'winter-aurora',
+    name: 'Night current',
+    image: 'elements/painting-winter-aurora.webp',
+    alt: 'A detail of the aurora over snowy Lofoten mountains',
+    category: 'seasonal',
+    detail: 'Winter · from Aurora over Flakstad',
+  },
+  {
+    id: 'suho-glasses',
+    name: 'A look over the glasses',
+    image: 'elements/suho-glasses.webp',
+    alt: 'Suho looking over rose-tinted glasses',
+    category: 'photos',
+    detail: 'Saved image',
+  },
+  {
+    id: 'clippy-sun',
+    name: 'Clippy takes the sun',
+    image: 'elements/clippy-sun.gif',
+    alt: 'Animated Clippy wearing sunglasses beside the sun',
+    category: 'drawings',
+    detail: 'Animated element',
+    shape: 'drawing',
+  },
+  {
+    id: 'suho-tulips',
+    name: 'Tulip room',
+    image: 'elements/suho-tulips.webp',
+    alt: 'Suho sitting in a room filled with yellow tulips',
+    category: 'photos',
+    detail: 'Saved image',
+    shape: 'portrait',
+  },
+  {
+    id: 'cherry-path',
+    name: 'Blossom walk',
+    image: 'elements/cherry-blossom-path.webp',
+    alt: 'A sunny path leading toward a fountain between cherry trees',
+    category: 'photos',
+    detail: 'Your photograph',
+    shape: 'landscape',
+  },
+  {
+    id: 'neon-vine',
+    name: 'Green growing thing',
+    image: 'elements/neon-vine.webp',
+    alt: 'A hand-drawn curling green and purple botanical form',
+    category: 'drawings',
+    detail: 'Your drawing',
+    shape: 'drawing',
+  },
+  {
+    id: 'crimson-wing',
+    name: 'Crimson wing',
+    image: 'elements/floral-crimson-wing.webp',
+    alt: 'A separate red hand-drawn winged flower',
+    category: 'drawings',
+    detail: 'Your drawing · separated',
+    shape: 'drawing',
+  },
+  {
+    id: 'sun-wing',
+    name: 'Sunlit wing',
+    image: 'elements/floral-sun-wing.webp',
+    alt: 'A separate red and gold hand-drawn winged flower',
+    category: 'drawings',
+    detail: 'Your drawing · separated',
+    shape: 'drawing',
+  },
+  {
+    id: 'left-wing',
+    name: 'Small red wing',
+    image: 'elements/floral-left-wing.webp',
+    alt: 'A separate small red hand-drawn winged flower',
+    category: 'drawings',
+    detail: 'Your drawing · separated',
+    shape: 'drawing',
+  },
+  {
+    id: 'heart-bloom',
+    name: 'Heart bloom',
+    image: 'elements/floral-heart-bloom.webp',
+    alt: 'A separate red and gold hand-drawn heart-shaped flower',
+    category: 'drawings',
+    detail: 'Your drawing · separated',
+    shape: 'drawing',
+  },
+  {
+    id: 'right-wing',
+    name: 'Turning wing',
+    image: 'elements/floral-right-wing.webp',
+    alt: 'A separate red hand-drawn winged flower turning inward',
+    category: 'drawings',
+    detail: 'Your drawing · separated',
+    shape: 'drawing',
+  },
+  {
+    id: 'lower-left-bloom',
+    name: 'Golden opening',
+    image: 'elements/floral-lower-left.webp',
+    alt: 'A separate red and gold hand-drawn opening flower',
+    category: 'drawings',
+    detail: 'Your drawing · separated',
+    shape: 'drawing',
+  },
+  {
+    id: 'lower-right-bloom',
+    name: 'Golden curl',
+    image: 'elements/floral-lower-right.webp',
+    alt: 'A separate red and gold hand-drawn curling flower',
+    category: 'drawings',
+    detail: 'Your drawing · separated',
+    shape: 'drawing',
+  },
+]
+
 function loadWorld(): WorldState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -169,6 +324,8 @@ function loadSeason(): SeasonId {
 
 function App() {
   const [world, setWorld] = useState<WorldState>(loadWorld)
+  const [view, setView] = useState<AppView>('world')
+  const [elementFilter, setElementFilter] = useState<ElementCategory | 'all'>('all')
   const [activeStream, setActiveStream] = useState<StreamId | null>(null)
   const [note, setNote] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
@@ -188,6 +345,10 @@ function App() {
   const nextUnlock = milestones.find((milestone) => milestone.threshold > totalGrowth)
   const currentStream = streams.find((stream) => stream.id === activeStream)
   const season = seasons.find((item) => item.id === activeSeason)!
+  const visibleElements =
+    elementFilter === 'all'
+      ? libraryElements
+      : libraryElements.filter((item) => item.category === elementFilter)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(world))
@@ -229,9 +390,17 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <a className="brand" href="#" aria-label="Suho Sesang home">
+    <main className={`app-shell ${view === 'library' ? 'library-open' : ''}`}>
+      <header className={`topbar ${view === 'library' ? 'library-topbar' : ''}`}>
+        <a
+          className="brand"
+          href="#"
+          aria-label="Suho Sesang home"
+          onClick={(event) => {
+            event.preventDefault()
+            setView('world')
+          }}
+        >
           <img
             className="bunny-logo"
             src={`${import.meta.env.BASE_URL}bunny.svg`}
@@ -245,7 +414,10 @@ function App() {
               className={item.id === activeSeason ? 'active' : ''}
               type="button"
               key={item.id}
-              onClick={() => setActiveSeason(item.id)}
+              onClick={() => {
+                setActiveSeason(item.id)
+                setView('world')
+              }}
               aria-current={item.id === activeSeason ? 'page' : undefined}
             >
               {item.label}
@@ -253,109 +425,170 @@ function App() {
           ))}
         </nav>
         <div className="topbar-actions">
-          <span className="growth-status">{totalGrowth} growth</span>
+          {view === 'world' && (
+          <>
+            <span className="growth-status">{totalGrowth} growth</span>
+            <button
+              className="record-button"
+              type="button"
+              onClick={() => setRecordOpen(true)}
+            >
+              record
+            </button>
+          </>
+          )}
           <button
-            className="record-button"
-            type="button"
-            onClick={() => setRecordOpen(true)}
+          className="library-button"
+          type="button"
+          onClick={() => setView((current) => current === 'world' ? 'library' : 'world')}
           >
-            record
+          {view === 'world' ? 'elements' : 'world'}
           </button>
         </div>
       </header>
 
-      <section className="painting-world" aria-label={`${season.label} world`}>
-        <img
-          className={`season-background season-${season.id}`}
-          src={`${import.meta.env.BASE_URL}${season.image}`}
-          alt={season.alt}
-        />
-        {streams.map((stream) => (
-          <button
-            className={`painting-hotspot ${stream.area}`}
-            type="button"
-            key={stream.id}
-            aria-label={`Add growth to ${stream.name}`}
-            onClick={() => setActiveStream(stream.id)}
-          />
-        ))}
-        <button
-          className="painting-hotspot record-area"
-          type="button"
-          aria-label="Open the garden record"
-          onClick={() => setRecordOpen(true)}
-        />
-      </section>
+      {view === 'library' ? (
+        <section className="element-library" aria-labelledby="library-title">
+          <header className="library-heading">
+          <span className="library-eyebrow">Element library</span>
+          <h1 id="library-title">The World Drawer</h1>
+          <p>
+            Pieces to keep, rearrange, and eventually place into each season.
+          </p>
+          </header>
 
-      <section className="stream-dock" aria-label="Life streams">
-        <div className="dock-heading">
-          <span>add to your world</span>
-          <small>or tap the painting</small>
-        </div>
-        <div className="stream-actions">
-          {streams.map((stream) => (
+          <nav className="library-filters" aria-label="Filter elements">
+          {([
+            ['all', 'Everything'],
+            ['seasonal', 'From the worlds'],
+            ['photos', 'Photos'],
+            ['drawings', 'Drawings'],
+          ] as const).map(([id, label]) => (
             <button
+              className={elementFilter === id ? 'active' : ''}
               type="button"
-              key={stream.id}
-              onClick={() => setActiveStream(stream.id)}
+              key={id}
+              onClick={() => setElementFilter(id)}
             >
-              <span>{stream.name}</span>
-              <small>{world.growth[stream.id]}</small>
+              {label}
             </button>
           ))}
-        </div>
-      </section>
+          </nav>
 
-      <footer className="painting-caption">
-        <span>{season.label.toLowerCase()} · {totalGrowth} growth</span>
-        <a
-          href={season.source}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {season.artist}, <cite>{season.title}</cite>, {season.date} · {season.license}
-        </a>
-      </footer>
+          <div className="element-grid">
+          {visibleElements.map((item) => (
+            <article className={`element-card ${item.shape ?? 'square'}`} key={item.id}>
+              <div className="element-image">
+                <img
+                  src={`${import.meta.env.BASE_URL}${item.image}`}
+                  alt={item.alt}
+                  loading="lazy"
+                />
+              </div>
+              <div className="element-copy">
+                <h2>{item.name}</h2>
+                <p>{item.detail}</p>
+              </div>
+            </article>
+          ))}
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="painting-world" aria-label={`${season.label} world`}>
+          <img
+            className={`season-background season-${season.id}`}
+            src={`${import.meta.env.BASE_URL}${season.image}`}
+            alt={season.alt}
+          />
+          {streams.map((stream) => (
+            <button
+              className={`painting-hotspot ${stream.area}`}
+              type="button"
+              key={stream.id}
+              aria-label={`Add growth to ${stream.name}`}
+              onClick={() => setActiveStream(stream.id)}
+            />
+          ))}
+          <button
+            className="painting-hotspot record-area"
+            type="button"
+            aria-label="Open the garden record"
+            onClick={() => setRecordOpen(true)}
+          />
+          </section>
 
-      {currentStream && (
+          <section className="stream-dock" aria-label="Life streams">
+          <div className="dock-heading">
+            <span>add to your world</span>
+            <small>or tap the painting</small>
+            </div>
+          <div className="stream-actions">
+            {streams.map((stream) => (
+              <button
+                type="button"
+                key={stream.id}
+                onClick={() => setActiveStream(stream.id)}
+              >
+                <span>{stream.name}</span>
+                <small>{world.growth[stream.id]}</small>
+              </button>
+            ))}
+          </div>
+          </section>
+
+          <footer className="painting-caption">
+          <span>{season.label.toLowerCase()} · {totalGrowth} growth</span>
+          <a
+            href={season.source}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {season.artist}, <cite>{season.title}</cite>, {season.date} · {season.license}
+          </a>
+          </footer>
+        </>
+      )}
+
+      {currentStream && view === 'world' && (
         <div className="overlay sheet-overlay" onClick={() => setActiveStream(null)}>
           <section
-            className="quick-sheet"
-            onClick={(event) => event.stopPropagation()}
-            aria-label={`Update ${currentStream.name}`}
+          className="quick-sheet"
+          onClick={(event) => event.stopPropagation()}
+          aria-label={`Update ${currentStream.name}`}
           >
-            <button
-              className="close-button"
-              type="button"
-              onClick={() => setActiveStream(null)}
-              aria-label="Close quick update"
-            >
-              ×
-            </button>
-            <span className="eyebrow">{currentStream.examples}</span>
-            <h2>{currentStream.prompt}</h2>
-            <textarea
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="A note, if you like…"
-              rows={2}
-            />
-            <div className="growth-buttons" aria-label="Choose growth amount">
-              {[5, 10, 20, 50].map((amount) => (
-                <button
-                  type="button"
-                  key={amount}
-                  onClick={() => addGrowth(currentStream.id, amount)}
-                >
-                  +{amount}
-                </button>
-              ))}
-            </div>
+          <button
+            className="close-button"
+            type="button"
+            onClick={() => setActiveStream(null)}
+            aria-label="Close quick update"
+          >
+            ×
+          </button>
+          <span className="eyebrow">{currentStream.examples}</span>
+          <h2>{currentStream.prompt}</h2>
+          <textarea
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="A note, if you like…"
+            rows={2}
+          />
+          <div className="growth-buttons" aria-label="Choose growth amount">
+            {[5, 10, 20, 50].map((amount) => (
+              <button
+                type="button"
+                key={amount}
+                onClick={() => addGrowth(currentStream.id, amount)}
+              >
+                +{amount}
+              </button>
+            ))}
+          </div>
           </section>
         </div>
       )}
 
-      {recordOpen && (
+      {recordOpen && view === 'world' && (
         <div className="overlay" onClick={() => setRecordOpen(false)}>
           <aside
             className="garden-record"

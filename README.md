@@ -3,14 +3,14 @@
 Suho Sesang (수호 세상) is a personal world that grows as you grow. Real-life
 progress adds Growth to a calm palace garden, revealing new details over time.
 
-## Spring foundation
+## Current foundation
 
 - Five interactive life streams: knowledge, language, creation, journey, and
   wellness
 - One-tap `+5`, `+10`, `+20`, and `+50` Growth updates with optional notes
-- Incremental garden discoveries tied to meaningful Growth milestones
-- A clickable Qilin guardian with a magical progress scroll
-- Drag-and-save world customization
+- Four switchable seasonal worlds
+- Incremental discoveries tied to meaningful Growth milestones
+- A filterable element library for seasonal details, photos, and drawings
 - Browser-only persistence with `localStorage`
 - Responsive, mobile-first layout and installable web app metadata
 
@@ -43,4 +43,6 @@ domain by [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Monet,_Cla
 The remaining seasonal worlds use Utagawa Hiroshige's *The Whirlpools of Awa*
 (1857, CC0), Tom Thomson's *Autumn Foliage* (1915, public domain), and Johannes
 Groll's *Aurora over Flakstad, Lofoten* (2017, CC0). Each live season links to
-its full source and license information.
+its full source and license information. The element library contains cropped
+details of these four seasonal works alongside user-supplied images and
+drawings.
