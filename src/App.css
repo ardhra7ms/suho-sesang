@@ -7,6 +7,10 @@
   --water: #4b665f;
 }
 
+.default-stream-elements {
+  z-index: 9;
+}
+
 .stream-actions button:nth-child(even) {
   border-radius: 54% 46% 57% 43% / 43% 55% 45% 57%;
 }
@@ -423,6 +427,31 @@ textarea {
   object-fit: cover;
 }
 
+.default-note-element {
+  width: clamp(78px, 10vw, 132px);
+}
+
+.stream-element-name {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 50%;
+  max-width: 130px;
+  padding: 3px 8px;
+  transform: translateX(-50%);
+  overflow: hidden;
+  border: 1px solid rgba(255, 250, 231, 0.34);
+  border-radius: 999px;
+  color: #fffbea;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 0.65rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 6px rgba(11, 18, 14, 0.9);
+  white-space: nowrap;
+  background: rgba(30, 43, 35, 0.58);
+  backdrop-filter: blur(5px);
+}
+
 .element-card.drawing .element-image img {
   object-fit: contain;
 }
@@ -469,6 +498,22 @@ textarea {
 .element-check.selected {
   color: #fffcef;
   background: #3f634d;
+}
+
+.default-element-mark {
+  position: absolute;
+  top: 5px;
+  right: 3px;
+  padding: 5px 8px;
+  border: 2px solid rgba(255, 252, 239, 0.92);
+  border-radius: 999px;
+  color: #fffcef;
+  font-size: 0.48rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: #3f634d;
+  box-shadow: 0 3px 10px rgba(18, 27, 22, 0.2);
 }
 
 .element-check:focus-visible {
@@ -620,7 +665,7 @@ textarea {
 .tulip-room-title {
   position: absolute;
   z-index: 12;
-  bottom: 150px;
+  bottom: 28px;
   left: 28px;
   color: #fff9df;
   text-shadow: 0 2px 14px rgba(26, 29, 14, 0.72);
@@ -1310,13 +1355,22 @@ textarea {
     width: clamp(62px, 20vw, 88px);
   }
 
+  .default-note-element {
+    width: clamp(68px, 21vw, 92px);
+  }
+
+  .stream-element-name {
+    max-width: 94px;
+    font-size: 0.56rem;
+  }
+
   .note-count {
     min-width: 22px;
     height: 22px;
   }
 
   .tulip-room-title {
-    bottom: 142px;
+    bottom: 22px;
     left: 16px;
   }
 

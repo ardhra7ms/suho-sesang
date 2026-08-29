@@ -27,6 +27,12 @@ type WorldState = {
   activities: Activity[]
   placements: Record<PageId, PlacedElement[]>
   streamTitles: Record<StreamId, string>
+  streamPlacements: Record<PageId, Record<StreamId, ElementPosition>>
+}
+
+type ElementPosition = {
+  x: number
+  y: number
 }
 
 type PlacedElement = {
@@ -163,6 +169,14 @@ const streams: Stream[] = [
   },
 ]
 
+const defaultStreamPositions: Record<StreamId, ElementPosition> = {
+  creation: { x: 8, y: 18 },
+  knowledge: { x: 29, y: 35 },
+  wellness: { x: 70, y: 18 },
+  journey: { x: 48, y: 57 },
+  language: { x: 78, y: 55 },
+}
+
 const initialState: WorldState = {
   growth: {
     knowledge: 0,
@@ -185,6 +199,13 @@ const initialState: WorldState = {
     wellness: 'Wellness',
     journey: 'Journey',
     language: 'Language',
+  },
+  streamPlacements: {
+    spring: { ...defaultStreamPositions },
+    summer: { ...defaultStreamPositions },
+    autumn: { ...defaultStreamPositions },
+    winter: { ...defaultStreamPositions },
+    'tulip-room': { ...defaultStreamPositions },
   },
 }
 
@@ -331,6 +352,14 @@ const libraryElements: LibraryElement[] = [
   },
 ]
 
+const defaultStreamElements: Record<StreamId, string> = {
+  creation: 'neon-vine',
+  knowledge: 'suho-glasses',
+  wellness: 'clippy-sun',
+  journey: 'cherry-path',
+  language: 'heart-bloom',
+}
+
 function loadWorld(): WorldState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -351,6 +380,28 @@ function loadWorld(): WorldState {
         'tulip-room': Array.isArray(parsed.placements?.['tulip-room'])
           ? parsed.placements['tulip-room']
           : [],
+      },
+      streamPlacements: {
+        spring: {
+          ...initialState.streamPlacements.spring,
+          ...parsed.streamPlacements?.spring,
+        },
+        summer: {
+          ...initialState.streamPlacements.summer,
+          ...parsed.streamPlacements?.summer,
+        },
+        autumn: {
+          ...initialState.streamPlacements.autumn,
+          ...parsed.streamPlacements?.autumn,
+        },
+        winter: {
+          ...initialState.streamPlacements.winter,
+          ...parsed.streamPlacements?.winter,
+        },
+        'tulip-room': {
+          ...initialState.streamPlacements['tulip-room'],
+          ...parsed.streamPlacements?.['tulip-room'],
+        },
       },
     }
   } catch {
@@ -508,6 +559,24 @@ function App() {
     }))
   }
 
+  const moveDefaultElement = (
+    page: PageId,
+    stream: StreamId,
+    x: number,
+    y: number,
+  ) => {
+    setWorld((current) => ({
+      ...current,
+      streamPlacements: {
+        ...current.streamPlacements,
+        [page]: {
+          ...current.streamPlacements[page],
+          [stream]: { x, y },
+        },
+      },
+    }))
+  }
+
   const updatePlacedElement = (
     page: PageId,
     elementId: string,
@@ -526,8 +595,7 @@ function App() {
 
   const startDragging = (
     event: ReactPointerEvent<HTMLButtonElement>,
-    page: PageId,
-    elementId: string,
+    onMove: (x: number, y: number) => void,
   ) => {
     const element = event.currentTarget
     const container = element.parentElement
@@ -569,7 +637,7 @@ function App() {
             100,
         ),
       )
-      moveElement(page, elementId, x, y)
+      onMove(x, y)
     }
 
     const stopDragging = () => {
@@ -603,6 +671,30 @@ function App() {
       placement.elementId,
       Math.max(0, Math.min(92, placement.x + delta[0])),
       Math.max(9, Math.min(88, placement.y + delta[1])),
+    )
+  }
+
+  const handleDefaultElementKey = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    page: PageId,
+    stream: StreamId,
+  ) => {
+    const movement: Partial<Record<typeof event.key, [number, number]>> = {
+      ArrowLeft: [-2, 0],
+      ArrowRight: [2, 0],
+      ArrowUp: [0, -2],
+      ArrowDown: [0, 2],
+    }
+    const delta = movement[event.key]
+    if (!delta) return
+
+    event.preventDefault()
+    const position = world.streamPlacements[page][stream]
+    moveDefaultElement(
+      page,
+      stream,
+      Math.max(0, Math.min(92, position.x + delta[0])),
+      Math.max(9, Math.min(88, position.y + delta[1])),
     )
   }
 
@@ -684,7 +776,9 @@ function App() {
             key={item.id}
             style={{ left: `${placement.x}%`, top: `${placement.y}%` }}
             onPointerDown={(event) =>
-              startDragging(event, page, placement.elementId)
+              startDragging(event, (x, y) =>
+                moveElement(page, placement.elementId, x, y),
+              )
             }
             onClick={() => {
               if (dragMoved.current) {
@@ -717,25 +811,58 @@ function App() {
     </div>
   )
 
-  const defaultElements = (
-    <section className="stream-dock" aria-label="Default note elements">
-      <div className="dock-heading">
-        <span>your default elements</span>
-        <small>always here</small>
-      </div>
-      <div className="stream-actions">
-        {streams.map((stream) => (
+  const defaultElements = (page: PageId) => (
+    <div
+      className="placed-elements default-stream-elements"
+      aria-label="Default note elements"
+    >
+      {streams.map((stream) => {
+        const item = libraryElements.find(
+          (element) => element.id === defaultStreamElements[stream.id],
+        )!
+        const position = world.streamPlacements[page][stream.id]
+        const noteCount = world.activities.filter(
+          (activity) => activity.stream === stream.id,
+        ).length
+
+        return (
           <button
+            className={`placed-element default-note-element placed-${item.category}`}
             type="button"
             key={stream.id}
-            onClick={() => setActiveStream(stream.id)}
+            style={{ left: `${position.x}%`, top: `${position.y}%` }}
+            onPointerDown={(event) =>
+              startDragging(event, (x, y) =>
+                moveDefaultElement(page, stream.id, x, y),
+              )
+            }
+            onClick={() => {
+              if (dragMoved.current) {
+                dragMoved.current = false
+                return
+              }
+              setActiveStream(stream.id)
+            }}
+            onKeyDown={(event) =>
+              handleDefaultElementKey(event, page, stream.id)
+            }
+            aria-label={`Open ${world.streamTitles[stream.id]} notes. Drag or use the arrow keys to move this element.`}
           >
-            <span>{world.streamTitles[stream.id]}</span>
-            <small>{world.growth[stream.id]}</small>
+            <img
+              src={`${import.meta.env.BASE_URL}${item.image}`}
+              alt=""
+              draggable="false"
+            />
+            <span className="stream-element-name" aria-hidden="true">
+              {world.streamTitles[stream.id]}
+            </span>
+            <span className="note-count" aria-hidden="true">
+              {noteCount || '+'}
+            </span>
           </button>
-        ))}
-      </div>
-    </section>
+        )
+      })}
+    </div>
   )
 
   return (
@@ -872,39 +999,43 @@ function App() {
                   loading="lazy"
                 />
               </div>
-              <button
-                className={
-                  world.placements[targetPage].some(
+              {Object.values(defaultStreamElements).includes(item.id) ? (
+                <span className="default-element-mark">default</span>
+              ) : (
+                <button
+                  className={
+                    world.placements[targetPage].some(
+                      (placement) => placement.elementId === item.id,
+                    )
+                      ? 'element-check selected'
+                      : 'element-check'
+                  }
+                  type="button"
+                  onClick={() => toggleElement(item.id)}
+                  aria-pressed={world.placements[targetPage].some(
                     (placement) => placement.elementId === item.id,
-                  )
-                    ? 'element-check selected'
-                    : 'element-check'
-                }
-                type="button"
-                onClick={() => toggleElement(item.id)}
-                aria-pressed={world.placements[targetPage].some(
-                  (placement) => placement.elementId === item.id,
-                )}
-                aria-label={`${
-                  world.placements[targetPage].some(
-                    (placement) => placement.elementId === item.id,
-                  )
-                    ? 'Remove'
-                    : 'Add'
-                } ${item.name} ${
-                  world.placements[targetPage].some(
-                    (placement) => placement.elementId === item.id,
-                  )
-                    ? 'from'
-                    : 'to'
-                } ${
-                  targetPage === 'tulip-room'
-                    ? 'Tulip Room'
-                    : seasons.find((page) => page.id === targetPage)?.label
-                }`}
-              >
-                <span aria-hidden="true">✓</span>
-              </button>
+                  )}
+                  aria-label={`${
+                    world.placements[targetPage].some(
+                      (placement) => placement.elementId === item.id,
+                    )
+                      ? 'Remove'
+                      : 'Add'
+                  } ${item.name} ${
+                    world.placements[targetPage].some(
+                      (placement) => placement.elementId === item.id,
+                    )
+                      ? 'from'
+                      : 'to'
+                  } ${
+                    targetPage === 'tulip-room'
+                      ? 'Tulip Room'
+                      : seasons.find((page) => page.id === targetPage)?.label
+                  }`}
+                >
+                  <span aria-hidden="true">✓</span>
+                </button>
+              )}
               <div className="element-copy">
                 <h2>{item.name}</h2>
                 <p>{item.detail}</p>
@@ -932,7 +1063,7 @@ function App() {
             <h1 id="tulip-room-title">Tulip Room</h1>
           </header>
           {placedElements('tulip-room')}
-          {defaultElements}
+          {defaultElements('tulip-room')}
         </section>
       ) : (
         <>
@@ -942,25 +1073,15 @@ function App() {
             src={`${import.meta.env.BASE_URL}${season.image}`}
             alt={season.alt}
           />
-          {streams.map((stream) => (
-            <button
-              className={`painting-hotspot ${stream.area}`}
-              type="button"
-              key={stream.id}
-              aria-label={`Add growth to ${stream.name}`}
-              onClick={() => setActiveStream(stream.id)}
-            />
-          ))}
           <button
             className="painting-hotspot record-area"
             type="button"
             aria-label="Open the garden record"
             onClick={() => setRecordOpen(true)}
           />
+          {defaultElements(activeSeason)}
           {placedElements(activeSeason)}
           </section>
-
-          {defaultElements}
 
           <footer className="painting-caption">
           <span>{season.label.toLowerCase()} · {totalGrowth} growth</span>
