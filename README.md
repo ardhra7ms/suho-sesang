@@ -10,7 +10,6 @@ progress adds Growth to a calm palace garden, revealing new details over time.
 - One-tap `+5`, `+10`, `+20`, and `+50` Growth updates with optional notes
 - Five permanent visual elements that open the life-stream Growth notes
 - Four switchable seasonal worlds
-- A separate Tulip Room environment
 - Incremental discoveries tied to meaningful Growth milestones
 - A filterable element library with page-specific placement and drag positioning
 - Local image uploads with four irregular frame choices and library deletion

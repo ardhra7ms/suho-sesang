@@ -10,8 +10,8 @@ import './App.css'
 
 type StreamId = 'knowledge' | 'language' | 'creation' | 'journey' | 'wellness'
 type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter'
-type PageId = SeasonId | 'tulip-room'
-type AppView = 'world' | 'library' | 'tulip-room'
+type PageId = SeasonId
+type AppView = 'world' | 'library'
 type ElementCategory = 'seasonal' | 'photos' | 'drawings'
 type ElementFrame = 'pebble' | 'puddle' | 'sprout' | 'cloud'
 
@@ -230,7 +230,6 @@ const initialState: WorldState = {
     summer: [],
     autumn: [],
     winter: [],
-    'tulip-room': [],
   },
   streamTitles: {
     creation: 'Creation',
@@ -244,7 +243,6 @@ const initialState: WorldState = {
     summer: { ...defaultStreamPositions },
     autumn: { ...defaultStreamPositions },
     winter: { ...defaultStreamPositions },
-    'tulip-room': { ...defaultStreamPositions },
   },
   trash: [],
   elementFrames: {},
@@ -503,9 +501,6 @@ function loadWorld(): WorldState {
         summer: Array.isArray(parsed.placements?.summer) ? parsed.placements.summer : [],
         autumn: Array.isArray(parsed.placements?.autumn) ? parsed.placements.autumn : [],
         winter: Array.isArray(parsed.placements?.winter) ? parsed.placements.winter : [],
-        'tulip-room': Array.isArray(parsed.placements?.['tulip-room'])
-          ? parsed.placements['tulip-room']
-          : [],
       },
       streamPlacements: {
         spring: {
@@ -524,12 +519,12 @@ function loadWorld(): WorldState {
           ...initialState.streamPlacements.winter,
           ...parsed.streamPlacements?.winter,
         },
-        'tulip-room': {
-          ...initialState.streamPlacements['tulip-room'],
-          ...parsed.streamPlacements?.['tulip-room'],
-        },
       },
-      trash: Array.isArray(parsed.trash) ? parsed.trash : [],
+      trash: Array.isArray(parsed.trash)
+        ? parsed.trash.filter(
+            (item) => !('page' in item) || String(item.page) !== 'tulip-room',
+          )
+        : [],
       elementFrames: parsed.elementFrames ?? {},
       deletedElementIds: Array.isArray(parsed.deletedElementIds)
         ? parsed.deletedElementIds
@@ -550,7 +545,6 @@ function loadSeason(): SeasonId {
 function App() {
   const [world, setWorld] = useState<WorldState>(loadWorld)
   const [view, setView] = useState<AppView>('world')
-  const [libraryReturnView, setLibraryReturnView] = useState<Exclude<AppView, 'library'>>('world')
   const [targetPage, setTargetPage] = useState<PageId>('spring')
   const [elementFilter, setElementFilter] = useState<ElementCategory | 'all'>('all')
   const [userElements, setUserElements] = useState<LibraryElement[]>([])
@@ -698,9 +692,7 @@ function App() {
   }
 
   const openLibrary = () => {
-    const returnView = view === 'tulip-room' ? 'tulip-room' : 'world'
-    setLibraryReturnView(returnView)
-    setTargetPage(returnView === 'tulip-room' ? 'tulip-room' : activeSeason)
+    setTargetPage(activeSeason)
     setView('library')
   }
 
@@ -1323,11 +1315,7 @@ function App() {
   )
 
   return (
-    <main
-      className={`app-shell ${view === 'library' ? 'library-open' : ''} ${
-        view === 'tulip-room' ? 'tulip-open' : ''
-      }`}
-    >
+    <main className={`app-shell ${view === 'library' ? 'library-open' : ''}`}>
       <header className={`topbar ${view === 'library' ? 'library-topbar' : ''}`}>
         <a
           className="brand"
@@ -1364,14 +1352,6 @@ function App() {
               {item.label}
             </button>
           ))}
-          <button
-            className={view === 'tulip-room' ? 'active' : ''}
-            type="button"
-            onClick={() => setView('tulip-room')}
-            aria-current={view === 'tulip-room' ? 'page' : undefined}
-          >
-            Tulip Room
-          </button>
         </nav>
         <div className="topbar-actions">
           {view === 'world' && (
@@ -1391,7 +1371,7 @@ function App() {
           type="button"
           onClick={() => {
             if (view === 'library') {
-              setView(libraryReturnView)
+              setView('world')
             } else {
               openLibrary()
             }
@@ -1442,7 +1422,6 @@ function App() {
                   {item.label}
                 </option>
               ))}
-              <option value="tulip-room">Tulip Room</option>
             </select>
           </label>
           </div>
@@ -1510,9 +1489,7 @@ function App() {
                       ? 'from'
                       : 'to'
                   } ${
-                    targetPage === 'tulip-room'
-                      ? 'Tulip Room'
-                      : seasons.find((page) => page.id === targetPage)?.label
+                    seasons.find((page) => page.id === targetPage)?.label
                   }`}
                 >
                   <span aria-hidden="true">✓</span>
@@ -1571,27 +1548,6 @@ function App() {
               </svg>
             </button>
           </div>
-        </section>
-      ) : view === 'tulip-room' ? (
-        <section className="tulip-room-page" aria-labelledby="tulip-room-title">
-          <div
-            className="tulip-room-haze"
-            style={{
-              backgroundImage: `url("${import.meta.env.BASE_URL}elements/suho-tulips.webp")`,
-            }}
-            aria-hidden="true"
-          />
-          <img
-            className="tulip-room-image"
-            src={`${import.meta.env.BASE_URL}elements/suho-tulips.webp`}
-            alt="Suho sitting in a room filled with yellow tulips"
-          />
-          <header className="tulip-room-title">
-            <span>A room of its own</span>
-            <h1 id="tulip-room-title">Tulip Room</h1>
-          </header>
-          {placedElements('tulip-room')}
-          {defaultElements('tulip-room')}
         </section>
       ) : (
         <>
@@ -1947,11 +1903,9 @@ function App() {
                       ? trashed.activity.note || 'A quiet step forward'
                       : trashed.kind === 'placed-element'
                         ? `${trashed.placement.notes?.length ?? 0} notes · ${
-                            trashed.page === 'tulip-room'
-                              ? 'Tulip Room'
-                              : seasons.find(
-                                  (page) => page.id === trashed.page,
-                                )?.label
+                            seasons.find(
+                              (page) => page.id === trashed.page,
+                            )?.label
                           }`
                         : trashed.note.text || 'Empty note'
 
