@@ -13,13 +13,15 @@ progress adds Growth to a calm palace garden, revealing new details over time.
 - A separate Tulip Room environment
 - Incremental discoveries tied to meaningful Growth milestones
 - A filterable element library with page-specific placement and drag positioning
+- Local image uploads with four irregular frame choices and library deletion
 - Custom element notebooks with editable headings and multiple editable notes
 - Drag-to-trash custom elements with restore and permanent deletion
 - Browser-only persistence with `localStorage`
 - Responsive, mobile-first layout and installable web app metadata
 
-Your progress stays in the browser on the device where you record it. Version 1
-does not include accounts or cloud sync.
+Your progress stays in the browser on the device where you record it. World
+state uses `localStorage`, while uploaded element images use IndexedDB. Version
+1 does not include accounts or cloud sync.
 
 ## Run locally
 

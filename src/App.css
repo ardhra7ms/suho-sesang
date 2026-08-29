@@ -306,6 +306,7 @@ textarea {
   min-height: 100svh;
   margin: 0 auto;
   padding: 132px 0 80px;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 
 .library-heading {
@@ -326,21 +327,25 @@ textarea {
 
 .library-heading h1 {
   margin: 0;
-  font-family: 'Newsreader', Georgia, serif;
-  font-size: clamp(2.7rem, 7vw, 5.7rem);
-  font-weight: 400;
-  letter-spacing: -0.045em;
-  line-height: 0.94;
+  font: inherit;
+  font-size: clamp(2.3rem, 6vw, 4.2rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1;
 }
 
 .library-heading p {
   max-width: 430px;
   margin: 18px auto 0;
   color: rgba(38, 53, 45, 0.64);
-  font-family: 'Newsreader', Georgia, serif;
-  font-size: 1rem;
-  font-style: italic;
+  font-size: 0.88rem;
   line-height: 1.45;
+}
+
+.library-error {
+  color: #873f37 !important;
+  font-size: 0.72rem !important;
+  font-style: normal !important;
 }
 
 .library-filters {
@@ -418,14 +423,6 @@ textarea {
   box-shadow: 0 12px 28px rgba(40, 48, 37, 0.09);
 }
 
-.element-card:nth-child(3n + 2) .element-image {
-  border-radius: 44% 56% 55% 45% / 53% 42% 58% 47%;
-}
-
-.element-card:nth-child(4n + 3) .element-image {
-  border-radius: 59% 41% 48% 52% / 39% 55% 45% 61%;
-}
-
 .element-card.drawing .element-image {
   display: grid;
   place-items: center;
@@ -478,9 +475,9 @@ textarea {
 
 .element-copy h2 {
   margin: 0;
-  font-family: 'Newsreader', Georgia, serif;
-  font-size: 1.03rem;
-  font-weight: 400;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
   line-height: 1.1;
 }
 
@@ -490,6 +487,43 @@ textarea {
   font-size: 0.55rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.frame-choices {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.frame-choice {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(38, 53, 45, 0.2);
+  background: rgba(38, 53, 45, 0.13);
+  cursor: pointer;
+}
+
+.frame-choice.active {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.frame-pebble {
+  border-radius: 52% 48% 43% 57% / 44% 56% 46% 54% !important;
+}
+
+.frame-puddle {
+  border-radius: 61% 39% 55% 45% / 42% 58% 37% 63% !important;
+}
+
+.frame-sprout {
+  border-radius: 38% 62% 67% 33% / 58% 36% 64% 42% !important;
+}
+
+.frame-cloud {
+  border-radius: 57% 43% 35% 65% / 39% 61% 54% 46% !important;
 }
 
 .element-check {
@@ -529,6 +563,71 @@ textarea {
   text-transform: uppercase;
   background: #3f634d;
   box-shadow: 0 3px 10px rgba(18, 27, 22, 0.2);
+}
+
+.library-delete-element {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 2px solid rgba(130, 50, 43, 0.7);
+  border-radius: 52% 48% 43% 57% / 44% 56% 46% 54%;
+  color: #fff8ea;
+  font-size: 0.62rem;
+  font-weight: 600;
+  background: rgba(92, 34, 30, 0.72);
+  cursor: pointer;
+}
+
+.library-tools {
+  position: fixed;
+  z-index: 40;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  gap: 8px;
+}
+
+.library-tools input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.library-tools button {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  padding: 9px;
+  border: 1px solid rgba(38, 53, 45, 0.25);
+  border-radius: 52% 48% 43% 57% / 44% 56% 46% 54%;
+  color: var(--ink);
+  background: rgba(247, 241, 223, 0.88);
+  box-shadow: 0 5px 16px rgba(30, 38, 29, 0.14);
+  cursor: pointer;
+}
+
+.library-tools button:last-child {
+  border-radius: 61% 39% 55% 45% / 42% 58% 37% 63%;
+}
+
+.library-tools button.active {
+  color: #fff7e8;
+  background: #7a312a;
+}
+
+.library-tools svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .element-check:focus-visible {
@@ -589,7 +688,7 @@ textarea {
   width: 100%;
   height: 100%;
   display: block;
-  border-radius: 50%;
+  border-radius: inherit;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
@@ -599,7 +698,7 @@ textarea {
 .placed-element.placed-seasonal img {
   overflow: hidden;
   border: 2px solid rgba(255, 250, 231, 0.7);
-  border-radius: 52% 48% 43% 57% / 44% 56% 46% 54%;
+  border-radius: inherit;
   object-fit: cover;
 }
 
@@ -1368,6 +1467,53 @@ textarea {
   color: rgba(38, 53, 45, 0.48);
   font-size: 0.56rem;
   text-align: center;
+}
+
+.element-notebook,
+.stream-notebook,
+.trash-panel {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  border-radius: 24px;
+}
+
+.element-notebook .eyebrow,
+.stream-notebook .eyebrow,
+.trash-panel .eyebrow {
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.notebook-title,
+.stream-notebook-title,
+.trash-panel h2,
+.element-note input,
+.stream-note strong {
+  font-family: inherit;
+  font-style: normal;
+}
+
+.notebook-title,
+.stream-notebook-title {
+  font-size: clamp(1.55rem, 5vw, 2.2rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.stream-prompt,
+.empty-notes,
+.empty-stream-notes,
+.empty-trash {
+  font-family: inherit;
+  font-style: normal;
+}
+
+.stream-note-history h3,
+.element-copy p,
+.library-eyebrow {
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .unlock-toast small,

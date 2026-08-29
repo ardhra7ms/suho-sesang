@@ -13,6 +13,7 @@ type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter'
 type PageId = SeasonId | 'tulip-room'
 type AppView = 'world' | 'library' | 'tulip-room'
 type ElementCategory = 'seasonal' | 'photos' | 'drawings'
+type ElementFrame = 'pebble' | 'puddle' | 'sprout' | 'cloud'
 
 type Activity = {
   id: string
@@ -29,6 +30,8 @@ type WorldState = {
   streamTitles: Record<StreamId, string>
   streamPlacements: Record<PageId, Record<StreamId, ElementPosition>>
   trash: TrashedItem[]
+  elementFrames: Record<string, ElementFrame>
+  deletedElementIds: string[]
 }
 
 type ElementPosition = {
@@ -42,6 +45,7 @@ type PlacedElement = {
   y: number
   title?: string
   notes?: ElementNote[]
+  frame?: ElementFrame
 }
 
 type ElementNote = {
@@ -91,9 +95,19 @@ type LibraryElement = {
   category: ElementCategory
   detail: string
   shape?: 'portrait' | 'landscape' | 'square' | 'drawing'
+  userCreated?: boolean
+}
+
+type StoredUserElement = {
+  id: string
+  name: string
+  blob: Blob
+  createdAt: string
 }
 
 const STORAGE_KEY = 'suho-sesang-world-v1'
+const ELEMENT_DB_NAME = 'suho-sesang-elements'
+const ELEMENT_STORE_NAME = 'images'
 
 const seasons: Array<{
   id: SeasonId
@@ -233,6 +247,8 @@ const initialState: WorldState = {
     'tulip-room': { ...defaultStreamPositions },
   },
   trash: [],
+  elementFrames: {},
+  deletedElementIds: [],
 }
 
 const milestones = [
@@ -386,6 +402,90 @@ const defaultStreamElements: Record<StreamId, string> = {
   language: 'heart-bloom',
 }
 
+const defaultStreamFrames: Record<StreamId, ElementFrame> = {
+  creation: 'sprout',
+  knowledge: 'pebble',
+  wellness: 'cloud',
+  journey: 'puddle',
+  language: 'sprout',
+}
+
+function openElementDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(ELEMENT_DB_NAME, 1)
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(ELEMENT_STORE_NAME)) {
+        request.result.createObjectStore(ELEMENT_STORE_NAME, { keyPath: 'id' })
+      }
+    }
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+}
+
+async function loadStoredElements(): Promise<StoredUserElement[]> {
+  const database = await openElementDatabase()
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(ELEMENT_STORE_NAME, 'readonly')
+    const request = transaction.objectStore(ELEMENT_STORE_NAME).getAll()
+    request.onsuccess = () => resolve(request.result as StoredUserElement[])
+    request.onerror = () => reject(request.error)
+    transaction.oncomplete = () => database.close()
+  })
+}
+
+async function storeElement(element: StoredUserElement): Promise<void> {
+  const database = await openElementDatabase()
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(ELEMENT_STORE_NAME, 'readwrite')
+    transaction.objectStore(ELEMENT_STORE_NAME).put(element)
+    transaction.oncomplete = () => {
+      database.close()
+      resolve()
+    }
+    transaction.onerror = () => reject(transaction.error)
+  })
+}
+
+async function removeStoredElement(id: string): Promise<void> {
+  const database = await openElementDatabase()
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(ELEMENT_STORE_NAME, 'readwrite')
+    transaction.objectStore(ELEMENT_STORE_NAME).delete(id)
+    transaction.oncomplete = () => {
+      database.close()
+      resolve()
+    }
+    transaction.onerror = () => reject(transaction.error)
+  })
+}
+
+async function prepareUploadedImage(file: File): Promise<Blob> {
+  if (file.type === 'image/gif') return file
+
+  const bitmap = await createImageBitmap(file)
+  const scale = Math.min(1, 1400 / Math.max(bitmap.width, bitmap.height))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale))
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+  const context = canvas.getContext('2d')
+  if (!context) {
+    bitmap.close()
+    throw new Error('This browser could not prepare the image.')
+  }
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  bitmap.close()
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) =>
+        blob ? resolve(blob) : reject(new Error('The image could not be saved.')),
+      'image/webp',
+      0.88,
+    )
+  })
+}
+
 function loadWorld(): WorldState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -430,6 +530,10 @@ function loadWorld(): WorldState {
         },
       },
       trash: Array.isArray(parsed.trash) ? parsed.trash : [],
+      elementFrames: parsed.elementFrames ?? {},
+      deletedElementIds: Array.isArray(parsed.deletedElementIds)
+        ? parsed.deletedElementIds
+        : [],
     }
   } catch {
     return initialState
@@ -449,6 +553,9 @@ function App() {
   const [libraryReturnView, setLibraryReturnView] = useState<Exclude<AppView, 'library'>>('world')
   const [targetPage, setTargetPage] = useState<PageId>('spring')
   const [elementFilter, setElementFilter] = useState<ElementCategory | 'all'>('all')
+  const [userElements, setUserElements] = useState<LibraryElement[]>([])
+  const [deleteMode, setDeleteMode] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [activeStream, setActiveStream] = useState<StreamId | null>(null)
   const [note, setNote] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
@@ -460,6 +567,7 @@ function App() {
   const [newUnlock, setNewUnlock] = useState<string | null>(null)
   const [activeSeason, setActiveSeason] = useState<SeasonId>(loadSeason)
   const dragMoved = useRef(false)
+  const uploadInput = useRef<HTMLInputElement>(null)
 
   const totalGrowth = useMemo(
     () => Object.values(world.growth).reduce((sum, value) => sum + value, 0),
@@ -474,14 +582,46 @@ function App() {
   const nextUnlock = milestones.find((milestone) => milestone.threshold > totalGrowth)
   const currentStream = streams.find((stream) => stream.id === activeStream)
   const season = seasons.find((item) => item.id === activeSeason)!
+  const allElements = useMemo(
+    () =>
+      [...libraryElements, ...userElements].filter(
+        (item) => !world.deletedElementIds.includes(item.id),
+      ),
+    [userElements, world.deletedElementIds],
+  )
   const visibleElements =
     elementFilter === 'all'
-      ? libraryElements
-      : libraryElements.filter((item) => item.category === elementFilter)
+      ? allElements
+      : allElements.filter((item) => item.category === elementFilter)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(world))
   }, [world])
+
+  useEffect(() => {
+    let active = true
+    loadStoredElements()
+      .then((storedElements) => {
+        if (!active) return
+        setUserElements(
+          storedElements.map((item) => ({
+            id: item.id,
+            name: item.name,
+            image: URL.createObjectURL(item.blob),
+            alt: item.name,
+            category: 'photos',
+            detail: 'Your upload',
+            userCreated: true,
+          })),
+        )
+      })
+      .catch(() => {
+        if (active) setUploadError('Your saved uploads could not be opened.')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!newUnlock) return
@@ -564,6 +704,100 @@ function App() {
     setView('library')
   }
 
+  const uploadElement = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Choose an image file.')
+      return
+    }
+
+    try {
+      setUploadError(null)
+      const blob = await prepareUploadedImage(file)
+      const id = `upload-${crypto.randomUUID()}`
+      const name = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')
+      await storeElement({
+        id,
+        name,
+        blob,
+        createdAt: new Date().toISOString(),
+      })
+      setUserElements((current) => [
+        ...current,
+        {
+          id,
+          name,
+          image: URL.createObjectURL(blob),
+          alt: name,
+          category: 'photos',
+          detail: 'Your upload',
+          userCreated: true,
+        },
+      ])
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : 'The image could not be added.',
+      )
+    }
+  }
+
+  const setElementFrame = (elementId: string, frame: ElementFrame) => {
+    setWorld((current) => ({
+      ...current,
+      elementFrames: {
+        ...current.elementFrames,
+        [elementId]: frame,
+      },
+      placements: Object.fromEntries(
+        Object.entries(current.placements).map(([page, placements]) => [
+          page,
+          placements.map((placement) =>
+            placement.elementId === elementId
+              ? { ...placement, frame }
+              : placement,
+          ),
+        ]),
+      ) as Record<PageId, PlacedElement[]>,
+    }))
+  }
+
+  const deleteLibraryElement = async (element: LibraryElement) => {
+    if (Object.values(defaultStreamElements).includes(element.id)) return
+
+    try {
+      if (element.userCreated) await removeStoredElement(element.id)
+      if (element.userCreated) {
+        URL.revokeObjectURL(element.image)
+        setUserElements((current) =>
+          current.filter((item) => item.id !== element.id),
+        )
+      }
+      setWorld((current) => ({
+        ...current,
+        deletedElementIds: current.deletedElementIds.includes(element.id)
+          ? current.deletedElementIds
+          : [...current.deletedElementIds, element.id],
+        placements: Object.fromEntries(
+          Object.entries(current.placements).map(([page, placements]) => [
+            page,
+            placements.filter(
+              (placement) => placement.elementId !== element.id,
+            ),
+          ]),
+        ) as Record<PageId, PlacedElement[]>,
+        trash: current.trash.filter(
+          (item) =>
+            !(
+              (item.kind === 'placed-element' &&
+                item.placement.elementId === element.id) ||
+              (item.kind === 'element' && item.elementId === element.id)
+            ),
+        ),
+      }))
+    } catch {
+      setUploadError('This element could not be deleted.')
+    }
+  }
+
   const toggleElement = (elementId: string) => {
     setWorld((current) => {
       const currentPlacements = current.placements[targetPage]
@@ -586,9 +820,10 @@ function App() {
                   x: 12 + (currentPlacements.length % 5) * 17,
                   y: 18 + (Math.floor(currentPlacements.length / 5) % 4) * 18,
                   title:
-                    libraryElements.find((item) => item.id === elementId)?.name ??
+                    allElements.find((item) => item.id === elementId)?.name ??
                     'Untitled',
                   notes: [],
+                  frame: current.elementFrames[elementId] ?? 'pebble',
                 },
               ],
         },
@@ -825,7 +1060,7 @@ function App() {
       )
     : undefined
   const activePlacementElement = activePlacement
-    ? libraryElements.find((item) => item.id === activePlacement.elementId)
+    ? allElements.find((item) => item.id === activePlacement.elementId)
     : undefined
 
   const addElementNote = () => {
@@ -981,14 +1216,16 @@ function App() {
   const placedElements = (page: PageId) => (
     <div className="placed-elements" aria-label="Placed elements">
       {world.placements[page].map((placement) => {
-        const item = libraryElements.find(
+        const item = allElements.find(
           (element) => element.id === placement.elementId,
         )
         if (!item) return null
 
         return (
           <button
-            className={`placed-element placed-${item.category}`}
+            className={`placed-element placed-${item.category} frame-${
+              placement.frame ?? world.elementFrames[item.id] ?? 'pebble'
+            }`}
             type="button"
             key={item.id}
             style={{ left: `${placement.x}%`, top: `${placement.y}%` }}
@@ -1046,7 +1283,7 @@ function App() {
 
         return (
           <button
-            className={`placed-element default-note-element placed-${item.category}`}
+            className={`placed-element default-note-element placed-${item.category} frame-${defaultStreamFrames[stream.id]}`}
             type="button"
             key={stream.id}
             style={{ left: `${position.x}%`, top: `${position.y}%` }}
@@ -1173,6 +1410,7 @@ function App() {
           <p>
             Pieces to keep, rearrange, and eventually place into each season.
           </p>
+          {uploadError && <p className="library-error" role="alert">{uploadError}</p>}
           </header>
 
           <div className="library-controls">
@@ -1212,12 +1450,36 @@ function App() {
           <div className="element-grid">
           {visibleElements.map((item) => (
             <article className={`element-card ${item.shape ?? 'square'}`} key={item.id}>
-              <div className="element-image">
+              <div
+                className={`element-image frame-${
+                  world.elementFrames[item.id] ?? 'pebble'
+                }`}
+              >
                 <img
                   src={`${import.meta.env.BASE_URL}${item.image}`}
                   alt={item.alt}
                   loading="lazy"
                 />
+              </div>
+              <div className="frame-choices" aria-label={`Shape for ${item.name}`}>
+                {(['pebble', 'puddle', 'sprout', 'cloud'] as const).map(
+                  (frame) => (
+                    <button
+                      className={
+                        (world.elementFrames[item.id] ?? 'pebble') === frame
+                          ? `frame-choice frame-${frame} active`
+                          : `frame-choice frame-${frame}`
+                      }
+                      type="button"
+                      key={frame}
+                      onClick={() => setElementFrame(item.id, frame)}
+                      aria-label={`Use ${frame} shape`}
+                      aria-pressed={
+                        (world.elementFrames[item.id] ?? 'pebble') === frame
+                      }
+                    />
+                  ),
+                )}
               </div>
               {Object.values(defaultStreamElements).includes(item.id) ? (
                 <span className="default-element-mark">default</span>
@@ -1260,8 +1522,54 @@ function App() {
                 <h2>{item.name}</h2>
                 <p>{item.detail}</p>
               </div>
+              {deleteMode &&
+                !Object.values(defaultStreamElements).includes(item.id) && (
+                  <button
+                    className="library-delete-element"
+                    type="button"
+                    onClick={() => deleteLibraryElement(item)}
+                    aria-label={`Permanently delete ${item.name} from the library`}
+                  >
+                    delete
+                  </button>
+                )}
             </article>
           ))}
+          </div>
+
+          <div className="library-tools" aria-label="Element library tools">
+            <input
+              ref={uploadInput}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? [])
+                files.forEach((file) => void uploadElement(file))
+                event.target.value = ''
+              }}
+              aria-label="Upload element images"
+            />
+            <button
+              type="button"
+              onClick={() => uploadInput.current?.click()}
+              aria-label="Upload element images"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5" />
+              </svg>
+            </button>
+            <button
+              className={deleteMode ? 'active' : ''}
+              type="button"
+              onClick={() => setDeleteMode((current) => !current)}
+              aria-label={deleteMode ? 'Exit delete mode' : 'Delete elements'}
+              aria-pressed={deleteMode}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 8v10m4-10v10m4-10v10M5 5h14m-9-2h4m4 2-1 16H7L6 5" />
+              </svg>
+            </button>
           </div>
         </section>
       ) : view === 'tulip-room' ? (
@@ -1571,7 +1879,7 @@ function App() {
         </div>
       )}
 
-      <button
+      {view !== 'library' && <button
         className={`trash-bin-button ${world.trash.length > 0 ? 'has-notes' : ''}`}
         type="button"
         data-trash-bin
@@ -1582,7 +1890,7 @@ function App() {
           <path d="M8 8v10m4-10v10m4-10v10M5 5h14m-9-2h4m4 2-1 16H7L6 5" />
         </svg>
         {world.trash.length > 0 && <span>{world.trash.length}</span>}
-      </button>
+      </button>}
 
       {trashOpen && (
         <div className="overlay" onClick={() => setTrashOpen(false)}>
@@ -1621,7 +1929,7 @@ function App() {
                           )
                   const placedItem =
                     trashed.kind === 'placed-element'
-                      ? libraryElements.find(
+                      ? allElements.find(
                           (item) =>
                             item.id === trashed.placement.elementId,
                         )
