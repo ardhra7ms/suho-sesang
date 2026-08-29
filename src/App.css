@@ -956,26 +956,7 @@ textarea {
 }
 
 .notebook-source {
-  display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  align-items: center;
-  gap: 17px;
   margin-bottom: 24px;
-}
-
-.notebook-source img {
-  width: 76px;
-  height: 76px;
-  display: block;
-  padding: 4px;
-  border-radius: 52% 48% 43% 57% / 44% 56% 46% 54%;
-  object-fit: contain;
-  background: #2a2a24;
-}
-
-.notebook-source .eyebrow {
-  margin-bottom: 5px;
-  text-align: left;
 }
 
 .notebook-title {
@@ -1711,14 +1692,7 @@ textarea {
   }
 
   .notebook-source {
-    grid-template-columns: 58px minmax(0, 1fr);
-    gap: 12px;
     margin-bottom: 18px;
-  }
-
-  .notebook-source img {
-    width: 58px;
-    height: 58px;
   }
 
   .notebook-title {
@@ -1793,6 +1767,170 @@ textarea {
   }
 }
 
+/* Seasonal comic panels: the palette changes, the visual language stays shared. */
+.notebook-season-spring {
+  --comic-panel: #fff0c9;
+  --comic-action: #e75582;
+  --comic-action-ink: #173d2b;
+}
+
+.notebook-season-summer {
+  --comic-panel: #ffdf70;
+  --comic-action: #119bc1;
+  --comic-action-ink: #211b0b;
+}
+
+.notebook-season-autumn {
+  --comic-panel: #f2a62b;
+  --comic-action: #fff0c4;
+  --comic-action-ink: #4d1d13;
+}
+
+.notebook-season-winter {
+  --comic-panel: #122c3c;
+  --comic-action: #7ff0c7;
+  --comic-action-ink: #081522;
+}
+
+.stream-notebook.themed-notebook,
+.element-notebook.themed-notebook {
+  background-color: var(--card-bg);
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--card-ink) 13%, transparent) 1.2px,
+    transparent 1.3px
+  );
+  background-size: 13px 13px;
+  border: 3px solid var(--card-ink);
+  border-radius: 30px 11px 26px 15px;
+  box-shadow: 8px 8px 0 var(--card-ink);
+}
+
+.element-notebook.themed-notebook .notebook-source {
+  display: block;
+  margin: 0 0 22px;
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .notebook-title,
+:is(.stream-notebook, .element-notebook).themed-notebook .stream-notebook-title {
+  padding: 0 48px 10px 0;
+  border: 0;
+  border-bottom: 4px solid var(--card-ink);
+  color: var(--card-ink);
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(2.4rem, 7vw, 4.6rem);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .stream-prompt {
+  width: fit-content;
+  max-width: calc(100% - 8px);
+  margin: 18px 0 28px;
+  padding: 10px 15px;
+  border: 2px solid var(--card-ink);
+  border-radius: 18px 18px 18px 4px;
+  color: var(--comic-action-ink);
+  font-weight: 700;
+  background: var(--comic-action);
+  box-shadow: 4px 4px 0 var(--card-ink);
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note,
+:is(.stream-notebook, .element-notebook).themed-notebook .element-note,
+:is(.stream-notebook, .element-notebook).themed-notebook .empty-notes,
+:is(.stream-notebook, .element-notebook).themed-notebook .empty-stream-notes,
+:is(.stream-notebook, .element-notebook).themed-notebook .stream-note textarea {
+  border: 3px solid var(--card-ink);
+  border-radius: 14px 5px 12px 7px;
+  color: var(--comic-action-ink);
+  background: var(--comic-panel);
+  box-shadow: 5px 5px 0 var(--card-ink);
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note,
+:is(.stream-notebook, .element-notebook).themed-notebook .element-note {
+  margin-right: 5px;
+  margin-left: 0;
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note textarea,
+:is(.stream-notebook, .element-notebook).themed-notebook .element-note textarea,
+:is(.stream-notebook, .element-notebook).themed-notebook .element-note input {
+  color: var(--comic-action-ink);
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .empty-notes,
+:is(.stream-notebook, .element-notebook).themed-notebook .empty-stream-notes {
+  color: var(--card-ink);
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .growth-buttons button,
+:is(.stream-notebook, .element-notebook).themed-notebook .add-note-button {
+  border: 2px solid var(--card-ink);
+  border-radius: 8px 3px 7px 4px;
+  color: var(--comic-action-ink);
+  font-weight: 800;
+  background: var(--comic-action);
+  box-shadow: 3px 3px 0 var(--card-ink);
+  transform: none;
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .growth-buttons button:active,
+:is(.stream-notebook, .element-notebook).themed-notebook .add-note-button:active {
+  box-shadow: 1px 1px 0 var(--card-ink);
+  transform: translate(2px, 2px);
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .stream-note-history {
+  margin-right: 5px;
+  margin-left: 0;
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .stream-note-history h3 {
+  color: var(--card-ink);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .close-button {
+  top: 18px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid var(--card-ink);
+  border-radius: 50%;
+  color: var(--comic-action-ink);
+  font-size: 1.4rem;
+  font-weight: 900;
+  line-height: 1;
+  background: var(--comic-action);
+  box-shadow: 3px 3px 0 var(--card-ink);
+}
+
+@media (max-width: 640px) {
+  .stream-notebook.themed-notebook,
+  .element-notebook.themed-notebook {
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -6px 0 var(--card-ink);
+  }
+
+  :is(.stream-notebook, .element-notebook).themed-notebook .notebook-title,
+  :is(.stream-notebook, .element-notebook).themed-notebook .stream-notebook-title {
+    font-size: clamp(2.2rem, 14vw, 3.7rem);
+  }
+}
+
 .themed-notebook {
   --card-bg: #fdc51b;
   --card-ink: #211b0b;
@@ -1807,23 +1945,6 @@ textarea {
 .themed-notebook > * {
   position: relative;
   z-index: 1;
-}
-
-.stream-notebook-art {
-  position: absolute;
-  z-index: 0;
-  top: -46px;
-  right: -34px;
-  width: 210px;
-  height: 210px;
-  opacity: 0.2;
-  pointer-events: none;
-}
-
-.stream-notebook-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
 }
 
 .themed-notebook,
@@ -1873,7 +1994,7 @@ textarea {
   background: transparent;
 }
 
-/* Spring: a botanical field journal with pressed-petal marks. */
+/* Spring comic palette. */
 .themed-notebook.notebook-season-spring {
   --card-bg: #f6ccd8;
   --card-ink: #173d2b;
@@ -1883,18 +2004,7 @@ textarea {
   border-radius: 46px 18px 40px 24px;
 }
 
-.notebook-season-spring .element-note,
-.notebook-season-spring .new-growth-note {
-  border-radius: 24px 8px 20px 12px;
-  background:
-    repeating-linear-gradient(
-      transparent 0 27px,
-      rgba(23, 61, 43, 0.09) 28px
-    ),
-    #fff0c9;
-}
-
-/* Summer: bright cut-paper scrapbook and mismatched Growth tokens. */
+/* Summer comic palette. */
 .themed-notebook.notebook-season-summer {
   --card-bg: #fdc51b;
   --card-ink: #211b0b;
@@ -1904,35 +2014,7 @@ textarea {
   border-radius: 22px 54px 18px 46px;
 }
 
-.notebook-season-summer .new-growth-note,
-.notebook-season-summer .element-note {
-  border: 2px solid var(--card-ink);
-  border-radius: 3px;
-  background: #ffdf70;
-  box-shadow: 6px 6px 0 rgba(33, 27, 11, 0.9);
-}
-
-.notebook-season-summer .growth-buttons button:nth-child(1) {
-  border-radius: 57% 43% 49% 51% / 42% 58% 39% 61%;
-  transform: rotate(-2deg);
-}
-
-.notebook-season-summer .growth-buttons button:nth-child(2) {
-  border-radius: 39% 61% 55% 45% / 61% 37% 63% 39%;
-  transform: translateY(4px) rotate(1deg);
-}
-
-.notebook-season-summer .growth-buttons button:nth-child(3) {
-  border-radius: 62% 38% 44% 56% / 43% 57% 52% 48%;
-  transform: rotate(2deg);
-}
-
-.notebook-season-summer .growth-buttons button:nth-child(4) {
-  border-radius: 46% 54% 63% 37% / 56% 44% 38% 62%;
-  transform: translateY(-3px) rotate(-1deg);
-}
-
-/* Autumn: a warm curiosity cabinet with framed specimens. */
+/* Autumn comic palette. */
 .themed-notebook.notebook-season-autumn {
   --card-bg: #9b341f;
   --card-ink: #fff0c4;
@@ -1946,31 +2028,7 @@ textarea {
     0 16px 50px rgba(26, 8, 4, 0.4);
 }
 
-.notebook-season-autumn .stream-notebook-art {
-  right: auto;
-  left: -42px;
-  opacity: 0.28;
-  transform: rotate(-8deg);
-}
-
-.notebook-season-autumn .new-growth-note,
-.notebook-season-autumn .element-note,
-.notebook-season-autumn .stream-note textarea {
-  border: 2px solid #4d1d13;
-  border-radius: 2px;
-  color: #35160f;
-  background: #f2a62b;
-}
-
-.notebook-season-autumn .new-growth-note {
-  margin-left: 13%;
-}
-
-.notebook-season-autumn .stream-note-history {
-  margin-right: 8%;
-}
-
-/* Winter: a dark portal lit by an aurora-like glow. */
+/* Winter comic palette. */
 .themed-notebook.notebook-season-winter {
   --card-bg: #081522;
   --card-ink: #effff8;
@@ -1988,41 +2046,9 @@ textarea {
   backdrop-filter: blur(18px);
 }
 
-.notebook-season-winter .stream-notebook-art {
-  opacity: 0.16;
-  filter: blur(1px) drop-shadow(0 0 20px var(--card-accent));
-}
-
-.notebook-season-winter .new-growth-note,
-.notebook-season-winter .element-note,
-.notebook-season-winter .stream-note textarea {
-  background: rgba(239, 255, 248, 0.07);
-}
-
-.notebook-season-winter .growth-buttons {
-  align-items: center;
-}
-
-.notebook-season-winter .growth-buttons button {
-  color: #081522;
-  background: var(--card-accent);
-  border-radius: 50%;
-}
-
-.notebook-season-winter .growth-buttons button:nth-child(even) {
-  transform: translateY(6px);
-}
-
 @media (max-width: 640px) {
   .themed-notebook {
     border-radius: 34px 34px 0 0;
-  }
-
-  .stream-notebook-art {
-    top: -28px;
-    right: -25px;
-    width: 145px;
-    height: 145px;
   }
 
   .notebook-season-autumn .new-growth-note,

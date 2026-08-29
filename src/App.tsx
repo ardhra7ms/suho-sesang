@@ -583,11 +583,6 @@ function App() {
       ),
     [userElements, world.deletedElementIds],
   )
-  const currentStreamElement = currentStream
-    ? allElements.find(
-        (item) => item.id === defaultStreamElements[currentStream.id],
-      )
-    : undefined
   const visibleElements =
     elementFilter === 'all'
       ? allElements
@@ -1595,14 +1590,6 @@ function App() {
             onClick={(event) => event.stopPropagation()}
             aria-label={`${world.streamTitles[currentStream.id]} notes`}
           >
-            {currentStreamElement && (
-              <div className="stream-notebook-art" aria-hidden="true">
-                <img
-                  src={`${import.meta.env.BASE_URL}${currentStreamElement.image}`}
-                  alt=""
-                />
-              </div>
-            )}
             <button
               className="close-button"
               type="button"
@@ -1771,28 +1758,21 @@ function App() {
               ×
             </button>
             <div className="notebook-source">
-              <img
-                src={`${import.meta.env.BASE_URL}${activePlacementElement.image}`}
-                alt=""
+              <input
+                className="notebook-title"
+                value={activePlacement.title ?? activePlacementElement.name}
+                onChange={(event) =>
+                  updatePlacedElement(
+                    activeNoteSource.page,
+                    activeNoteSource.elementId,
+                    (placement) => ({
+                      ...placement,
+                      title: event.target.value,
+                    }),
+                  )
+                }
+                aria-label="Element notes heading"
               />
-              <div>
-                <span className="eyebrow">Notes held by this element</span>
-                <input
-                  className="notebook-title"
-                  value={activePlacement.title ?? activePlacementElement.name}
-                  onChange={(event) =>
-                    updatePlacedElement(
-                      activeNoteSource.page,
-                      activeNoteSource.elementId,
-                      (placement) => ({
-                        ...placement,
-                        title: event.target.value,
-                      }),
-                    )
-                  }
-                  aria-label="Element notes heading"
-                />
-              </div>
             </div>
 
             <div className="element-notes">
