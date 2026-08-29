@@ -1,0 +1,17 @@
+{
+  "name": "Suho Sesang",
+  "short_name": "Suho",
+  "description": "A personal world that grows as you grow.",
+  "start_url": "/suho-sesang/",
+  "display": "standalone",
+  "background_color": "#f7f1df",
+  "theme_color": "#486e50",
+  "icons": [
+    {
+      "src": "bunny.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
