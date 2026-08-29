@@ -33,3 +33,9 @@ npm run build
 
 Pushes to `main` are deployed to GitHub Pages by the workflow in
 `.github/workflows/deploy.yml`.
+
+## Artwork
+
+The spring world uses Claude Monet's *Water Lilies (Nymphéas)* (1907), from the
+Museum of Fine Arts, Houston. The high-resolution reproduction is marked public
+domain by [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Monet,_Claude_-_Water_Lilies_(Nymph%C3%A9as)_-_Google_Art_Project.jpg).
