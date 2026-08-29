@@ -8,11 +8,12 @@ progress adds Growth to a calm palace garden, revealing new details over time.
 - Five interactive life streams: knowledge, language, creation, journey, and
   wellness
 - One-tap `+5`, `+10`, `+20`, and `+50` Growth updates with optional notes
+- Five permanent life-stream elements with editable headings and note history
 - Four switchable seasonal worlds
 - A separate Tulip Room environment
 - Incremental discoveries tied to meaningful Growth milestones
 - A filterable element library with page-specific placement and drag positioning
-- Element-based notebooks with editable headings and multiple editable notes
+- Custom element notebooks with editable headings and multiple editable notes
 - Browser-only persistence with `localStorage`
 - Responsive, mobile-first layout and installable web app metadata
 

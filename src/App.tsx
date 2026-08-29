@@ -26,6 +26,7 @@ type WorldState = {
   growth: Record<StreamId, number>
   activities: Activity[]
   placements: Record<PageId, PlacedElement[]>
+  streamTitles: Record<StreamId, string>
 }
 
 type PlacedElement = {
@@ -177,6 +178,13 @@ const initialState: WorldState = {
     autumn: [],
     winter: [],
     'tulip-room': [],
+  },
+  streamTitles: {
+    creation: 'Creation',
+    knowledge: 'Knowledge',
+    wellness: 'Wellness',
+    journey: 'Journey',
+    language: 'Language',
   },
 }
 
@@ -331,6 +339,10 @@ function loadWorld(): WorldState {
     return {
       growth: { ...initialState.growth, ...parsed.growth },
       activities: Array.isArray(parsed.activities) ? parsed.activities : [],
+      streamTitles: {
+        ...initialState.streamTitles,
+        ...parsed.streamTitles,
+      },
       placements: {
         spring: Array.isArray(parsed.placements?.spring) ? parsed.placements.spring : [],
         summer: Array.isArray(parsed.placements?.summer) ? parsed.placements.summer : [],
@@ -424,8 +436,18 @@ function App() {
       ].slice(0, 100),
     }))
     setNote('')
-    setActiveStream(null)
     if (unlocked) setNewUnlock(unlocked.name)
+  }
+
+  const updateActivityNote = (activityId: string, value: string) => {
+    setWorld((current) => ({
+      ...current,
+      activities: current.activities.map((activity) =>
+        activity.id === activityId
+          ? { ...activity, note: value }
+          : activity,
+      ),
+    }))
   }
 
   const openLibrary = () => {
@@ -695,6 +717,27 @@ function App() {
     </div>
   )
 
+  const defaultElements = (
+    <section className="stream-dock" aria-label="Default note elements">
+      <div className="dock-heading">
+        <span>your default elements</span>
+        <small>always here</small>
+      </div>
+      <div className="stream-actions">
+        {streams.map((stream) => (
+          <button
+            type="button"
+            key={stream.id}
+            onClick={() => setActiveStream(stream.id)}
+          >
+            <span>{world.streamTitles[stream.id]}</span>
+            <small>{world.growth[stream.id]}</small>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+
   return (
     <main
       className={`app-shell ${view === 'library' ? 'library-open' : ''} ${
@@ -889,6 +932,7 @@ function App() {
             <h1 id="tulip-room-title">Tulip Room</h1>
           </header>
           {placedElements('tulip-room')}
+          {defaultElements}
         </section>
       ) : (
         <>
@@ -916,24 +960,7 @@ function App() {
           {placedElements(activeSeason)}
           </section>
 
-          <section className="stream-dock" aria-label="Life streams">
-          <div className="dock-heading">
-            <span>add to your world</span>
-            <small>or tap the painting</small>
-            </div>
-          <div className="stream-actions">
-            {streams.map((stream) => (
-              <button
-                type="button"
-                key={stream.id}
-                onClick={() => setActiveStream(stream.id)}
-              >
-                <span>{stream.name}</span>
-                <small>{world.growth[stream.id]}</small>
-              </button>
-            ))}
-          </div>
-          </section>
+          {defaultElements}
 
           <footer className="painting-caption">
           <span>{season.label.toLowerCase()} · {totalGrowth} growth</span>
@@ -948,40 +975,89 @@ function App() {
         </>
       )}
 
-      {currentStream && view === 'world' && (
-        <div className="overlay sheet-overlay" onClick={() => setActiveStream(null)}>
+      {currentStream && view !== 'library' && (
+        <div
+          className="overlay notebook-overlay"
+          onClick={() => setActiveStream(null)}
+        >
           <section
-          className="quick-sheet"
-          onClick={(event) => event.stopPropagation()}
-          aria-label={`Update ${currentStream.name}`}
+            className="stream-notebook"
+            onClick={(event) => event.stopPropagation()}
+            aria-label={`${world.streamTitles[currentStream.id]} notes`}
           >
-          <button
-            className="close-button"
-            type="button"
-            onClick={() => setActiveStream(null)}
-            aria-label="Close quick update"
-          >
-            ×
-          </button>
-          <span className="eyebrow">{currentStream.examples}</span>
-          <h2>{currentStream.prompt}</h2>
-          <textarea
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="A note, if you like…"
-            rows={2}
-          />
-          <div className="growth-buttons" aria-label="Choose growth amount">
-            {[5, 10, 20, 50].map((amount) => (
-              <button
-                type="button"
-                key={amount}
-                onClick={() => addGrowth(currentStream.id, amount)}
-              >
-                +{amount}
-              </button>
-            ))}
-          </div>
+            <button
+              className="close-button"
+              type="button"
+              onClick={() => setActiveStream(null)}
+              aria-label="Close default element"
+            >
+              ×
+            </button>
+            <span className="eyebrow">Default element · {currentStream.examples}</span>
+            <input
+              className="stream-notebook-title"
+              value={world.streamTitles[currentStream.id]}
+              onChange={(event) =>
+                setWorld((current) => ({
+                  ...current,
+                  streamTitles: {
+                    ...current.streamTitles,
+                    [currentStream.id]: event.target.value,
+                  },
+                }))
+              }
+              aria-label="Element heading"
+            />
+            <p className="stream-prompt">{currentStream.prompt}</p>
+            <div className="new-growth-note">
+              <textarea
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder="Write a new note…"
+                rows={2}
+              />
+              <div className="growth-buttons" aria-label="Save note with growth">
+                {[5, 10, 20, 50].map((amount) => (
+                  <button
+                    type="button"
+                    key={amount}
+                    onClick={() => addGrowth(currentStream.id, amount)}
+                  >
+                    +{amount}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="stream-note-history">
+              <h3>Notes held here</h3>
+              {world.activities.filter(
+                (activity) => activity.stream === currentStream.id,
+              ).length === 0 ? (
+                <p className="empty-stream-notes">No notes yet.</p>
+              ) : (
+                world.activities
+                  .filter((activity) => activity.stream === currentStream.id)
+                  .map((activity) => (
+                    <article className="stream-note" key={activity.id}>
+                      <div>
+                        <strong>+{activity.amount}</strong>
+                        <time dateTime={activity.createdAt}>
+                          {new Date(activity.createdAt).toLocaleDateString()}
+                        </time>
+                      </div>
+                      <textarea
+                        value={activity.note ?? ''}
+                        onChange={(event) =>
+                          updateActivityNote(activity.id, event.target.value)
+                        }
+                        placeholder="Add words to this trace…"
+                        rows={2}
+                        aria-label={`${world.streamTitles[currentStream.id]} note`}
+                      />
+                    </article>
+                  ))
+              )}
+            </div>
           </section>
         </div>
       )}

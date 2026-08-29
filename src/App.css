@@ -7,8 +7,131 @@
   --water: #4b665f;
 }
 
+.stream-actions button:nth-child(even) {
+  border-radius: 54% 46% 57% 43% / 43% 55% 45% 57%;
+}
+
 * {
   box-sizing: border-box;
+}
+
+.stream-notebook {
+  width: min(640px, 100%);
+  max-height: calc(100svh - 36px);
+  overflow-y: auto;
+  padding: 40px;
+  border-radius: 34px 13px 31px 17px;
+  animation: record-in 260ms ease-out;
+}
+
+.stream-notebook-title {
+  width: 100%;
+  margin-top: 8px;
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 1px solid rgba(38, 53, 45, 0.22);
+  outline: 0;
+  color: var(--ink);
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  line-height: 1;
+  text-align: center;
+  background: transparent;
+}
+
+.stream-notebook-title:focus {
+  border-color: var(--water);
+}
+
+.stream-prompt {
+  margin: 9px 0 22px;
+  color: rgba(38, 53, 45, 0.62);
+  font-family: 'Newsreader', Georgia, serif;
+  font-style: italic;
+  text-align: center;
+}
+
+.new-growth-note {
+  padding: 14px;
+  border: 1px solid rgba(38, 53, 45, 0.17);
+  border-radius: 20px 8px 18px 10px;
+  background: rgba(255, 252, 239, 0.46);
+}
+
+.new-growth-note textarea {
+  width: 100%;
+  display: block;
+  resize: vertical;
+  padding: 4px;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  background: transparent;
+}
+
+.stream-note-history {
+  margin-top: 24px;
+}
+
+.stream-note-history h3 {
+  margin: 0 0 10px;
+  color: rgba(38, 53, 45, 0.58);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.empty-stream-notes {
+  margin: 0;
+  padding: 22px;
+  border: 1px dashed rgba(38, 53, 45, 0.22);
+  border-radius: 16px;
+  color: rgba(38, 53, 45, 0.54);
+  font-family: 'Newsreader', Georgia, serif;
+  font-style: italic;
+  text-align: center;
+}
+
+.stream-note {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 10px;
+  padding: 11px 0;
+  border-top: 1px solid rgba(38, 53, 45, 0.14);
+}
+
+.stream-note > div {
+  padding-top: 7px;
+}
+
+.stream-note strong,
+.stream-note time {
+  display: block;
+}
+
+.stream-note strong {
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+}
+
+.stream-note time {
+  margin-top: 2px;
+  color: rgba(38, 53, 45, 0.5);
+  font-size: 0.5rem;
+}
+
+.stream-note textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 9px 11px;
+  border: 1px solid rgba(38, 53, 45, 0.14);
+  border-radius: 12px 5px 10px 7px;
+  outline: 0;
+  color: var(--ink);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  background: rgba(255, 252, 239, 0.38);
 }
 
 button,
@@ -497,7 +620,7 @@ textarea {
 .tulip-room-title {
   position: absolute;
   z-index: 12;
-  bottom: 28px;
+  bottom: 150px;
   left: 28px;
   color: #fff9df;
   text-shadow: 0 2px 14px rgba(26, 29, 14, 0.72);
@@ -655,7 +778,7 @@ textarea {
   gap: 5px;
   padding: 9px 10px;
   border: 1px solid rgba(248, 243, 224, 0.16);
-  border-radius: 7px;
+  border-radius: 48% 52% 45% 55% / 54% 45% 55% 46%;
   color: #f7f1df;
   background: rgba(247, 241, 223, 0.06);
   cursor: pointer;
@@ -698,7 +821,8 @@ textarea {
 
 .quick-sheet,
 .garden-record,
-.element-notebook {
+.element-notebook,
+.stream-notebook {
   position: relative;
   width: min(500px, 100%);
   color: var(--ink);
@@ -1192,7 +1316,7 @@ textarea {
   }
 
   .tulip-room-title {
-    bottom: 22px;
+    bottom: 142px;
     left: 16px;
   }
 
@@ -1280,6 +1404,25 @@ textarea {
 
   .element-note {
     min-height: 138px;
+  }
+
+  .stream-notebook {
+    width: 100%;
+    max-height: 88svh;
+    padding: 38px 18px 24px;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .stream-notebook-title {
+    font-size: 2rem;
+  }
+
+  .stream-prompt {
+    margin-bottom: 17px;
+  }
+
+  .stream-note {
+    grid-template-columns: 52px minmax(0, 1fr);
   }
 }
 
