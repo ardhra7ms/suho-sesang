@@ -1804,10 +1804,10 @@ textarea {
 
 /* Editorial system inspired by the reference article's grid and typography. */
 :root {
-  --ink: #272727;
-  --paper: #ececea;
-  --violet: #272727;
-  --water: #272727;
+  --ink: #211b0b;
+  --paper: #ffc326;
+  --violet: #211b0b;
+  --water: #211b0b;
 }
 
 .app-shell,
@@ -1819,13 +1819,13 @@ textarea {
 }
 
 .topbar {
-  height: 108px;
+  height: 68px;
   padding: 0 5.555vw;
-  color: #272727;
-  background: rgba(236, 236, 234, 0.96);
-  border-bottom: 1px solid #272727;
+  color: #211b0b;
+  background: rgba(255, 195, 38, 0.68);
+  border-bottom: 1px solid rgba(33, 27, 11, 0.58);
   text-shadow: none;
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(8px);
 }
 
 .topbar::after {
@@ -1837,17 +1837,17 @@ textarea {
 }
 
 .brand strong {
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .bunny-logo {
-  width: 42px;
-  height: 42px;
-  border: 1px solid #272727;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #211b0b;
   border-radius: 3px;
-  background: #ececea;
+  background: rgba(255, 213, 80, 0.82);
 }
 
 .season-switcher {
@@ -1858,13 +1858,13 @@ textarea {
 .season-switcher button.active {
   padding: 8px 0 5px;
   border-radius: 0;
-  color: #272727;
-  font-size: 0.72rem;
+  color: #211b0b;
+  font-size: 0.8rem;
   background: transparent;
 }
 
 .season-switcher button.active {
-  border-bottom: 1px solid #272727;
+  border-bottom: 1px solid #211b0b;
 }
 
 .topbar-actions {
@@ -1875,39 +1875,39 @@ textarea {
 .library-button {
   padding: 7px 0 5px;
   border: 0;
-  border-bottom: 1px solid #272727;
+  border-bottom: 1px solid #211b0b;
   border-radius: 0;
-  color: #272727;
+  color: #211b0b;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   background: transparent;
 }
 
 .growth-status {
-  color: #6a6a69;
-  font-size: 0.68rem;
+  color: rgba(33, 27, 11, 0.7);
+  font-size: 0.76rem;
   letter-spacing: 0;
   text-transform: none;
 }
 
 .app-shell.library-open {
-  background: #ececea;
+  background: #ffc326;
 }
 
 .library-topbar {
-  color: #272727;
-  background: rgba(236, 236, 234, 0.96);
+  color: #211b0b;
+  background: rgba(255, 195, 38, 0.78);
 }
 
 .library-topbar .season-switcher button,
 .library-topbar .season-switcher button.active {
-  color: #272727;
+  color: #211b0b;
   background: transparent;
 }
 
 .library-topbar .library-button {
   border: 0;
-  border-bottom: 1px solid #272727;
+  border-bottom: 1px solid #211b0b;
   border-radius: 0;
   background: transparent;
 }
@@ -1915,23 +1915,23 @@ textarea {
 .element-library {
   width: auto;
   margin: 0 5.555vw;
-  padding: 176px 0 96px;
-  color: #272727;
+  padding: 122px 0 88px;
+  color: #211b0b;
   font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
 }
 
 .library-heading {
   max-width: 920px;
-  margin: 0 0 62px;
-  padding-bottom: 34px;
-  border-bottom: 1px solid #272727;
+  margin: 0 0 42px;
+  padding-bottom: 26px;
+  border-bottom: 1px solid #211b0b;
   text-align: left;
 }
 
 .library-eyebrow {
-  margin-bottom: 20px;
-  color: #6a6a69;
-  font-size: 0.74rem;
+  margin-bottom: 14px;
+  color: rgba(33, 27, 11, 0.7);
+  font-size: 0.8rem;
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
@@ -1940,7 +1940,7 @@ textarea {
 .library-heading h1 {
   max-width: 820px;
   font-family: 'Segoe Serif', Georgia, serif;
-  font-size: clamp(3.4rem, 6.2vw, 6rem);
+  font-size: clamp(2.6rem, 4.2vw, 4rem);
   font-weight: 400;
   letter-spacing: -0.04em;
   line-height: 0.98;
@@ -1948,9 +1948,9 @@ textarea {
 
 .library-heading p {
   max-width: 540px;
-  margin: 24px 0 0;
-  color: #6a6a69;
-  font-size: 1rem;
+  margin: 18px 0 0;
+  color: rgba(33, 27, 11, 0.76);
+  font-size: 0.94rem;
   line-height: 1.45;
 }
 
@@ -1958,7 +1958,7 @@ textarea {
   max-width: none;
   margin-bottom: 46px;
   padding-bottom: 18px;
-  border-bottom: 1px solid rgba(39, 39, 39, 0.38);
+  border-bottom: 1px solid rgba(33, 27, 11, 0.45);
 }
 
 .library-filters {
@@ -1971,28 +1971,28 @@ textarea {
   border: 0;
   border-bottom: 1px solid transparent;
   border-radius: 0;
-  color: #6a6a69;
-  font-size: 0.72rem;
+  color: rgba(33, 27, 11, 0.68);
+  font-size: 0.78rem;
   background: transparent;
 }
 
 .library-filters button.active {
-  border-bottom-color: #272727;
-  color: #272727;
+  border-bottom-color: #211b0b;
+  color: #211b0b;
 }
 
 .library-destination {
-  color: #6a6a69;
-  font-size: 0.68rem;
+  color: rgba(33, 27, 11, 0.7);
+  font-size: 0.74rem;
   letter-spacing: 0;
   text-transform: none;
 }
 
 .library-destination select {
   min-height: 36px;
-  border-color: #272727;
+  border-color: #211b0b;
   border-radius: 3px;
-  color: #272727;
+  color: #211b0b;
   background: transparent;
 }
 
@@ -2003,8 +2003,8 @@ textarea {
 }
 
 .element-image {
-  border-color: #272727;
-  background: #d8d8d4;
+  border-color: #211b0b;
+  background: #ffd75b;
   box-shadow: none;
 }
 
@@ -2018,13 +2018,13 @@ textarea {
 }
 
 .element-copy h2 {
-  font-size: 0.85rem;
+  font-size: 0.92rem;
   font-weight: 600;
 }
 
 .element-copy p {
-  color: #6a6a69;
-  font-size: 0.62rem;
+  color: rgba(33, 27, 11, 0.68);
+  font-size: 0.67rem;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -2034,26 +2034,26 @@ textarea {
 }
 
 .frame-choice {
-  border-color: #6a6a69;
+  border-color: rgba(33, 27, 11, 0.65);
   background: transparent;
 }
 
 .frame-choice.active {
-  background: #272727;
+  background: #211b0b;
 }
 
 .element-check,
 .default-element-mark {
-  border-color: #ececea;
-  color: #ececea;
-  background: #272727;
+  border-color: #ffc326;
+  color: #ffc326;
+  background: #211b0b;
   box-shadow: none;
 }
 
 .library-tools button {
-  border-color: #272727;
-  color: #272727;
-  background: #ececea;
+  border-color: #211b0b;
+  color: #211b0b;
+  background: #ffd451;
   box-shadow: none;
 }
 
@@ -2067,10 +2067,10 @@ textarea {
 .garden-record,
 .trash-panel,
 .quick-sheet {
-  color: #272727;
+  color: #211b0b;
   font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
-  background: #ececea;
-  border: 1px solid #272727;
+  background: #ffd451;
+  border: 1px solid #211b0b;
   border-radius: 24px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 }
@@ -2079,8 +2079,8 @@ textarea {
 .stream-notebook .eyebrow,
 .garden-record .eyebrow,
 .trash-panel .eyebrow {
-  color: #6a6a69;
-  font-size: 0.72rem;
+  color: rgba(33, 27, 11, 0.68);
+  font-size: 0.76rem;
   font-weight: 400;
   letter-spacing: 0;
   text-align: left;
@@ -2091,7 +2091,7 @@ textarea {
 .stream-notebook-title,
 .garden-record h2,
 .trash-panel h2 {
-  color: #272727;
+  color: #211b0b;
   font-family: 'Segoe Serif', Georgia, serif;
   font-weight: 400;
   letter-spacing: -0.03em;
@@ -2100,12 +2100,12 @@ textarea {
 
 .stream-notebook-title {
   margin-top: 12px;
-  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-size: clamp(2rem, 4vw, 3rem);
 }
 
 .stream-prompt {
   margin: 10px 0 28px;
-  color: #6a6a69;
+  color: rgba(33, 27, 11, 0.72);
   font-family: inherit;
   font-style: normal;
   text-align: left;
@@ -2114,7 +2114,7 @@ textarea {
 .new-growth-note,
 .element-note,
 .trashed-note {
-  border: 1px solid rgba(39, 39, 39, 0.42);
+  border: 1px solid rgba(33, 27, 11, 0.48);
   border-radius: 3px;
   background: transparent;
 }
@@ -2125,21 +2125,21 @@ textarea {
 
 .growth-buttons button,
 .add-note-button {
-  border: 1px solid #272727;
+  border: 1px solid #211b0b;
   border-radius: 3px;
-  color: #ececea;
-  background: #272727;
+  color: #ffc326;
+  background: #211b0b;
 }
 
 .add-note-button {
-  color: #272727;
+  color: #211b0b;
   background: transparent;
 }
 
 .stream-note-history h3,
 .record-section h3 {
-  color: #6a6a69;
-  font-size: 0.7rem;
+  color: rgba(33, 27, 11, 0.68);
+  font-size: 0.74rem;
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
@@ -2169,7 +2169,7 @@ textarea {
 
 @media (max-width: 640px) {
   .topbar {
-    height: 70px;
+    height: 58px;
     padding: 0 18px;
   }
 
@@ -2181,22 +2181,22 @@ textarea {
   }
 
   .season-switcher {
-    top: 70px;
+    top: 58px;
     right: 0;
     left: 0;
     gap: 18px;
-    padding: 8px 18px;
+    padding: 6px 18px;
     border: 0;
-    border-bottom: 1px solid #272727;
+    border-bottom: 1px solid rgba(33, 27, 11, 0.58);
     border-radius: 0;
-    background: rgba(236, 236, 234, 0.96);
-    backdrop-filter: blur(12px);
+    background: rgba(255, 195, 38, 0.68);
+    backdrop-filter: blur(8px);
   }
 
   .element-library {
     width: auto;
     margin: 0 18px;
-    padding-top: 112px;
+    padding-top: 96px;
   }
 
   .library-heading {
@@ -2205,7 +2205,7 @@ textarea {
   }
 
   .library-heading h1 {
-    font-size: clamp(2.8rem, 14vw, 4.2rem);
+    font-size: clamp(2.35rem, 11vw, 3.2rem);
   }
 
   .library-heading p {
