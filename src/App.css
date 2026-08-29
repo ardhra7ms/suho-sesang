@@ -2137,9 +2137,11 @@ textarea {
 /* Editorial system inspired by the reference article's grid and typography. */
 :root {
   --ink: #211b0b;
-  --paper: #fdc51b;
+  --paper: #FDC51B;
   --violet: #211b0b;
   --water: #211b0b;
+  --mango: #FDC51B;
+  --mango-glass: rgba(253, 197, 27, 0.86);
 }
 
 .app-shell,
@@ -2154,7 +2156,7 @@ textarea {
   height: 68px;
   padding: 0 5.555vw;
   color: #211b0b;
-  background: rgba(255, 195, 38, 0.68);
+  background: var(--mango-glass);
   border-bottom: 1px solid rgba(33, 27, 11, 0.58);
   text-shadow: none;
   backdrop-filter: blur(8px);
@@ -2179,7 +2181,7 @@ textarea {
   height: 38px;
   border: 1px solid #211b0b;
   border-radius: 3px;
-  background: rgba(255, 213, 80, 0.82);
+  background: rgba(253, 197, 27, 0.72);
 }
 
 .season-switcher {
@@ -2223,12 +2225,12 @@ textarea {
 }
 
 .app-shell.library-open {
-  background: #fdc51b;
+  background: var(--mango);
 }
 
 .library-topbar {
   color: #211b0b;
-  background: rgba(255, 195, 38, 0.78);
+  background: rgba(253, 197, 27, 0.92);
 }
 
 .library-topbar .season-switcher button,
@@ -2336,7 +2338,7 @@ textarea {
 
 .element-image {
   border-color: #211b0b;
-  background: #ffda55;
+  background: var(--mango);
   box-shadow: none;
 }
 
@@ -2385,7 +2387,7 @@ textarea {
 .library-tools button {
   border-color: #211b0b;
   color: #211b0b;
-  background: #ffd84d;
+  background: var(--mango);
   box-shadow: none;
 }
 
@@ -2401,7 +2403,7 @@ textarea {
 .quick-sheet {
   color: #211b0b;
   font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
-  background: #ffd84d;
+  background: var(--mango);
   border: 1px solid #211b0b;
   border-radius: 24px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
@@ -2521,7 +2523,7 @@ textarea {
     border: 0;
     border-bottom: 1px solid rgba(33, 27, 11, 0.58);
     border-radius: 0;
-    background: rgba(255, 195, 38, 0.68);
+    background: var(--mango-glass);
     backdrop-filter: blur(8px);
   }
 
