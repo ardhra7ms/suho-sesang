@@ -565,12 +565,11 @@ textarea {
   padding: 6px;
   transform: translateZ(0);
   overflow: visible;
-  border: 0;
   color: transparent;
-  border: 1px solid rgba(255, 251, 235, 0.52);
+  border: 1px solid rgba(205, 215, 171, 0.58);
   border-radius: 50%;
-  background: rgba(238, 231, 211, 0.82);
-  box-shadow: 0 5px 14px rgba(15, 24, 19, 0.22);
+  background: rgba(100, 112, 72, 0.9);
+  box-shadow: 0 5px 14px rgba(24, 31, 17, 0.3);
   cursor: grab;
   pointer-events: auto;
   touch-action: none;
