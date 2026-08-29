@@ -135,7 +135,7 @@ const seasons: Array<{
   {
     id: 'summer',
     label: 'Summer',
-    image: 'summer-sky.jpg',
+    image: 'summer-clouds-iccup.jpg',
     alt: 'Towering white clouds opening onto a vivid blue summer sky',
     artist: 'iccup',
     title: 'White clouds and blue sky during daytime',
@@ -273,7 +273,7 @@ const libraryElements: LibraryElement[] = [
   {
     id: 'summer-whirlpool',
     name: 'Cloud opening',
-    image: 'elements/painting-summer-sky.webp',
+    image: 'elements/summer-cloud-opening-iccup.webp',
     alt: 'A detail of towering white clouds around a vivid blue sky',
     category: 'seasonal',
     detail: 'Summer · photograph by iccup',
