@@ -41,6 +41,16 @@ textarea {
   text-shadow: 0 1px 12px rgba(12, 22, 20, 0.7);
 }
 
+.topbar::after {
+  content: '';
+  position: absolute;
+  right: 24px;
+  bottom: 2px;
+  left: 24px;
+  height: 1px;
+  background: rgba(249, 244, 228, 0.18);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -70,6 +80,45 @@ textarea {
   font-size: 0.8rem;
   background: transparent;
   cursor: pointer;
+}
+
+.season-switcher {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transform: translateX(-50%);
+}
+
+.season-switcher button {
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(246, 241, 223, 0.58);
+  font-size: 0.62rem;
+  background: transparent;
+}
+
+.season-switcher button.active {
+  color: #23362d;
+  background: rgba(244, 239, 219, 0.9);
+}
+
+.season-switcher button:disabled {
+  cursor: default;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.growth-status {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .painting-world {
@@ -103,6 +152,13 @@ textarea {
   outline: 2px solid #fff5b5;
   outline-offset: 3px;
   background: rgba(255, 245, 181, 0.08);
+}
+
+.painting-hotspot:hover {
+  opacity: 1;
+  outline: 1px solid rgba(255, 248, 204, 0.42);
+  outline-offset: -1px;
+  background: rgba(255, 248, 204, 0.035);
 }
 
 .creation-area {
@@ -169,6 +225,80 @@ textarea {
 .painting-caption a {
   color: inherit;
   pointer-events: auto;
+}
+
+.stream-dock {
+  position: fixed;
+  z-index: 25;
+  bottom: 42px;
+  left: 50%;
+  width: min(760px, calc(100% - 32px));
+  padding: 10px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(248, 243, 224, 0.28);
+  border-radius: 14px;
+  color: #f7f1df;
+  background: rgba(25, 39, 36, 0.67);
+  box-shadow: 0 16px 50px rgba(12, 23, 20, 0.26);
+  backdrop-filter: blur(13px);
+}
+
+.dock-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1px 4px 8px;
+  font-size: 0.58rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.dock-heading small {
+  color: rgba(247, 241, 223, 0.55);
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 0.62rem;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.stream-actions {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+
+.stream-actions button {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 9px 10px;
+  border: 1px solid rgba(248, 243, 224, 0.16);
+  border-radius: 7px;
+  color: #f7f1df;
+  background: rgba(247, 241, 223, 0.06);
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.stream-actions button:hover,
+.stream-actions button:focus-visible {
+  border-color: rgba(248, 243, 224, 0.45);
+  outline: 0;
+  background: rgba(247, 241, 223, 0.14);
+}
+
+.stream-actions button span {
+  overflow: hidden;
+  font-size: 0.65rem;
+  text-overflow: ellipsis;
+}
+
+.stream-actions button small {
+  color: rgba(247, 241, 223, 0.58);
+  font-size: 0.55rem;
 }
 
 .overlay {
@@ -412,6 +542,61 @@ textarea {
   .topbar {
     height: 68px;
     padding: 11px 14px;
+  }
+
+  .topbar::after {
+    right: 14px;
+    left: 14px;
+  }
+
+  .brand strong {
+    display: none;
+  }
+
+  .season-switcher {
+    gap: 1px;
+  }
+
+  .season-switcher button {
+    padding: 6px 7px;
+    font-size: 0.56rem;
+  }
+
+  .season-switcher button:not(.active) {
+    display: none;
+  }
+
+  .growth-status {
+    display: none;
+  }
+
+  .topbar-actions {
+    gap: 8px;
+  }
+
+  .stream-dock {
+    bottom: 43px;
+    width: calc(100% - 20px);
+    padding: 8px;
+  }
+
+  .dock-heading {
+    padding-bottom: 6px;
+  }
+
+  .stream-actions {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .stream-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stream-actions button {
+    min-width: 104px;
+    flex: 0 0 auto;
   }
 
   .painting-caption {

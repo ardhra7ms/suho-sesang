@@ -168,13 +168,22 @@ function App() {
           />
           <strong>suho sesang</strong>
         </a>
-        <button
-          className="record-button"
-          type="button"
-          onClick={() => setRecordOpen(true)}
-        >
-          record
-        </button>
+        <nav className="season-switcher" aria-label="Seasons">
+          <button className="active" type="button">Spring</button>
+          <button type="button" disabled>Summer</button>
+          <button type="button" disabled>Autumn</button>
+          <button type="button" disabled>Winter</button>
+        </nav>
+        <div className="topbar-actions">
+          <span className="growth-status">{totalGrowth} growth</span>
+          <button
+            className="record-button"
+            type="button"
+            onClick={() => setRecordOpen(true)}
+          >
+            record
+          </button>
+        </div>
       </header>
 
       <section className="painting-world" aria-label="Spring water garden">
@@ -200,8 +209,27 @@ function App() {
         />
       </section>
 
+      <section className="stream-dock" aria-label="Life streams">
+        <div className="dock-heading">
+          <span>add to your world</span>
+          <small>or tap the painting</small>
+        </div>
+        <div className="stream-actions">
+          {streams.map((stream) => (
+            <button
+              type="button"
+              key={stream.id}
+              onClick={() => setActiveStream(stream.id)}
+            >
+              <span>{stream.name}</span>
+              <small>{world.growth[stream.id]}</small>
+            </button>
+          ))}
+        </div>
+      </section>
+
       <footer className="painting-caption">
-        <span>spring · {totalGrowth} growth</span>
+        <span>spring · water garden</span>
         <a
           href="https://commons.wikimedia.org/wiki/File:Monet,_Claude_-_Water_Lilies_(Nymph%C3%A9as)_-_Google_Art_Project.jpg"
           target="_blank"
