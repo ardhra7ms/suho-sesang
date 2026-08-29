@@ -17,24 +17,28 @@ textarea {
 }
 
 .app-shell {
-  min-height: 100svh;
-  padding: 16px 18px 24px;
-  color: var(--ink);
-  background: #ece6d4;
-}
-
-.topbar,
-.painting-world,
-.painting-caption {
-  width: min(860px, 100%);
-  margin-inline: auto;
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  color: #f4f0e3;
+  background: #263b39;
 }
 
 .topbar {
-  height: 54px;
+  position: fixed;
+  z-index: 20;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 78px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 14px 24px;
+  color: #f6f1df;
+  background: linear-gradient(rgba(18, 29, 28, 0.52), transparent);
+  text-shadow: 0 1px 12px rgba(12, 22, 20, 0.7);
 }
 
 .brand {
@@ -53,6 +57,8 @@ textarea {
 .bunny-logo {
   width: 38px;
   height: 38px;
+  border-radius: 12px;
+  background: rgba(240, 234, 216, 0.88);
 }
 
 .record-button {
@@ -67,16 +73,20 @@ textarea {
 }
 
 .painting-world {
-  position: relative;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background: #384a47;
-  box-shadow: 0 18px 55px rgba(30, 40, 34, 0.2);
 }
 
 .monet-painting {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
+  object-fit: cover;
+  object-position: center 58%;
 }
 
 .painting-hotspot {
@@ -138,18 +148,27 @@ textarea {
 }
 
 .painting-caption {
+  position: fixed;
+  z-index: 20;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  padding-top: 9px;
-  color: rgba(38, 53, 45, 0.65);
+  padding: 38px 24px 16px;
+  color: rgba(248, 244, 229, 0.88);
   font-family: 'Newsreader', Georgia, serif;
   font-size: 0.64rem;
   font-style: italic;
+  background: linear-gradient(transparent, rgba(18, 28, 27, 0.54));
+  text-shadow: 0 1px 8px rgba(9, 17, 15, 0.78);
+  pointer-events: none;
 }
 
 .painting-caption a {
   color: inherit;
+  pointer-events: auto;
 }
 
 .overlay {
@@ -387,17 +406,22 @@ textarea {
 
 @media (max-width: 640px) {
   .app-shell {
-    padding: 9px 8px 18px;
+    padding: 0;
   }
 
   .topbar {
-    height: 50px;
-    padding-inline: 3px;
+    height: 68px;
+    padding: 11px 14px;
   }
 
   .painting-caption {
-    flex-direction: column;
-    gap: 3px;
+    padding: 35px 14px 12px;
+    font-size: 0.56rem;
+  }
+
+  .painting-caption a {
+    max-width: 60%;
+    text-align: right;
   }
 
   .garden-record {
