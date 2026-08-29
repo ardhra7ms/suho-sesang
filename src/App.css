@@ -1795,15 +1795,10 @@ textarea {
 .stream-notebook.themed-notebook,
 .element-notebook.themed-notebook {
   background-color: var(--card-bg);
-  background-image: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--card-ink) 13%, transparent) 1.2px,
-    transparent 1.3px
-  );
-  background-size: 13px 13px;
-  border: 3px solid var(--card-ink);
-  border-radius: 30px 11px 26px 15px;
-  box-shadow: 8px 8px 0 var(--card-ink);
+  background-image: none;
+  border: 2px solid var(--card-ink);
+  border-radius: 4px 10px 3px 7px;
+  box-shadow: none;
 }
 
 .element-notebook.themed-notebook .notebook-source {
@@ -1815,46 +1810,74 @@ textarea {
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-notebook-title {
   padding: 0 48px 10px 0;
   border: 0;
-  border-bottom: 4px solid var(--card-ink);
+  border-bottom: 2px solid var(--card-ink);
   color: var(--card-ink);
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  font-size: clamp(2.4rem, 7vw, 4.6rem);
-  font-weight: 900;
-  letter-spacing: 0.01em;
-  line-height: 0.95;
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
   text-align: left;
   text-transform: uppercase;
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-prompt {
+  position: relative;
   width: fit-content;
-  max-width: calc(100% - 8px);
-  margin: 18px 0 28px;
-  padding: 10px 15px;
+  max-width: calc(100% - 16px);
+  margin: 18px 0 34px 8px;
+  padding: 10px 18px;
   border: 2px solid var(--card-ink);
-  border-radius: 18px 18px 18px 4px;
-  color: var(--comic-action-ink);
+  border-radius: 51% 49% 46% 54% / 58% 45% 55% 42%;
+  color: var(--card-ink);
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-style: italic;
   font-weight: 700;
-  background: var(--comic-action);
-  box-shadow: 4px 4px 0 var(--card-ink);
+  background: var(--comic-panel);
+  box-shadow: none;
+  transform: rotate(-0.5deg);
 }
 
-:is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note,
+:is(.stream-notebook, .element-notebook).themed-notebook .stream-prompt::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 22px;
+  width: 13px;
+  height: 13px;
+  border-right: 2px solid var(--card-ink);
+  border-bottom: 2px solid var(--card-ink);
+  background: var(--comic-panel);
+  transform: rotate(38deg) skew(-8deg);
+}
+
 :is(.stream-notebook, .element-notebook).themed-notebook .element-note,
-:is(.stream-notebook, .element-notebook).themed-notebook .empty-notes,
-:is(.stream-notebook, .element-notebook).themed-notebook .empty-stream-notes,
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-note textarea {
-  border: 3px solid var(--card-ink);
-  border-radius: 14px 5px 12px 7px;
+  border: 2px solid var(--card-ink);
+  border-radius: 3px 7px 2px 5px;
   color: var(--comic-action-ink);
   background: var(--comic-panel);
-  box-shadow: 5px 5px 0 var(--card-ink);
+  box-shadow: none;
 }
 
-:is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note,
-:is(.stream-notebook, .element-notebook).themed-notebook .element-note {
-  margin-right: 5px;
+:is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note {
+  margin-right: 0;
   margin-left: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note textarea {
+  min-height: 92px;
+  padding: 14px 16px;
+  border: 2px solid var(--card-ink);
+  border-radius: 2px 6px 3px 4px;
+  color: var(--comic-action-ink);
+  background: var(--comic-panel);
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .new-growth-note textarea,
@@ -1865,24 +1888,62 @@ textarea {
 
 :is(.stream-notebook, .element-notebook).themed-notebook .empty-notes,
 :is(.stream-notebook, .element-notebook).themed-notebook .empty-stream-notes {
+  padding: 18px 4px 8px;
+  border: 0;
+  border-top: 2px solid var(--card-ink);
+  border-radius: 0;
   color: var(--card-ink);
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-style: italic;
+  text-align: left;
+  background: transparent;
+  box-shadow: none;
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .growth-buttons button,
 :is(.stream-notebook, .element-notebook).themed-notebook .add-note-button {
-  border: 2px solid var(--card-ink);
-  border-radius: 8px 3px 7px 4px;
-  color: var(--comic-action-ink);
+  padding: 7px 11px;
+  border: 1.5px solid var(--card-ink);
+  border-radius: 48% 52% 43% 57% / 55% 44% 56% 45%;
+  color: var(--card-ink);
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-style: italic;
   font-weight: 800;
-  background: var(--comic-action);
-  box-shadow: 3px 3px 0 var(--card-ink);
+  background: transparent;
+  box-shadow: none;
   transform: none;
+}
+
+.stream-notebook.themed-notebook .growth-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 10px 0 4px;
+}
+
+.stream-notebook.themed-notebook .growth-buttons button:nth-child(1) {
+  transform: rotate(-2deg);
+}
+
+.stream-notebook.themed-notebook .growth-buttons button:nth-child(2) {
+  transform: translateY(3px) rotate(1deg);
+}
+
+.stream-notebook.themed-notebook .growth-buttons button:nth-child(3) {
+  transform: rotate(2deg);
+}
+
+.stream-notebook.themed-notebook .growth-buttons button:nth-child(4) {
+  transform: translateY(-2px) rotate(-1deg);
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .growth-buttons button:active,
 :is(.stream-notebook, .element-notebook).themed-notebook .add-note-button:active {
-  box-shadow: 1px 1px 0 var(--card-ink);
-  transform: translate(2px, 2px);
+  color: var(--comic-action-ink);
+  background: var(--comic-action);
+  box-shadow: none;
+  transform: rotate(-2deg);
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-note-history {
@@ -1892,27 +1953,33 @@ textarea {
 
 :is(.stream-notebook, .element-notebook).themed-notebook .stream-note-history h3 {
   color: var(--card-ink);
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-style: italic;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
 }
 
 :is(.stream-notebook, .element-notebook).themed-notebook .close-button {
+  position: absolute;
+  z-index: 2;
   top: 18px;
   right: 18px;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   padding: 0;
-  border: 2px solid var(--card-ink);
-  border-radius: 50%;
-  color: var(--comic-action-ink);
-  font-size: 1.4rem;
+  border: 0;
+  border-radius: 0;
+  color: var(--card-ink);
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkboard SE', cursive;
+  font-size: 1.7rem;
   font-weight: 900;
   line-height: 1;
-  background: var(--comic-action);
-  box-shadow: 3px 3px 0 var(--card-ink);
+  background: transparent;
+  box-shadow: none;
+  transform: rotate(4deg);
 }
 
 @media (max-width: 640px) {
@@ -2001,7 +2068,9 @@ textarea {
   --card-muted: rgba(23, 61, 43, 0.66);
   --card-accent: #e75582;
   background: var(--card-bg);
-  border-radius: 46px 18px 40px 24px;
+  border: 2px solid var(--card-ink);
+  border-radius: 3px 9px 2px 6px;
+  box-shadow: none;
 }
 
 /* Summer comic palette. */
@@ -2011,7 +2080,9 @@ textarea {
   --card-muted: rgba(33, 27, 11, 0.7);
   --card-accent: #119bc1;
   background: var(--card-bg);
-  border-radius: 22px 54px 18px 46px;
+  border: 2px solid var(--card-ink);
+  border-radius: 7px 2px 8px 3px;
+  box-shadow: none;
 }
 
 /* Autumn comic palette. */
@@ -2021,11 +2092,9 @@ textarea {
   --card-muted: rgba(255, 240, 196, 0.7);
   --card-accent: #f2a62b;
   background: var(--card-bg);
-  border: 3px solid #4d1d13;
-  border-radius: 12px 38px 14px 30px;
-  box-shadow:
-    inset 0 0 0 7px #c75d25,
-    0 16px 50px rgba(26, 8, 4, 0.4);
+  border: 2px solid #4d1d13;
+  border-radius: 2px 8px 3px 5px;
+  box-shadow: none;
 }
 
 /* Winter comic palette. */
@@ -2034,15 +2103,13 @@ textarea {
   --card-ink: #effff8;
   --card-muted: rgba(239, 255, 248, 0.68);
   --card-accent: #7ff0c7;
-  border: 1px solid rgba(175, 255, 231, 0.64);
-  border-radius: 58px 20px 48px 28px;
+  border: 2px solid rgba(175, 255, 231, 0.76);
+  border-radius: 6px 2px 7px 3px;
   background:
     radial-gradient(circle at 80% 18%, rgba(57, 218, 172, 0.34), transparent 28%),
     radial-gradient(circle at 18% 82%, rgba(98, 105, 226, 0.32), transparent 31%),
     rgba(8, 21, 34, 0.94);
-  box-shadow:
-    0 0 45px rgba(68, 229, 181, 0.18),
-    0 20px 70px rgba(0, 0, 0, 0.5);
+  box-shadow: none;
   backdrop-filter: blur(18px);
 }
 
@@ -2494,5 +2561,14 @@ textarea {
   .stream-notebook,
   .trash-panel {
     border-radius: 24px 24px 0 0;
+  }
+
+  .stream-notebook.themed-notebook[class*='notebook-season-'],
+  .element-notebook.themed-notebook[class*='notebook-season-'] {
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 12px 12px 0 0;
+    box-shadow: none;
   }
 }
