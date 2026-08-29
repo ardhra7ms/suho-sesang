@@ -1874,7 +1874,7 @@ textarea {
 }
 
 /* Spring: a botanical field journal with pressed-petal marks. */
-.notebook-season-spring {
+.themed-notebook.notebook-season-spring {
   --card-bg: #f6ccd8;
   --card-ink: #173d2b;
   --card-muted: rgba(23, 61, 43, 0.66);
@@ -1894,7 +1894,7 @@ textarea {
 }
 
 /* Summer: bright cut-paper scrapbook and mismatched Growth tokens. */
-.notebook-season-summer {
+.themed-notebook.notebook-season-summer {
   --card-bg: #fdc51b;
   --card-ink: #211b0b;
   --card-muted: rgba(33, 27, 11, 0.7);
@@ -1931,7 +1931,7 @@ textarea {
 }
 
 /* Autumn: a warm curiosity cabinet with framed specimens. */
-.notebook-season-autumn {
+.themed-notebook.notebook-season-autumn {
   --card-bg: #9b341f;
   --card-ink: #fff0c4;
   --card-muted: rgba(255, 240, 196, 0.7);
@@ -1968,7 +1968,7 @@ textarea {
 }
 
 /* Winter: a dark portal lit by an aurora-like glow. */
-.notebook-season-winter {
+.themed-notebook.notebook-season-winter {
   --card-bg: #081522;
   --card-ink: #effff8;
   --card-muted: rgba(239, 255, 248, 0.68);
