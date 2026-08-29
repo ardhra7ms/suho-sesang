@@ -1246,6 +1246,13 @@ textarea {
   background: #8a493e;
 }
 
+.trash-bin-button.is-drop-target {
+  color: #fffbea;
+  background: #8a493e;
+  box-shadow: 0 0 0 12px rgba(138, 73, 62, 0.2);
+  transform: scale(1.14);
+}
+
 .trash-panel {
   position: relative;
   width: min(560px, 100%);
@@ -1290,6 +1297,20 @@ textarea {
   border: 1px solid rgba(38, 53, 45, 0.14);
   border-radius: 17px 7px 15px 9px;
   background: rgba(255, 252, 239, 0.44);
+}
+
+.trashed-note:has(.trashed-element-image) {
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+}
+
+.trashed-element-image {
+  width: 52px;
+  height: 52px;
+  align-self: center;
+  padding: 3px;
+  border-radius: 52% 48% 43% 57% / 44% 56% 46% 54%;
+  object-fit: contain;
+  background: #292923;
 }
 
 .trashed-note span {
@@ -1665,6 +1686,19 @@ textarea {
   .trashed-note {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
+  }
+
+  .trashed-note:has(.trashed-element-image) {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .trashed-note:has(.trashed-element-image) .trash-actions {
+    grid-column: 1 / -1;
+  }
+
+  .trashed-element-image {
+    width: 48px;
+    height: 48px;
   }
 
   .trash-actions {

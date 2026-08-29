@@ -28,7 +28,7 @@ type WorldState = {
   placements: Record<PageId, PlacedElement[]>
   streamTitles: Record<StreamId, string>
   streamPlacements: Record<PageId, Record<StreamId, ElementPosition>>
-  trash: TrashedNote[]
+  trash: TrashedItem[]
 }
 
 type ElementPosition = {
@@ -51,7 +51,7 @@ type ElementNote = {
   createdAt: string
 }
 
-type TrashedNote =
+type TrashedItem =
   | {
       id: string
       kind: 'activity'
@@ -66,6 +66,13 @@ type TrashedNote =
       elementId: string
       elementName: string
       note: ElementNote
+    }
+  | {
+      id: string
+      kind: 'placed-element'
+      deletedAt: string
+      page: PageId
+      placement: PlacedElement
     }
 
 type Stream = {
@@ -585,6 +592,49 @@ function App() {
                 },
               ],
         },
+        trash: isPlaced
+          ? [
+              {
+                id: crypto.randomUUID(),
+                kind: 'placed-element',
+                deletedAt: new Date().toISOString(),
+                page: targetPage,
+                placement: currentPlacements.find(
+                  (placement) => placement.elementId === elementId,
+                )!,
+              },
+              ...current.trash,
+            ]
+          : current.trash,
+      }
+    })
+  }
+
+  const trashPlacedElement = (page: PageId, elementId: string) => {
+    setWorld((current) => {
+      const placement = current.placements[page].find(
+        (item) => item.elementId === elementId,
+      )
+      if (!placement) return current
+
+      return {
+        ...current,
+        placements: {
+          ...current.placements,
+          [page]: current.placements[page].filter(
+            (item) => item.elementId !== elementId,
+          ),
+        },
+        trash: [
+          {
+            id: crypto.randomUUID(),
+            kind: 'placed-element',
+            deletedAt: new Date().toISOString(),
+            page,
+            placement,
+          },
+          ...current.trash,
+        ],
       }
     })
   }
@@ -645,6 +695,7 @@ function App() {
   const startDragging = (
     event: ReactPointerEvent<HTMLButtonElement>,
     onMove: (x: number, y: number) => void,
+    onTrash?: () => void,
   ) => {
     const element = event.currentTarget
     const container = element.parentElement
@@ -660,6 +711,11 @@ function App() {
     const offsetY = event.clientY - elementRect.top
     const startX = event.clientX
     const startY = event.clientY
+    const isOverTrash = (pointerEvent: PointerEvent, rect: DOMRect) =>
+      pointerEvent.clientX >= rect.left - 24 &&
+      pointerEvent.clientX <= rect.right + 24 &&
+      pointerEvent.clientY >= rect.top - 24 &&
+      pointerEvent.clientY <= rect.bottom + 24
 
     const handleMove = (moveEvent: PointerEvent) => {
       if (
@@ -687,12 +743,28 @@ function App() {
         ),
       )
       onMove(x, y)
+
+      const bin = document.querySelector<HTMLElement>('[data-trash-bin]')
+      if (bin && onTrash) {
+        const binRect = bin.getBoundingClientRect()
+        bin.classList.toggle('is-drop-target', isOverTrash(moveEvent, binRect))
+      }
     }
 
-    const stopDragging = () => {
+    const stopDragging = (endEvent: PointerEvent) => {
+      const bin = document.querySelector<HTMLElement>('[data-trash-bin]')
+      const binRect = bin?.getBoundingClientRect()
+      const droppedInBin =
+        endEvent.type === 'pointerup' &&
+        onTrash &&
+        binRect &&
+        isOverTrash(endEvent, binRect)
+
+      bin?.classList.remove('is-drop-target')
       element.removeEventListener('pointermove', handleMove)
       element.removeEventListener('pointerup', stopDragging)
       element.removeEventListener('pointercancel', stopDragging)
+      if (droppedInBin) onTrash()
     }
 
     element.addEventListener('pointermove', handleMove)
@@ -856,6 +928,26 @@ function App() {
         }
       }
 
+      if (trashed.kind === 'placed-element') {
+        const alreadyPlaced = current.placements[trashed.page].some(
+          (placement) =>
+            placement.elementId === trashed.placement.elementId,
+        )
+        if (alreadyPlaced) return current
+
+        return {
+          ...current,
+          placements: {
+            ...current.placements,
+            [trashed.page]: [
+              ...current.placements[trashed.page],
+              trashed.placement,
+            ],
+          },
+          trash: current.trash.filter((item) => item.id !== trashId),
+        }
+      }
+
       const sourceExists = current.placements[trashed.page].some(
         (placement) => placement.elementId === trashed.elementId,
       )
@@ -901,8 +993,10 @@ function App() {
             key={item.id}
             style={{ left: `${placement.x}%`, top: `${placement.y}%` }}
             onPointerDown={(event) =>
-              startDragging(event, (x, y) =>
-                moveElement(page, placement.elementId, x, y),
+              startDragging(
+                event,
+                (x, y) => moveElement(page, placement.elementId, x, y),
+                () => trashPlacedElement(page, placement.elementId),
               )
             }
             onClick={() => {
@@ -957,8 +1051,9 @@ function App() {
             key={stream.id}
             style={{ left: `${position.x}%`, top: `${position.y}%` }}
             onPointerDown={(event) =>
-              startDragging(event, (x, y) =>
-                moveDefaultElement(page, stream.id, x, y),
+              startDragging(
+                event,
+                (x, y) => moveDefaultElement(page, stream.id, x, y),
               )
             }
             onClick={() => {
@@ -1479,8 +1574,9 @@ function App() {
       <button
         className={`trash-bin-button ${world.trash.length > 0 ? 'has-notes' : ''}`}
         type="button"
+        data-trash-bin
         onClick={() => setTrashOpen(true)}
-        aria-label={`Open trash${world.trash.length ? `, ${world.trash.length} notes` : ''}`}
+        aria-label={`Open trash${world.trash.length ? `, ${world.trash.length} items` : ''}`}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M8 8v10m4-10v10m4-10v10M5 5h14m-9-2h4m4 2-1 16H7L6 5" />
@@ -1504,34 +1600,69 @@ function App() {
               ×
             </button>
             <span className="eyebrow">Trash</span>
-            <h2>Notes set aside</h2>
+            <h2>Things set aside</h2>
             {world.trash.length === 0 ? (
               <p className="empty-trash">The bin is empty.</p>
             ) : (
               <div className="trash-list">
                 {world.trash.map((trashed) => {
                   const sourceExists =
-                    trashed.kind === 'activity' ||
-                    world.placements[trashed.page].some(
-                      (placement) =>
-                        placement.elementId === trashed.elementId,
-                    )
+                    trashed.kind === 'activity'
+                      ? true
+                      : trashed.kind === 'placed-element'
+                        ? !world.placements[trashed.page].some(
+                            (placement) =>
+                              placement.elementId ===
+                              trashed.placement.elementId,
+                          )
+                        : world.placements[trashed.page].some(
+                            (placement) =>
+                              placement.elementId === trashed.elementId,
+                          )
+                  const placedItem =
+                    trashed.kind === 'placed-element'
+                      ? libraryElements.find(
+                          (item) =>
+                            item.id === trashed.placement.elementId,
+                        )
+                      : undefined
                   const title =
                     trashed.kind === 'activity'
                       ? world.streamTitles[trashed.activity.stream]
-                      : trashed.note.title || 'Untitled note'
+                      : trashed.kind === 'placed-element'
+                        ? trashed.placement.title ||
+                          placedItem?.name ||
+                          'Untitled element'
+                        : trashed.note.title || 'Untitled note'
                   const text =
                     trashed.kind === 'activity'
                       ? trashed.activity.note || 'A quiet step forward'
-                      : trashed.note.text || 'Empty note'
+                      : trashed.kind === 'placed-element'
+                        ? `${trashed.placement.notes?.length ?? 0} notes · ${
+                            trashed.page === 'tulip-room'
+                              ? 'Tulip Room'
+                              : seasons.find(
+                                  (page) => page.id === trashed.page,
+                                )?.label
+                          }`
+                        : trashed.note.text || 'Empty note'
 
                   return (
                     <article className="trashed-note" key={trashed.id}>
+                      {placedItem && (
+                        <img
+                          className="trashed-element-image"
+                          src={`${import.meta.env.BASE_URL}${placedItem.image}`}
+                          alt=""
+                        />
+                      )}
                       <div>
                         <span>
                           {trashed.kind === 'activity'
                             ? `Growth note · +${trashed.activity.amount}`
-                            : trashed.elementName}
+                            : trashed.kind === 'placed-element'
+                              ? 'Element and notebook'
+                              : trashed.elementName}
                         </span>
                         <h3>{title}</h3>
                         <p>{text}</p>
@@ -1559,8 +1690,8 @@ function App() {
               </div>
             )}
             <p className="trash-explanation">
-              Removing a Growth note also removes its points. Restoring it adds
-              them back.
+              Drag custom elements here to remove them. “Delete forever”
+              permanently erases the element and every note it holds.
             </p>
           </aside>
         </div>
