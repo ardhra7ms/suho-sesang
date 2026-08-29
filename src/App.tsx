@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
 type StreamId = 'knowledge' | 'language' | 'creation' | 'journey' | 'wellness'
+type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter'
 
 type Activity = {
   id: string
@@ -25,6 +26,67 @@ type Stream = {
 }
 
 const STORAGE_KEY = 'suho-sesang-world-v1'
+
+const seasons: Array<{
+  id: SeasonId
+  label: string
+  image: string
+  alt: string
+  artist: string
+  title: string
+  date: string
+  license: string
+  source: string
+}> = [
+  {
+    id: 'spring',
+    label: 'Spring',
+    image: 'monet-water-lilies-1907.jpg',
+    alt: 'Water Lilies, painted by Claude Monet in 1907',
+    artist: 'Claude Monet',
+    title: 'Water Lilies',
+    date: '1907',
+    license: 'public domain',
+    source:
+      'https://commons.wikimedia.org/wiki/File:Monet,_Claude_-_Water_Lilies_(Nymph%C3%A9as)_-_Google_Art_Project.jpg',
+  },
+  {
+    id: 'summer',
+    label: 'Summer',
+    image: 'summer-hiroshige.jpg',
+    alt: 'The Whirlpools of Awa, a Japanese woodblock print by Utagawa Hiroshige',
+    artist: 'Utagawa Hiroshige',
+    title: 'The Whirlpools of Awa',
+    date: '1857',
+    license: 'CC0',
+    source:
+      'https://commons.wikimedia.org/wiki/File:Awa_no_Naruto-%E9%9B%AA%E6%9C%88%E8%8A%B1_%E9%98%BF%E6%B3%A2%E9%B3%B4%E9%96%80%E4%B9%8B%E9%A2%A8%E6%99%AF-The_Whirlpools_of_Awa_MET_DP146864.jpg',
+  },
+  {
+    id: 'autumn',
+    label: 'Autumn',
+    image: 'autumn-thomson.jpg',
+    alt: 'Autumn Foliage, painted by Tom Thomson in 1915',
+    artist: 'Tom Thomson',
+    title: 'Autumn Foliage',
+    date: '1915',
+    license: 'public domain',
+    source:
+      'https://commons.wikimedia.org/wiki/File:Tom_Thomson_-_Autumn_Foliage_-_Google_Art_Project.jpg',
+  },
+  {
+    id: 'winter',
+    label: 'Winter',
+    image: 'winter-lofoten.jpg',
+    alt: 'Aurora over snowy mountains at Flakstad in Lofoten, Norway',
+    artist: 'Johannes Groll',
+    title: 'Aurora over Flakstad, Lofoten',
+    date: '2017',
+    license: 'CC0',
+    source:
+      'https://commons.wikimedia.org/wiki/File:Lofoten,_Norway_(Unsplash).jpg',
+  },
+]
 
 const streams: Stream[] = [
   {
@@ -98,12 +160,20 @@ function loadWorld(): WorldState {
   }
 }
 
+function loadSeason(): SeasonId {
+  const requested = new URLSearchParams(window.location.search).get('season')
+  return seasons.some((season) => season.id === requested)
+    ? (requested as SeasonId)
+    : 'spring'
+}
+
 function App() {
   const [world, setWorld] = useState<WorldState>(loadWorld)
   const [activeStream, setActiveStream] = useState<StreamId | null>(null)
   const [note, setNote] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
   const [newUnlock, setNewUnlock] = useState<string | null>(null)
+  const [activeSeason, setActiveSeason] = useState<SeasonId>(loadSeason)
 
   const totalGrowth = useMemo(
     () => Object.values(world.growth).reduce((sum, value) => sum + value, 0),
@@ -117,6 +187,7 @@ function App() {
   const completion = Math.min(100, Math.round((totalGrowth / 300) * 100))
   const nextUnlock = milestones.find((milestone) => milestone.threshold > totalGrowth)
   const currentStream = streams.find((stream) => stream.id === activeStream)
+  const season = seasons.find((item) => item.id === activeSeason)!
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(world))
@@ -169,10 +240,17 @@ function App() {
           <strong>suho sesang</strong>
         </a>
         <nav className="season-switcher" aria-label="Seasons">
-          <button className="active" type="button">Spring</button>
-          <button type="button" disabled>Summer</button>
-          <button type="button" disabled>Autumn</button>
-          <button type="button" disabled>Winter</button>
+          {seasons.map((item) => (
+            <button
+              className={item.id === activeSeason ? 'active' : ''}
+              type="button"
+              key={item.id}
+              onClick={() => setActiveSeason(item.id)}
+              aria-current={item.id === activeSeason ? 'page' : undefined}
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
         <div className="topbar-actions">
           <span className="growth-status">{totalGrowth} growth</span>
@@ -186,11 +264,11 @@ function App() {
         </div>
       </header>
 
-      <section className="painting-world" aria-label="Spring water garden">
+      <section className="painting-world" aria-label={`${season.label} world`}>
         <img
-          className="monet-painting"
-          src={`${import.meta.env.BASE_URL}monet-water-lilies-1907.jpg`}
-          alt="Water Lilies, painted by Claude Monet in 1907"
+          className={`season-background season-${season.id}`}
+          src={`${import.meta.env.BASE_URL}${season.image}`}
+          alt={season.alt}
         />
         {streams.map((stream) => (
           <button
@@ -229,13 +307,13 @@ function App() {
       </section>
 
       <footer className="painting-caption">
-        <span>spring · water garden</span>
+        <span>{season.label.toLowerCase()} · {totalGrowth} growth</span>
         <a
-          href="https://commons.wikimedia.org/wiki/File:Monet,_Claude_-_Water_Lilies_(Nymph%C3%A9as)_-_Google_Art_Project.jpg"
+          href={season.source}
           target="_blank"
           rel="noreferrer"
         >
-          Claude Monet, <cite>Water Lilies</cite>, 1907 · public domain
+          {season.artist}, <cite>{season.title}</cite>, {season.date} · {season.license}
         </a>
       </footer>
 
@@ -298,7 +376,7 @@ function App() {
               <div><strong>{level}</strong><span>Level</span></div>
               <div><strong>{totalGrowth}</strong><span>Growth</span></div>
               <div><strong>+{todayGrowth}</strong><span>Today</span></div>
-              <div><strong>{completion}%</strong><span>Spring</span></div>
+              <div><strong>{completion}%</strong><span>{season.label}</span></div>
             </div>
             <div className="completion-track">
               <span style={{ width: `${completion}%` }} />

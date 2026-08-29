@@ -105,10 +105,6 @@ textarea {
   background: rgba(244, 239, 219, 0.9);
 }
 
-.season-switcher button:disabled {
-  cursor: default;
-}
-
 .topbar-actions {
   display: flex;
   align-items: center;
@@ -130,12 +126,28 @@ textarea {
   background: #384a47;
 }
 
-.monet-painting {
+.season-background {
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
+  transition: opacity 280ms ease;
+}
+
+.season-spring {
   object-position: center 58%;
+}
+
+.season-summer {
+  object-position: center center;
+}
+
+.season-autumn {
+  object-position: center 48%;
+}
+
+.season-winter {
+  object-position: center 54%;
 }
 
 .painting-hotspot {
