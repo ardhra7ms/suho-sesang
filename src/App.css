@@ -1879,6 +1879,7 @@ textarea {
   --card-ink: #173d2b;
   --card-muted: rgba(23, 61, 43, 0.66);
   --card-accent: #e75582;
+  background: var(--card-bg);
   border-radius: 46px 18px 40px 24px;
 }
 
@@ -1899,6 +1900,7 @@ textarea {
   --card-ink: #211b0b;
   --card-muted: rgba(33, 27, 11, 0.7);
   --card-accent: #119bc1;
+  background: var(--card-bg);
   border-radius: 22px 54px 18px 46px;
 }
 
@@ -1936,6 +1938,7 @@ textarea {
   --card-ink: #fff0c4;
   --card-muted: rgba(255, 240, 196, 0.7);
   --card-accent: #f2a62b;
+  background: var(--card-bg);
   border: 3px solid #4d1d13;
   border-radius: 12px 38px 14px 30px;
   box-shadow:
