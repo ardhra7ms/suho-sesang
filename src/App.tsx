@@ -121,14 +121,14 @@ const seasons: Array<{
   {
     id: 'summer',
     label: 'Summer',
-    image: 'summer-hiroshige.jpg',
-    alt: 'The Whirlpools of Awa, a Japanese woodblock print by Utagawa Hiroshige',
-    artist: 'Utagawa Hiroshige',
-    title: 'The Whirlpools of Awa',
-    date: '1857',
+    image: 'summer-sky.jpg',
+    alt: 'A deep blue sky and soft cloud deck photographed from a flight',
+    artist: 'SharingIsCaring',
+    title: 'Sky-airplane',
+    date: '2015',
     license: 'CC0',
     source:
-      'https://commons.wikimedia.org/wiki/File:Awa_no_Naruto-%E9%9B%AA%E6%9C%88%E8%8A%B1_%E9%98%BF%E6%B3%A2%E9%B3%B4%E9%96%80%E4%B9%8B%E9%A2%A8%E6%99%AF-The_Whirlpools_of_Awa_MET_DP146864.jpg',
+      'https://commons.wikimedia.org/wiki/File:Sky-airplane.jpg',
   },
   {
     id: 'autumn',
@@ -256,11 +256,11 @@ const libraryElements: LibraryElement[] = [
   },
   {
     id: 'summer-whirlpool',
-    name: 'Turning tide',
-    image: 'elements/painting-summer-whirlpool.webp',
-    alt: 'A detail of the sea from Hiroshige’s Whirlpools of Awa',
+    name: 'Above the clouds',
+    image: 'elements/painting-summer-sky.webp',
+    alt: 'A detail of a blue sky and cloud deck seen from a flight',
     category: 'seasonal',
-    detail: 'Summer · from The Whirlpools of Awa',
+    detail: 'Summer · from Sky-airplane',
   },
   {
     id: 'autumn-leaves',

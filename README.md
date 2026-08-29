@@ -44,9 +44,9 @@ The spring world uses Claude Monet's *Water Lilies (Nymphéas)* (1907), from the
 Museum of Fine Arts, Houston. The high-resolution reproduction is marked public
 domain by [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Monet,_Claude_-_Water_Lilies_(Nymph%C3%A9as)_-_Google_Art_Project.jpg).
 
-The remaining seasonal worlds use Utagawa Hiroshige's *The Whirlpools of Awa*
-(1857, CC0), Tom Thomson's *Autumn Foliage* (1915, public domain), and Johannes
-Groll's *Aurora over Flakstad, Lofoten* (2017, CC0). Each live season links to
-its full source and license information. The element library contains cropped
-details of these four seasonal works alongside user-supplied images and
-drawings.
+The remaining seasonal worlds use SharingIsCaring's in-flight photograph
+*Sky-airplane* (2015, CC0), Tom Thomson's *Autumn Foliage* (1915, public
+domain), and Johannes Groll's *Aurora over Flakstad, Lofoten* (2017, CC0).
+Each live season links to its full source and license information. The element
+library contains cropped details of these four seasonal works alongside
+user-supplied images and drawings.
