@@ -7,6 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import './App.css'
+import './ComicNotebook.css'
 
 type StreamId = 'knowledge' | 'language' | 'creation' | 'journey' | 'wellness'
 type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter'
@@ -1586,7 +1587,7 @@ function App() {
           onClick={() => setActiveStream(null)}
         >
           <section
-            className={`stream-notebook themed-notebook notebook-season-${activeSeason}`}
+            className={`stream-notebook themed-notebook comic-strip notebook-season-${activeSeason}`}
             onClick={(event) => event.stopPropagation()}
             aria-label={`${world.streamTitles[currentStream.id]} notes`}
           >
@@ -1616,6 +1617,7 @@ function App() {
               <p className="stream-prompt">{currentStream.prompt}</p>
             </div>
             <div className="new-growth-note">
+              <span className="comic-panel-label">Write it down</span>
               <textarea
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
@@ -1745,7 +1747,7 @@ function App() {
           onClick={() => setActiveNoteSource(null)}
         >
           <section
-            className={`element-notebook themed-notebook notebook-season-${activeNoteSource.page}`}
+            className={`element-notebook themed-notebook comic-strip notebook-season-${activeNoteSource.page}`}
             onClick={(event) => event.stopPropagation()}
             aria-label={`Notes for ${
               activePlacement.title || activePlacementElement.name
