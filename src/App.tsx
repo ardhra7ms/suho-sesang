@@ -1611,7 +1611,6 @@ function App() {
             >
               ×
             </button>
-            <span className="eyebrow">Default element · {currentStream.examples}</span>
             <input
               className="stream-notebook-title"
               value={world.streamTitles[currentStream.id]}

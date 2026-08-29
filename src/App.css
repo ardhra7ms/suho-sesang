@@ -1804,14 +1804,6 @@ textarea {
   border-color: var(--card-ink);
 }
 
-.themed-notebook::before,
-.themed-notebook::after {
-  content: '';
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-}
-
 .themed-notebook > * {
   position: relative;
   z-index: 1;
@@ -1890,32 +1882,6 @@ textarea {
   border-radius: 46px 18px 40px 24px;
 }
 
-.notebook-season-spring::before {
-  top: 18px;
-  right: 34px;
-  width: 54px;
-  height: 54px;
-  border: 2px solid var(--card-accent);
-  border-radius: 68% 32% 61% 39% / 35% 62% 38% 65%;
-  box-shadow:
-    -25px 21px 0 -13px var(--card-accent),
-    18px 32px 0 -17px var(--card-ink);
-  transform: rotate(24deg);
-}
-
-.notebook-season-spring::after {
-  right: -14px;
-  bottom: 24px;
-  width: 150px;
-  height: 90px;
-  opacity: 0.35;
-  background:
-    radial-gradient(ellipse at 25% 35%, var(--card-accent) 0 10%, transparent 11%),
-    radial-gradient(ellipse at 50% 58%, var(--card-accent) 0 8%, transparent 9%),
-    radial-gradient(ellipse at 77% 30%, var(--card-ink) 0 6%, transparent 7%);
-  transform: rotate(-12deg);
-}
-
 .notebook-season-spring .element-note,
 .notebook-season-spring .new-growth-note {
   border-radius: 24px 8px 20px 12px;
@@ -1934,27 +1900,6 @@ textarea {
   --card-muted: rgba(33, 27, 11, 0.7);
   --card-accent: #119bc1;
   border-radius: 22px 54px 18px 46px;
-}
-
-.notebook-season-summer::before {
-  top: 18px;
-  left: -24px;
-  width: 128px;
-  height: 28px;
-  background: rgba(17, 155, 193, 0.82);
-  transform: rotate(-9deg);
-}
-
-.notebook-season-summer::after {
-  right: 28px;
-  bottom: -42px;
-  width: 128px;
-  height: 128px;
-  border: 3px solid #ef5b2a;
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 13px transparent,
-    0 0 0 15px rgba(239, 91, 42, 0.45);
 }
 
 .notebook-season-summer .new-growth-note,
@@ -1998,22 +1943,6 @@ textarea {
     0 16px 50px rgba(26, 8, 4, 0.4);
 }
 
-.notebook-season-autumn::before {
-  inset: 18px;
-  border: 1px solid rgba(255, 240, 196, 0.32);
-  border-radius: 4px 25px 5px 20px;
-}
-
-.notebook-season-autumn::after {
-  top: 34px;
-  left: 26px;
-  width: 78px;
-  height: 22px;
-  border: 1px solid var(--card-ink);
-  background: var(--card-accent);
-  transform: rotate(-4deg);
-}
-
 .notebook-season-autumn .stream-notebook-art {
   right: auto;
   left: -42px;
@@ -2054,31 +1983,6 @@ textarea {
     0 0 45px rgba(68, 229, 181, 0.18),
     0 20px 70px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(18px);
-}
-
-.notebook-season-winter::before {
-  top: 22px;
-  right: 25%;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--card-ink);
-  box-shadow:
-    56px 36px 0 -2px var(--card-accent),
-    104px 4px 0 -1px var(--card-ink),
-    -50px 54px 0 -2px var(--card-ink),
-    145px 72px 0 -2px var(--card-accent);
-}
-
-.notebook-season-winter::after {
-  right: -40px;
-  bottom: -65px;
-  width: 230px;
-  height: 150px;
-  border: 2px solid var(--card-accent);
-  border-radius: 50%;
-  opacity: 0.38;
-  transform: rotate(-18deg);
 }
 
 .notebook-season-winter .stream-notebook-art {
