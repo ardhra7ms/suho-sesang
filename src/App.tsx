@@ -583,6 +583,11 @@ function App() {
       ),
     [userElements, world.deletedElementIds],
   )
+  const currentStreamElement = currentStream
+    ? allElements.find(
+        (item) => item.id === defaultStreamElements[currentStream.id],
+      )
+    : undefined
   const visibleElements =
     elementFilter === 'all'
       ? allElements
@@ -1586,10 +1591,18 @@ function App() {
           onClick={() => setActiveStream(null)}
         >
           <section
-            className="stream-notebook"
+            className={`stream-notebook themed-notebook notebook-season-${activeSeason}`}
             onClick={(event) => event.stopPropagation()}
             aria-label={`${world.streamTitles[currentStream.id]} notes`}
           >
+            {currentStreamElement && (
+              <div className="stream-notebook-art" aria-hidden="true">
+                <img
+                  src={`${import.meta.env.BASE_URL}${currentStreamElement.image}`}
+                  alt=""
+                />
+              </div>
+            )}
             <button
               className="close-button"
               type="button"
@@ -1744,7 +1757,7 @@ function App() {
           onClick={() => setActiveNoteSource(null)}
         >
           <section
-            className="element-notebook"
+            className={`element-notebook themed-notebook notebook-season-${activeNoteSource.page}`}
             onClick={(event) => event.stopPropagation()}
             aria-label={`Notes for ${
               activePlacement.title || activePlacementElement.name
