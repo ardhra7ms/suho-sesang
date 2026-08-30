@@ -44,6 +44,7 @@ type ElementPosition = {
 
 type WorldStyle = CSSProperties & {
   '--season-image': string
+  '--mobile-season-image': string
   '--world-depth': string
 }
 
@@ -133,60 +134,54 @@ const seasons: Array<{
   id: SeasonId
   label: string
   image: string
+  mobileImage?: string
   alt: string
   artist: string
   title: string
   date: string
   license: string
-  source: string
+  source?: string
 }> = [
   {
     id: 'spring',
     label: 'Spring',
-    image: 'monet-water-lilies-1907.jpg',
-    alt: 'Water Lilies, painted by Claude Monet in 1907',
-    artist: 'Claude Monet',
-    title: 'Water Lilies',
-    date: '1907',
-    license: 'public domain',
-    source:
-      'https://commons.wikimedia.org/wiki/File:Monet,_Claude_-_Water_Lilies_(Nymph%C3%A9as)_-_Google_Art_Project.jpg',
+    image: 'spring-suho-desktop.webp',
+    mobileImage: 'spring-suho-phone.jpeg',
+    alt: 'Suho sitting outside Abbey Road Studios',
+    artist: 'Personal collection',
+    title: 'Suho at Abbey Road Studios',
+    date: 'photograph',
+    license: 'user supplied',
   },
   {
     id: 'summer',
     label: 'Summer',
-    image: 'summer-clouds-iccup.jpg',
-    alt: 'Towering white clouds opening onto a vivid blue summer sky',
-    artist: 'iccup',
-    title: 'White clouds and blue sky during daytime',
+    image: 'summer-suho.jpeg',
+    alt: 'Suho posing beside a pink bear',
+    artist: 'Personal collection',
+    title: 'Suho and pink bear',
     date: 'photograph',
-    license: 'Unsplash License',
-    source:
-      'https://unsplash.com/photos/white-clouds-and-blue-sky-during-daytime-xNtwmcRP-gw',
+    license: 'user supplied',
   },
   {
     id: 'autumn',
     label: 'Autumn',
-    image: 'autumn-thomson.jpg',
-    alt: 'Autumn Foliage, painted by Tom Thomson in 1915',
-    artist: 'Tom Thomson',
-    title: 'Autumn Foliage',
-    date: '1915',
-    license: 'public domain',
-    source:
-      'https://commons.wikimedia.org/wiki/File:Tom_Thomson_-_Autumn_Foliage_-_Google_Art_Project.jpg',
+    image: 'autumn-suho.webp',
+    alt: 'Black-and-white portrait of Suho at a bar',
+    artist: 'Personal collection',
+    title: 'Suho for Vogue Korea',
+    date: 'photograph',
+    license: 'user supplied',
   },
   {
     id: 'winter',
     label: 'Winter',
-    image: 'winter-lofoten.jpg',
-    alt: 'Aurora over snowy mountains at Flakstad in Lofoten, Norway',
-    artist: 'Johannes Groll',
-    title: 'Aurora over Flakstad, Lofoten',
-    date: '2017',
-    license: 'CC0',
-    source:
-      'https://commons.wikimedia.org/wiki/File:Lofoten,_Norway_(Unsplash).jpg',
+    image: 'winter-suho.webp',
+    alt: 'Suho sitting among yellow flowers',
+    artist: 'Personal collection',
+    title: 'Suho among flowers',
+    date: 'photograph',
+    license: 'user supplied',
   },
 ]
 
@@ -698,6 +693,7 @@ function App() {
   }, [activeSeason, world.placements, world.streamPlacements])
   const worldStyle: WorldStyle = {
     '--season-image': `url("${import.meta.env.BASE_URL}${season.image}")`,
+    '--mobile-season-image': `url("${import.meta.env.BASE_URL}${season.mobileImage ?? season.image}")`,
     '--world-depth': `${worldDepth}svh`,
   }
   const allElements = useMemo(
@@ -1914,13 +1910,15 @@ function App() {
 
           <footer className="painting-caption">
           <span>{season.label.toLowerCase()} · {totalGrowth} growth</span>
-          <a
-            href={season.source}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {season.artist}, <cite>{season.title}</cite>, {season.date} · {season.license}
-          </a>
+          {season.source ? (
+            <a href={season.source} target="_blank" rel="noreferrer">
+              {season.artist}, <cite>{season.title}</cite>, {season.date} · {season.license}
+            </a>
+          ) : (
+            <span>
+              {season.artist}, <cite>{season.title}</cite> · {season.license}
+            </span>
+          )}
           </footer>
         </>
       )}

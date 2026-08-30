@@ -43,13 +43,7 @@ Pushes to `main` are deployed to GitHub Pages by the workflow in
 
 ## Artwork
 
-The spring world uses Claude Monet's *Water Lilies (Nymphéas)* (1907), from the
-Museum of Fine Arts, Houston. The high-resolution reproduction is marked public
-domain by [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Monet,_Claude_-_Water_Lilies_(Nymph%C3%A9as)_-_Google_Art_Project.jpg).
-
-The remaining seasonal worlds use iccup's *White clouds and blue sky during
-daytime* (Unsplash License), Tom Thomson's *Autumn Foliage* (1915, public
-domain), and Johannes Groll's *Aurora over Flakstad, Lofoten* (2017, CC0).
-Each live season links to its full source and license information. The element
-library contains cropped details of these four seasonal works alongside
+The four seasonal worlds use user-supplied Suho photographs. Spring has
+separate desktop and phone compositions so its subject remains visible at both
+aspect ratios. The element library retains cropped painting details alongside
 user-supplied images and drawings.

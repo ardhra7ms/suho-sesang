@@ -1707,7 +1707,7 @@ textarea {
     height: var(--world-depth);
     min-height: 165svh;
     overflow: clip;
-    background-image: var(--season-image);
+    background-image: var(--mobile-season-image);
     background-position: center top;
     background-repeat: repeat-y;
     background-size: 100% auto;
