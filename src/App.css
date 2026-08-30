@@ -1667,10 +1667,6 @@ textarea {
     overflow: visible;
   }
 
-  .app-shell * {
-    text-transform: none !important;
-  }
-
   .app-shell:not(.library-open) .painting-world {
     position: relative;
     height: var(--world-depth);
@@ -1981,6 +1977,10 @@ textarea {
     flex-direction: row;
     justify-content: flex-end;
   }
+}
+
+.app-shell * {
+  text-transform: none !important;
 }
 
 /* Seasonal comic panels: the palette changes, the visual language stays shared. */
