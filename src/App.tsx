@@ -301,10 +301,9 @@ function parseTags(value: string): string[] {
   )
 }
 
-function formatTimestamp(value: string): string {
+function formatDate(value: string): string {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
-    timeStyle: 'short',
   }).format(new Date(value))
 }
 
@@ -2074,7 +2073,7 @@ function App() {
                       <div>
                         <strong>+{activity.amount}</strong>
                         <time dateTime={activity.createdAt}>
-                          {formatTimestamp(activity.createdAt)}
+                          {formatDate(activity.createdAt)}
                         </time>
                       </div>
                       <div className="note-fields">
@@ -2158,7 +2157,7 @@ function App() {
                         <div className="memory-result-heading">
                           <strong>{result.title}</strong>
                           <time dateTime={result.createdAt}>
-                            {formatTimestamp(result.createdAt)}
+                            {formatDate(result.createdAt)}
                           </time>
                         </div>
                         <small>{result.context}</small>
@@ -2352,7 +2351,7 @@ function App() {
                     />
                     <div className="element-note-meta">
                       <time dateTime={elementNote.createdAt}>
-                        {formatTimestamp(elementNote.createdAt)}
+                        {formatDate(elementNote.createdAt)}
                       </time>
                       <input
                         className="tag-editor"
