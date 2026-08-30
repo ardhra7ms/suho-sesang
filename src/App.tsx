@@ -28,6 +28,7 @@ type Activity = {
 type WorldState = {
   growth: Record<StreamId, number>
   activities: Activity[]
+  targets: ProjectTarget[]
   placements: Record<PageId, PlacedElement[]>
   streamTitles: Record<StreamId, string>
   weeklyMinimums: Record<StreamId, WeeklyMinimum>
@@ -40,6 +41,38 @@ type WorldState = {
 type ElementPosition = {
   x: number
   y: number
+}
+
+type TargetChecklistItem = {
+  id: string
+  text: string
+  done: boolean
+}
+
+type TargetMotion = {
+  x: number
+  y: number
+  vx: number
+  vy: number
+}
+
+type ProjectTarget = {
+  id: string
+  title: string
+  outcome: string
+  stream: StreamId
+  month: string
+  minimumSuccess: string
+  nextStep: string
+  notes: string
+  tags: string[]
+  checklist: TargetChecklistItem[]
+  reminders: string
+  status: string
+  completionPoints: 5 | 10 | 20 | 50
+  motion: TargetMotion
+  createdAt: string
+  completedAt?: string
 }
 
 type WorldStyle = CSSProperties & {
@@ -245,6 +278,7 @@ const initialState: WorldState = {
     wellness: 0,
   },
   activities: [],
+  targets: [],
   placements: {
     spring: [],
     summer: [],
@@ -299,6 +333,12 @@ function formatDate(value: string): string {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
   }).format(new Date(value))
+}
+
+function getElementImageSource(image: string): string {
+  return /^(blob:|data:|https?:)/.test(image)
+    ? image
+    : `${import.meta.env.BASE_URL}${image}`
 }
 
 function calculateGrowth(activities: Activity[]): Record<StreamId, number> {
@@ -561,6 +601,7 @@ function loadWorld(): WorldState {
     return {
       growth: calculateGrowth(activities),
       activities,
+      targets: Array.isArray(parsed.targets) ? parsed.targets : [],
       streamTitles: {
         ...initialState.streamTitles,
         ...parsed.streamTitles,
@@ -625,6 +666,122 @@ function loadSeason(): SeasonId {
     : 'spring'
 }
 
+function createTargetMotion(index: number): TargetMotion {
+  return {
+    x: 0.12 + ((index * 0.23) % 0.7),
+    y: 0.14 + ((index * 0.19) % 0.64),
+    vx: index % 2 === 0 ? 13 : -11,
+    vy: index % 3 === 0 ? 8 : -7,
+  }
+}
+
+function TargetCloudLayer({
+  targets,
+  onOpen,
+  onMotionCommit,
+}: {
+  targets: ProjectTarget[]
+  onOpen: (targetId: string) => void
+  onMotionCommit: (motions: Record<string, TargetMotion>) => void
+}) {
+  const cloudElements = useRef(new Map<string, HTMLButtonElement>())
+  const motions = useRef(new Map<string, TargetMotion>())
+  const commitRef = useRef(onMotionCommit)
+
+  useEffect(() => {
+    commitRef.current = onMotionCommit
+  }, [onMotionCommit])
+
+  useEffect(() => {
+    const activeIds = new Set(targets.map((target) => target.id))
+    targets.forEach((target) => {
+      if (!motions.current.has(target.id)) {
+        motions.current.set(target.id, { ...target.motion })
+      }
+    })
+    motions.current.forEach((_, id) => {
+      if (!activeIds.has(id)) motions.current.delete(id)
+    })
+  }, [targets])
+
+  useEffect(() => {
+    let animationFrame = 0
+    let previousTime = performance.now()
+    let lastCommit = previousTime
+    const motionState = motions.current
+
+    const animate = (time: number) => {
+      const elapsed = Math.min(0.05, (time - previousTime) / 1000)
+      previousTime = time
+      const isPhone = window.innerWidth <= 640
+      const topEdge = isPhone ? 112 : 82
+      const bottomEdge = 76
+
+      motionState.forEach((motion, id) => {
+        const element = cloudElements.current.get(id)
+        if (!element || element.matches(':hover, :focus-visible')) return
+        const width = element.offsetWidth
+        const height = element.offsetHeight
+        const availableWidth = Math.max(1, window.innerWidth - width - 20)
+        const availableHeight = Math.max(
+          1,
+          window.innerHeight - topEdge - bottomEdge - height,
+        )
+        let nextX = motion.x * availableWidth + motion.vx * elapsed
+        let nextY = motion.y * availableHeight + motion.vy * elapsed
+
+        if (nextX <= 0 || nextX >= availableWidth) {
+          motion.vx *= -1
+          nextX = Math.min(availableWidth, Math.max(0, nextX))
+        }
+        if (nextY <= 0 || nextY >= availableHeight) {
+          motion.vy *= -1
+          nextY = Math.min(availableHeight, Math.max(0, nextY))
+        }
+
+        motion.x = nextX / availableWidth
+        motion.y = nextY / availableHeight
+        element.style.transform = `translate3d(${Math.round(nextX + 10)}px, ${Math.round(nextY + topEdge)}px, 0)`
+      })
+
+      if (time - lastCommit >= 4000 && motionState.size > 0) {
+        lastCommit = time
+        commitRef.current(Object.fromEntries(motionState))
+      }
+      animationFrame = requestAnimationFrame(animate)
+    }
+
+    animationFrame = requestAnimationFrame(animate)
+    return () => {
+      cancelAnimationFrame(animationFrame)
+      if (motionState.size > 0) {
+        commitRef.current(Object.fromEntries(motionState))
+      }
+    }
+  }, [])
+
+  return (
+    <div className="target-cloud-layer" aria-label="Active project targets">
+      {targets.map((target) => (
+        <button
+          className={`target-cloud target-cloud-${target.stream}`}
+          type="button"
+          key={target.id}
+          ref={(element) => {
+            if (element) cloudElements.current.set(target.id, element)
+            else cloudElements.current.delete(target.id)
+          }}
+          onClick={() => onOpen(target.id)}
+          aria-label={`Open target: ${target.title || 'Untitled target'}`}
+        >
+          <span>{target.title || 'New target'}</span>
+          <small>{target.status || 'Active'}</small>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function App() {
   const [world, setWorld] = useState<WorldState>(loadWorld)
   const [view, setView] = useState<AppView>('world')
@@ -638,6 +795,8 @@ function App() {
   const [noteTags, setNoteTags] = useState('')
   const [memorySearch, setMemorySearch] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
+  const [targetsOpen, setTargetsOpen] = useState(false)
+  const [activeTargetId, setActiveTargetId] = useState<string | null>(null)
   const [trashOpen, setTrashOpen] = useState(false)
   const [activeNoteSource, setActiveNoteSource] = useState<{
     page: PageId
@@ -674,6 +833,8 @@ function App() {
     .filter((activity) => new Date(activity.createdAt).toDateString() === today)
     .reduce((sum, activity) => sum + activity.amount, 0)
   const level = Math.floor(totalGrowth / 100) + 1
+  const activeTargets = world.targets.filter((target) => !target.completedAt)
+  const completedTargets = world.targets.filter((target) => target.completedAt)
   const currentStream = streams.find((stream) => stream.id === activeStream)
   const season = seasons.find((item) => item.id === activeSeason)!
   const worldDepth = useMemo(() => {
@@ -729,8 +890,19 @@ function App() {
           })),
         ),
     )
+    const targetResults = world.targets.map((target) => ({
+      id: `target-${target.id}`,
+      title: target.title || 'Untitled target',
+      text:
+        [target.outcome, target.nextStep, target.minimumSuccess, target.notes]
+          .filter(Boolean)
+          .join(' · ') || 'Target details',
+      tags: target.tags,
+      createdAt: target.createdAt,
+      context: `${world.streamTitles[target.stream]} target · ${target.status}`,
+    }))
 
-    return [...activityResults, ...elementResults]
+    return [...activityResults, ...elementResults, ...targetResults]
       .filter((result) => {
         const searchable = [
           result.title,
@@ -753,6 +925,7 @@ function App() {
     world.activities,
     world.placements,
     world.streamTitles,
+    world.targets,
   ])
 
   useEffect(() => {
@@ -805,6 +978,156 @@ function App() {
     })
     setNote('')
     setNoteTags('')
+  }
+
+  const addTarget = () => {
+    const id = crypto.randomUUID()
+    const month = new Date().toISOString().slice(0, 7)
+    setWorld((current) => ({
+      ...current,
+      targets: [
+        ...current.targets,
+        {
+          id,
+          title: '',
+          outcome: '',
+          stream: 'creation',
+          month,
+          minimumSuccess: '',
+          nextStep: '',
+          notes: '',
+          tags: [],
+          checklist: [],
+          reminders: '',
+          status: 'Planning',
+          completionPoints: 20,
+          motion: createTargetMotion(current.targets.length),
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    }))
+    setActiveTargetId(id)
+  }
+
+  const updateTarget = (
+    targetId: string,
+    update: Partial<ProjectTarget>,
+  ) => {
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.map((target) =>
+        target.id === targetId ? { ...target, ...update } : target,
+      ),
+    }))
+  }
+
+  const addTargetChecklistItem = (targetId: string) => {
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.map((target) =>
+        target.id === targetId
+          ? {
+              ...target,
+              checklist: [
+                ...target.checklist,
+                { id: crypto.randomUUID(), text: '', done: false },
+              ],
+            }
+          : target,
+      ),
+    }))
+  }
+
+  const updateTargetChecklistItem = (
+    targetId: string,
+    itemId: string,
+    update: Partial<TargetChecklistItem>,
+  ) => {
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.map((target) =>
+        target.id === targetId
+          ? {
+              ...target,
+              checklist: target.checklist.map((item) =>
+                item.id === itemId ? { ...item, ...update } : item,
+              ),
+            }
+          : target,
+      ),
+    }))
+  }
+
+  const removeTargetChecklistItem = (targetId: string, itemId: string) => {
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.map((target) =>
+        target.id === targetId
+          ? {
+              ...target,
+              checklist: target.checklist.filter((item) => item.id !== itemId),
+            }
+          : target,
+      ),
+    }))
+  }
+
+  const completeTarget = (targetId: string) => {
+    setWorld((current) => {
+      const target = current.targets.find((item) => item.id === targetId)
+      if (!target || target.completedAt) return current
+      const activities = [
+        {
+          id: crypto.randomUUID(),
+          stream: target.stream,
+          amount: target.completionPoints,
+          note: `Completed target: ${target.title.trim() || 'Untitled target'}`,
+          tags: parseTags(`target, ${target.tags.join(', ')}`),
+          createdAt: new Date().toISOString(),
+        },
+        ...current.activities,
+      ]
+      return {
+        ...current,
+        growth: calculateGrowth(activities),
+        activities,
+        targets: current.targets.map((item) =>
+          item.id === targetId
+            ? {
+                ...item,
+                status: 'Complete',
+                completedAt: new Date().toISOString(),
+              }
+            : item,
+        ),
+      }
+    })
+    setActiveTargetId(null)
+  }
+
+  const reopenTarget = (targetId: string) => {
+    updateTarget(targetId, { completedAt: undefined, status: 'Active' })
+    setActiveTargetId(targetId)
+  }
+
+  const deleteTarget = (targetId: string) => {
+    if (!window.confirm('Delete this target and its project details?')) return
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.filter((target) => target.id !== targetId),
+    }))
+    setActiveTargetId((current) => (current === targetId ? null : current))
+  }
+
+  const commitTargetMotions = (motions: Record<string, TargetMotion>) => {
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.map((target) =>
+        motions[target.id]
+          ? { ...target, motion: { ...motions[target.id] } }
+          : target,
+      ),
+    }))
   }
 
   const updateActivityNote = (activityId: string, value: string) => {
@@ -1575,7 +1898,7 @@ function App() {
             }. Drag or use the arrow keys to move it.`}
           >
             <img
-              src={`${import.meta.env.BASE_URL}${item.image}`}
+              src={getElementImageSource(item.image)}
               alt=""
               draggable="false"
             />
@@ -1627,7 +1950,7 @@ function App() {
             aria-label={`Open ${world.streamTitles[stream.id]} notes. Drag or use the arrow keys to move this element.`}
           >
             <img
-              src={`${import.meta.env.BASE_URL}${item.image}`}
+              src={getElementImageSource(item.image)}
               alt=""
               draggable="false"
             />
@@ -1662,7 +1985,7 @@ function App() {
         >
           <img
             className="bunny-logo"
-            src={`${import.meta.env.BASE_URL}bunny-boxed.svg`}
+            src={`${import.meta.env.BASE_URL}bunny-simple.svg`}
             alt=""
           />
           <strong>suho's sesang</strong>
@@ -1700,6 +2023,13 @@ function App() {
             >
               Record
             </button>
+            <button
+              className="targets-button"
+              type="button"
+              onClick={() => setTargetsOpen(true)}
+            >
+              Targets{activeTargets.length ? ` ${activeTargets.length}` : ''}
+            </button>
           </>
           )}
           <button
@@ -1717,6 +2047,17 @@ function App() {
           </button>
         </div>
       </header>
+
+      {view === 'world' && activeTargets.length > 0 && (
+        <TargetCloudLayer
+          targets={activeTargets}
+          onOpen={(targetId) => {
+            setActiveTargetId(targetId)
+            setTargetsOpen(true)
+          }}
+          onMotionCommit={commitTargetMotions}
+        />
+      )}
 
       {view === 'library' ? (
         <section className="element-library" aria-labelledby="library-title">
@@ -1771,7 +2112,7 @@ function App() {
                 }`}
               >
                 <img
-                  src={`${import.meta.env.BASE_URL}${item.image}`}
+                  src={getElementImageSource(item.image)}
                   alt={item.alt}
                   loading="lazy"
                 />
@@ -2174,6 +2515,331 @@ function App() {
         </div>
       )}
 
+      {targetsOpen && view === 'world' && (
+        <div className="overlay" onClick={() => setTargetsOpen(false)}>
+          <aside
+            className="target-board"
+            onClick={(event) => event.stopPropagation()}
+            aria-label="Target board"
+          >
+            <button
+              className="close-button"
+              type="button"
+              onClick={() => setTargetsOpen(false)}
+              aria-label="Close Target board"
+            >
+              ×
+            </button>
+            <header className="target-board-heading">
+              <span>Major projects</span>
+              <h2>Target board</h2>
+              <p>
+                Shape the outcome here. Active targets become drifting clouds
+                in every season.
+              </p>
+              <button type="button" onClick={addTarget}>+ Add a target</button>
+            </header>
+
+            <datalist id="target-status-options">
+              <option value="Planning" />
+              <option value="Active" />
+              <option value="Waiting" />
+              <option value="Paused" />
+              <option value="Reviewing" />
+            </datalist>
+
+            <section className="target-board-section">
+              <h3>Active clouds</h3>
+              {activeTargets.length === 0 ? (
+                <p className="empty-targets">
+                  Add a major project and its cloud will enter the world.
+                </p>
+              ) : (
+                <div className="target-card-list">
+                  {activeTargets.map((target) => {
+                    const expanded = activeTargetId === target.id
+                    const completedSteps = target.checklist.filter(
+                      (item) => item.done,
+                    ).length
+                    return (
+                      <article
+                        className={`target-card target-card-${target.stream} ${expanded ? 'expanded' : ''}`}
+                        key={target.id}
+                      >
+                        <button
+                          className="target-card-summary"
+                          type="button"
+                          onClick={() =>
+                            setActiveTargetId(expanded ? null : target.id)
+                          }
+                          aria-expanded={expanded}
+                        >
+                          <span>
+                            {world.streamTitles[target.stream]} · {target.status}
+                          </span>
+                          <strong>{target.title || 'Untitled target'}</strong>
+                          <small>
+                            {target.checklist.length
+                              ? `${completedSteps}/${target.checklist.length} steps`
+                              : 'No steps yet'}
+                          </small>
+                        </button>
+
+                        {expanded && (
+                          <div className="target-card-editor">
+                            <label className="target-field target-field-wide">
+                              <span>Project name</span>
+                              <input
+                                value={target.title}
+                                onChange={(event) =>
+                                  updateTarget(target.id, {
+                                    title: event.target.value,
+                                  })
+                                }
+                                placeholder="Name this target"
+                              />
+                            </label>
+                            <label className="target-field target-field-wide">
+                              <span>Target outcome</span>
+                              <textarea
+                                value={target.outcome}
+                                onChange={(event) =>
+                                  updateTarget(target.id, {
+                                    outcome: event.target.value,
+                                  })
+                                }
+                                placeholder="What will be true when this succeeds?"
+                              />
+                            </label>
+                            <div className="target-field-row">
+                              <label className="target-field">
+                                <span>Life stream</span>
+                                <select
+                                  value={target.stream}
+                                  onChange={(event) =>
+                                    updateTarget(target.id, {
+                                      stream: event.target.value as StreamId,
+                                    })
+                                  }
+                                >
+                                  {streams.map((stream) => (
+                                    <option value={stream.id} key={stream.id}>
+                                      {world.streamTitles[stream.id]}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label className="target-field">
+                                <span>Target month</span>
+                                <input
+                                  type="month"
+                                  value={target.month}
+                                  onChange={(event) =>
+                                    updateTarget(target.id, {
+                                      month: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                              <label className="target-field">
+                                <span>Status</span>
+                                <input
+                                  list="target-status-options"
+                                  value={target.status}
+                                  onChange={(event) =>
+                                    updateTarget(target.id, {
+                                      status: event.target.value,
+                                    })
+                                  }
+                                  placeholder="Add a status"
+                                />
+                              </label>
+                            </div>
+                            <label className="target-field target-field-wide">
+                              <span>Minimum success</span>
+                              <input
+                                value={target.minimumSuccess}
+                                onChange={(event) =>
+                                  updateTarget(target.id, {
+                                    minimumSuccess: event.target.value,
+                                  })
+                                }
+                                placeholder="The smallest version that still counts"
+                              />
+                            </label>
+                            <label className="target-field target-field-wide">
+                              <span>Next concrete step</span>
+                              <input
+                                value={target.nextStep}
+                                onChange={(event) =>
+                                  updateTarget(target.id, {
+                                    nextStep: event.target.value,
+                                  })
+                                }
+                                placeholder="What happens next?"
+                              />
+                            </label>
+
+                            <section className="target-checklist">
+                              <div>
+                                <h4>Progress</h4>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    addTargetChecklistItem(target.id)
+                                  }
+                                >
+                                  + Add step
+                                </button>
+                              </div>
+                              {target.checklist.map((item) => (
+                                <label key={item.id}>
+                                  <input
+                                    type="checkbox"
+                                    checked={item.done}
+                                    onChange={(event) =>
+                                      updateTargetChecklistItem(
+                                        target.id,
+                                        item.id,
+                                        { done: event.target.checked },
+                                      )
+                                    }
+                                  />
+                                  <input
+                                    value={item.text}
+                                    onChange={(event) =>
+                                      updateTargetChecklistItem(
+                                        target.id,
+                                        item.id,
+                                        { text: event.target.value },
+                                      )
+                                    }
+                                    placeholder="A concrete step"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeTargetChecklistItem(
+                                        target.id,
+                                        item.id,
+                                      )
+                                    }
+                                    aria-label="Remove step"
+                                  >
+                                    ×
+                                  </button>
+                                </label>
+                              ))}
+                            </section>
+
+                            <label className="target-field target-field-wide">
+                              <span>Notes</span>
+                              <textarea
+                                value={target.notes}
+                                onChange={(event) =>
+                                  updateTarget(target.id, {
+                                    notes: event.target.value,
+                                  })
+                                }
+                                placeholder="Context, decisions, or ideas"
+                              />
+                            </label>
+                            <div className="target-field-row">
+                              <label className="target-field">
+                                <span>Tags</span>
+                                <input
+                                  value={target.tags.join(', ')}
+                                  onChange={(event) =>
+                                    updateTarget(target.id, {
+                                      tags: parseTags(event.target.value),
+                                    })
+                                  }
+                                  placeholder="work, writing"
+                                />
+                              </label>
+                              <label className="target-field">
+                                <span>Reminders</span>
+                                <input
+                                  value={target.reminders}
+                                  onChange={(event) =>
+                                    updateTarget(target.id, {
+                                      reminders: event.target.value,
+                                    })
+                                  }
+                                  placeholder="Friday review"
+                                />
+                              </label>
+                            </div>
+
+                            <footer className="target-card-actions">
+                              <label>
+                                <span>Completion Growth</span>
+                                <select
+                                  value={target.completionPoints}
+                                  onChange={(event) =>
+                                    updateTarget(target.id, {
+                                      completionPoints: Number(
+                                        event.target.value,
+                                      ) as ProjectTarget['completionPoints'],
+                                    })
+                                  }
+                                >
+                                  <option value={5}>+5 small</option>
+                                  <option value={10}>+10 focused</option>
+                                  <option value={20}>+20 major</option>
+                                  <option value={50}>+50 breakthrough</option>
+                                </select>
+                              </label>
+                              <button
+                                className="complete-target"
+                                type="button"
+                                onClick={() => completeTarget(target.id)}
+                              >
+                                ✓ Complete for +{target.completionPoints}
+                              </button>
+                              <button
+                                className="delete-target"
+                                type="button"
+                                onClick={() => deleteTarget(target.id)}
+                              >
+                                Delete
+                              </button>
+                            </footer>
+                          </div>
+                        )}
+                      </article>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+
+            {completedTargets.length > 0 && (
+              <section className="target-board-section completed-targets">
+                <h3>Completed targets</h3>
+                {completedTargets.map((target) => (
+                  <article key={target.id}>
+                    <div>
+                      <strong>{target.title || 'Untitled target'}</strong>
+                      <small>
+                        {formatDate(target.completedAt!)} · +{target.completionPoints}{' '}
+                        Growth
+                      </small>
+                    </div>
+                    <button type="button" onClick={() => reopenTarget(target.id)}>
+                      Reopen
+                    </button>
+                    <button type="button" onClick={() => deleteTarget(target.id)}>
+                      Delete
+                    </button>
+                  </article>
+                ))}
+              </section>
+            )}
+          </aside>
+        </div>
+      )}
+
       {activeNoteSource && activePlacement && activePlacementElement && (
         <div
           className="overlay notebook-overlay"
@@ -2427,7 +3093,7 @@ function App() {
                       {placedItem && (
                         <img
                           className="trashed-element-image"
-                          src={`${import.meta.env.BASE_URL}${placedItem.image}`}
+                          src={getElementImageSource(placedItem.image)}
                           alt=""
                         />
                       )}
