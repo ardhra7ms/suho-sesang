@@ -307,6 +307,16 @@ function formatDate(value: string): string {
   }).format(new Date(value))
 }
 
+function calculateGrowth(activities: Activity[]): Record<StreamId, number> {
+  return activities.reduce<Record<StreamId, number>>(
+    (growth, activity) => ({
+      ...growth,
+      [activity.stream]: growth[activity.stream] + activity.amount,
+    }),
+    { ...initialState.growth },
+  )
+}
+
 function getWeekKey(date = new Date()): string {
   const utcDate = new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
@@ -560,9 +570,12 @@ function loadWorld(): WorldState {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (!saved) return initialState
     const parsed = JSON.parse(saved) as Partial<WorldState>
+    const activities = Array.isArray(parsed.activities)
+      ? parsed.activities
+      : []
     return {
-      growth: { ...initialState.growth, ...parsed.growth },
-      activities: Array.isArray(parsed.activities) ? parsed.activities : [],
+      growth: calculateGrowth(activities),
+      activities,
       streamTitles: {
         ...initialState.streamTitles,
         ...parsed.streamTitles,
@@ -803,13 +816,8 @@ function App() {
         milestone.threshold <= updatedGrowth,
     )
 
-    setWorld((current) => ({
-      ...current,
-      growth: {
-        ...current.growth,
-        [stream]: current.growth[stream] + amount,
-      },
-      activities: [
+    setWorld((current) => {
+      const activities = [
         {
           id: crypto.randomUUID(),
           stream,
@@ -819,8 +827,13 @@ function App() {
           createdAt: new Date().toISOString(),
         },
         ...current.activities,
-      ].slice(0, 100),
-    }))
+      ]
+      return {
+        ...current,
+        growth: calculateGrowth(activities),
+        activities,
+      }
+    })
     setNote('')
     setNoteTags('')
     if (unlocked) setNewUnlock(unlocked.name)
@@ -874,13 +887,8 @@ function App() {
         milestone.threshold > totalGrowth &&
         milestone.threshold <= totalGrowth + 15,
     )
-    setWorld((current) => ({
-      ...current,
-      growth: {
-        ...current.growth,
-        [stream]: current.growth[stream] + 15,
-      },
-      activities: [
+    setWorld((current) => {
+      const activities = [
         {
           id: crypto.randomUUID(),
           stream,
@@ -890,18 +898,23 @@ function App() {
           createdAt: new Date().toISOString(),
         },
         ...current.activities,
-      ].slice(0, 100),
-      weeklyMinimums: {
-        ...current.weeklyMinimums,
-        [stream]: {
-          ...current.weeklyMinimums[stream],
-          completedWeeks: [
-            ...current.weeklyMinimums[stream].completedWeeks,
-            currentWeek,
-          ],
+      ]
+      return {
+        ...current,
+        growth: calculateGrowth(activities),
+        activities,
+        weeklyMinimums: {
+          ...current.weeklyMinimums,
+          [stream]: {
+            ...current.weeklyMinimums[stream],
+            completedWeeks: [
+              ...current.weeklyMinimums[stream].completedWeeks,
+              currentWeek,
+            ],
+          },
         },
-      },
-    }))
+      }
+    })
     if (unlocked) setNewUnlock(unlocked.name)
   }
 
@@ -909,17 +922,14 @@ function App() {
     setWorld((current) => {
       const activity = current.activities.find((item) => item.id === activityId)
       if (!activity) return current
+      const activities = current.activities.filter(
+        (item) => item.id !== activityId,
+      )
 
       return {
         ...current,
-        growth: {
-          ...current.growth,
-          [activity.stream]: Math.max(
-            0,
-            current.growth[activity.stream] - activity.amount,
-          ),
-        },
-        activities: current.activities.filter((item) => item.id !== activityId),
+        growth: calculateGrowth(activities),
+        activities,
         trash: [
           {
             id: crypto.randomUUID(),
@@ -1193,13 +1203,8 @@ function App() {
         milestone.threshold <= totalGrowth + 15,
     )
     const { page, elementId } = activeNoteSource
-    setWorld((current) => ({
-      ...current,
-      growth: {
-        ...current.growth,
-        [minimum.stream!]: current.growth[minimum.stream!] + 15,
-      },
-      activities: [
+    setWorld((current) => {
+      const activities = [
         {
           id: crypto.randomUUID(),
           stream: minimum.stream!,
@@ -1209,22 +1214,27 @@ function App() {
           createdAt: new Date().toISOString(),
         },
         ...current.activities,
-      ].slice(0, 100),
-      placements: {
-        ...current.placements,
-        [page]: current.placements[page].map((placement) =>
-          placement.elementId === elementId
-            ? {
-                ...placement,
-                weeklyMinimum: {
-                  ...minimum,
-                  completedWeeks: [...minimum.completedWeeks, currentWeek],
-                },
-              }
-            : placement,
-        ),
-      },
-    }))
+      ]
+      return {
+        ...current,
+        growth: calculateGrowth(activities),
+        activities,
+        placements: {
+          ...current.placements,
+          [page]: current.placements[page].map((placement) =>
+            placement.elementId === elementId
+              ? {
+                  ...placement,
+                  weeklyMinimum: {
+                    ...minimum,
+                    completedWeeks: [...minimum.completedWeeks, currentWeek],
+                  },
+                }
+              : placement,
+          ),
+        },
+      }
+    })
     if (unlocked) setNewUnlock(unlocked.name)
   }
 
@@ -1509,14 +1519,11 @@ function App() {
       if (!trashed) return current
 
       if (trashed.kind === 'activity') {
+        const activities = [trashed.activity, ...current.activities]
         return {
           ...current,
-          growth: {
-            ...current.growth,
-            [trashed.activity.stream]:
-              current.growth[trashed.activity.stream] + trashed.activity.amount,
-          },
-          activities: [trashed.activity, ...current.activities],
+          growth: calculateGrowth(activities),
+          activities,
           trash: current.trash.filter((item) => item.id !== trashId),
         }
       }
