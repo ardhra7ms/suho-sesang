@@ -158,6 +158,92 @@ textarea {
   font: inherit;
 }
 
+.tag-editor,
+.memory-search input[type='search'] {
+  width: 100%;
+  border: 1px solid currentColor;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+}
+
+.tag-editor {
+  min-height: 30px;
+  margin-top: 8px;
+  padding: 6px 9px;
+  border-radius: 3px;
+  font-size: 0.64rem;
+}
+
+.note-fields {
+  min-width: 0;
+}
+
+.element-note-meta {
+  margin-top: 10px;
+}
+
+.element-note-meta time {
+  display: block;
+  font-size: 0.58rem;
+  opacity: 0.68;
+}
+
+.memory-search input[type='search'] {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 3px;
+}
+
+.memory-results {
+  display: grid;
+  gap: 8px;
+  max-height: 330px;
+  margin-top: 10px;
+  overflow-y: auto;
+}
+
+.memory-result {
+  padding: 11px 12px;
+  border: 1px solid rgba(38, 53, 45, 0.22);
+  background: rgba(255, 252, 239, 0.38);
+}
+
+.memory-result-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.memory-result-heading strong {
+  font-size: 0.78rem;
+}
+
+.memory-result-heading time,
+.memory-result small {
+  color: rgba(38, 53, 45, 0.58);
+  font-size: 0.56rem;
+}
+
+.memory-result p {
+  margin-top: 7px;
+}
+
+.note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.note-tags span {
+  padding: 3px 6px;
+  border: 1px solid rgba(38, 53, 45, 0.22);
+  border-radius: 999px;
+  font-size: 0.54rem;
+}
+
 .app-shell {
   position: relative;
   width: 100%;

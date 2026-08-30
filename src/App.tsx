@@ -22,6 +22,7 @@ type Activity = {
   stream: StreamId
   amount: number
   note?: string
+  tags?: string[]
   createdAt: string
 }
 
@@ -63,6 +64,7 @@ type ElementNote = {
   id: string
   title: string
   text: string
+  tags?: string[]
   createdAt: string
 }
 
@@ -266,6 +268,24 @@ function getPlacedElementStyle(position: ElementPosition): PlacedElementStyle {
     top: `${position.y}%`,
     '--mobile-y': `${position.y}svh`,
   }
+}
+
+function parseTags(value: string): string[] {
+  return Array.from(
+    new Set(
+      value
+        .split(',')
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  )
+}
+
+function formatTimestamp(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
 }
 
 const milestones = [
@@ -571,6 +591,8 @@ function App() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [activeStream, setActiveStream] = useState<StreamId | null>(null)
   const [note, setNote] = useState('')
+  const [noteTags, setNoteTags] = useState('')
+  const [memorySearch, setMemorySearch] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
   const [trashOpen, setTrashOpen] = useState(false)
   const [activeNoteSource, setActiveNoteSource] = useState<{
@@ -620,6 +642,58 @@ function App() {
     elementFilter === 'all'
       ? allElements
       : allElements.filter((item) => item.category === elementFilter)
+  const memoryResults = useMemo(() => {
+    const query = memorySearch.trim().toLowerCase()
+    if (!query) return []
+    const words = query.split(/\s+/)
+    const activityResults = world.activities.map((activity) => ({
+      id: `activity-${activity.id}`,
+      title: world.streamTitles[activity.stream],
+      text: activity.note || 'A quiet step forward',
+      tags: activity.tags ?? [],
+      createdAt: activity.createdAt,
+      context: `+${activity.amount} Growth`,
+    }))
+    const elementResults = Object.entries(world.placements).flatMap(
+      ([page, placements]) =>
+        placements.flatMap((placement) =>
+          (placement.notes ?? []).map((elementNote) => ({
+            id: `element-${placement.elementId}-${elementNote.id}`,
+            title: elementNote.title || placement.title || 'Untitled note',
+            text: elementNote.text || 'Empty note',
+            tags: elementNote.tags ?? [],
+            createdAt: elementNote.createdAt,
+            context: `${placement.title || 'Element'} · ${
+              seasons.find((seasonItem) => seasonItem.id === page)?.label
+            }`,
+          })),
+        ),
+    )
+
+    return [...activityResults, ...elementResults]
+      .filter((result) => {
+        const searchable = [
+          result.title,
+          result.text,
+          result.context,
+          ...result.tags,
+        ]
+          .join(' ')
+          .toLowerCase()
+        return words.every((word) => searchable.includes(word))
+      })
+      .sort(
+        (left, right) =>
+          new Date(right.createdAt).getTime() -
+          new Date(left.createdAt).getTime(),
+      )
+      .slice(0, 50)
+  }, [
+    memorySearch,
+    world.activities,
+    world.placements,
+    world.streamTitles,
+  ])
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(world))
@@ -676,12 +750,14 @@ function App() {
           stream,
           amount,
           note: note.trim() || undefined,
+          tags: parseTags(noteTags),
           createdAt: new Date().toISOString(),
         },
         ...current.activities,
       ].slice(0, 100),
     }))
     setNote('')
+    setNoteTags('')
     if (unlocked) setNewUnlock(unlocked.name)
   }
 
@@ -691,6 +767,17 @@ function App() {
       activities: current.activities.map((activity) =>
         activity.id === activityId
           ? { ...activity, note: value }
+          : activity,
+      ),
+    }))
+  }
+
+  const updateActivityTags = (activityId: string, value: string) => {
+    setWorld((current) => ({
+      ...current,
+      activities: current.activities.map((activity) =>
+        activity.id === activityId
+          ? { ...activity, tags: parseTags(value) }
           : activity,
       ),
     }))
@@ -1163,6 +1250,22 @@ function App() {
         notes: (placement.notes ?? []).map((elementNote) =>
           elementNote.id === noteId
             ? { ...elementNote, [field]: value }
+            : elementNote,
+        ),
+      }),
+    )
+  }
+
+  const updateElementNoteTags = (noteId: string, value: string) => {
+    if (!activeNoteSource) return
+    updatePlacedElement(
+      activeNoteSource.page,
+      activeNoteSource.elementId,
+      (placement) => ({
+        ...placement,
+        notes: (placement.notes ?? []).map((elementNote) =>
+          elementNote.id === noteId
+            ? { ...elementNote, tags: parseTags(value) }
             : elementNote,
         ),
       }),
@@ -1700,6 +1803,13 @@ function App() {
                 placeholder="Write a new note…"
                 rows={2}
               />
+              <input
+                className="tag-editor"
+                value={noteTags}
+                onChange={(event) => setNoteTags(event.target.value)}
+                placeholder="tags, separated by commas"
+                aria-label="Tags for this note"
+              />
               <div className="growth-buttons" aria-label="Save note with growth">
                 {[5, 10, 20, 50].map((amount) => (
                   <button
@@ -1726,18 +1836,29 @@ function App() {
                       <div>
                         <strong>+{activity.amount}</strong>
                         <time dateTime={activity.createdAt}>
-                          {new Date(activity.createdAt).toLocaleDateString()}
+                          {formatTimestamp(activity.createdAt)}
                         </time>
                       </div>
-                      <textarea
-                        value={activity.note ?? ''}
-                        onChange={(event) =>
-                          updateActivityNote(activity.id, event.target.value)
-                        }
-                        placeholder="Add words to this trace…"
-                        rows={2}
-                        aria-label={`${world.streamTitles[currentStream.id]} note`}
-                      />
+                      <div className="note-fields">
+                        <textarea
+                          value={activity.note ?? ''}
+                          onChange={(event) =>
+                            updateActivityNote(activity.id, event.target.value)
+                          }
+                          placeholder="Add words to this trace…"
+                          rows={2}
+                          aria-label={`${world.streamTitles[currentStream.id]} note`}
+                        />
+                        <input
+                          className="tag-editor"
+                          value={(activity.tags ?? []).join(', ')}
+                          onChange={(event) =>
+                            updateActivityTags(activity.id, event.target.value)
+                          }
+                          placeholder="add tags"
+                          aria-label={`Tags for ${world.streamTitles[currentStream.id]} note`}
+                        />
+                      </div>
                       <button
                         className="trash-note-button"
                         type="button"
@@ -1780,6 +1901,43 @@ function App() {
             <div className="completion-track">
               <span style={{ width: `${completion}%` }} />
             </div>
+            <section className="record-section memory-search">
+              <h3>Find a memory</h3>
+              <input
+                type="search"
+                value={memorySearch}
+                onChange={(event) => setMemorySearch(event.target.value)}
+                placeholder="Search notes, elements, or tags"
+                aria-label="Search all memories"
+              />
+              {memorySearch.trim() && (
+                <div className="memory-results" aria-live="polite">
+                  {memoryResults.length === 0 ? (
+                    <p>No memories match that search.</p>
+                  ) : (
+                    memoryResults.map((result) => (
+                      <article className="memory-result" key={result.id}>
+                        <div className="memory-result-heading">
+                          <strong>{result.title}</strong>
+                          <time dateTime={result.createdAt}>
+                            {formatTimestamp(result.createdAt)}
+                          </time>
+                        </div>
+                        <small>{result.context}</small>
+                        <p>{result.text}</p>
+                        {result.tags.length > 0 && (
+                          <div className="note-tags" aria-label="Tags">
+                            {result.tags.map((tag) => (
+                              <span key={tag}>#{tag}</span>
+                            ))}
+                          </div>
+                        )}
+                      </article>
+                    ))
+                  )}
+                </div>
+              )}
+            </section>
             <section className="record-section">
               <h3>Life streams</h3>
               {streams.map((stream) => (
@@ -1887,6 +2045,23 @@ function App() {
                       rows={3}
                       aria-label={`${elementNote.title || 'Untitled'} note`}
                     />
+                    <div className="element-note-meta">
+                      <time dateTime={elementNote.createdAt}>
+                        {formatTimestamp(elementNote.createdAt)}
+                      </time>
+                      <input
+                        className="tag-editor"
+                        value={(elementNote.tags ?? []).join(', ')}
+                        onChange={(event) =>
+                          updateElementNoteTags(
+                            elementNote.id,
+                            event.target.value,
+                          )
+                        }
+                        placeholder="add tags"
+                        aria-label={`Tags for ${elementNote.title || 'untitled note'}`}
+                      />
+                    </div>
                     <button
                       className="delete-note"
                       type="button"
