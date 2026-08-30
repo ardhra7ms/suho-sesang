@@ -31,6 +31,7 @@ type WorldState = {
   activities: Activity[]
   placements: Record<PageId, PlacedElement[]>
   streamTitles: Record<StreamId, string>
+  weeklyMinimums: Record<StreamId, WeeklyMinimum>
   streamPlacements: Record<PageId, Record<StreamId, ElementPosition>>
   trash: TrashedItem[]
   elementFrames: Record<string, ElementFrame>
@@ -57,7 +58,14 @@ type PlacedElement = {
   y: number
   title?: string
   notes?: ElementNote[]
+  weeklyMinimum?: WeeklyMinimum
   frame?: ElementFrame
+}
+
+type WeeklyMinimum = {
+  text: string
+  completedWeeks: string[]
+  stream?: StreamId
 }
 
 type ElementNote = {
@@ -229,6 +237,11 @@ const defaultStreamPositions: Record<StreamId, ElementPosition> = {
   language: { x: 78, y: 55 },
 }
 
+const emptyWeeklyMinimum = (): WeeklyMinimum => ({
+  text: '',
+  completedWeeks: [],
+})
+
 const initialState: WorldState = {
   growth: {
     knowledge: 0,
@@ -250,6 +263,13 @@ const initialState: WorldState = {
     wellness: 'Wellness',
     journey: 'Journey',
     language: 'Language',
+  },
+  weeklyMinimums: {
+    creation: emptyWeeklyMinimum(),
+    knowledge: emptyWeeklyMinimum(),
+    wellness: emptyWeeklyMinimum(),
+    journey: emptyWeeklyMinimum(),
+    language: emptyWeeklyMinimum(),
   },
   streamPlacements: {
     spring: { ...defaultStreamPositions },
@@ -286,6 +306,19 @@ function formatTimestamp(value: string): string {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
+}
+
+function getWeekKey(date = new Date()): string {
+  const utcDate = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  )
+  const day = utcDate.getUTCDay() || 7
+  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day)
+  const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1))
+  const week = Math.ceil(
+    ((utcDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+  )
+  return `${utcDate.getUTCFullYear()}-W${String(week).padStart(2, '0')}`
 }
 
 const milestones = [
@@ -535,6 +568,20 @@ function loadWorld(): WorldState {
         ...initialState.streamTitles,
         ...parsed.streamTitles,
       },
+      weeklyMinimums: Object.fromEntries(
+        streams.map((stream) => {
+          const savedMinimum = parsed.weeklyMinimums?.[stream.id]
+          return [
+            stream.id,
+            {
+              text: savedMinimum?.text ?? '',
+              completedWeeks: Array.isArray(savedMinimum?.completedWeeks)
+                ? savedMinimum.completedWeeks
+                : [],
+            },
+          ]
+        }),
+      ) as Record<StreamId, WeeklyMinimum>,
       placements: {
         spring: Array.isArray(parsed.placements?.spring) ? parsed.placements.spring : [],
         summer: Array.isArray(parsed.placements?.summer) ? parsed.placements.summer : [],
@@ -607,6 +654,25 @@ function App() {
   const totalGrowth = useMemo(
     () => Object.values(world.growth).reduce((sum, value) => sum + value, 0),
     [world.growth],
+  )
+  const currentWeek = getWeekKey()
+  const totalStars = useMemo(
+    () =>
+      Object.values(world.weeklyMinimums).reduce(
+        (total, minimum) => total + minimum.completedWeeks.length,
+        0,
+      ) +
+      Object.values(world.placements).reduce(
+        (total, placements) =>
+          total +
+          placements.reduce(
+            (pageTotal, placement) =>
+              pageTotal + (placement.weeklyMinimum?.completedWeeks.length ?? 0),
+            0,
+          ),
+        0,
+      ),
+    [world.placements, world.weeklyMinimums],
   )
   const today = new Date().toDateString()
   const todayGrowth = world.activities
@@ -781,6 +847,63 @@ function App() {
           : activity,
       ),
     }))
+  }
+
+  const updateStreamMinimum = (
+    stream: StreamId,
+    update: Partial<WeeklyMinimum>,
+  ) => {
+    setWorld((current) => ({
+      ...current,
+      weeklyMinimums: {
+        ...current.weeklyMinimums,
+        [stream]: {
+          ...current.weeklyMinimums[stream],
+          ...update,
+        },
+      },
+    }))
+  }
+
+  const completeStreamMinimum = (stream: StreamId) => {
+    const minimum = world.weeklyMinimums[stream]
+    if (!minimum.text.trim() || minimum.completedWeeks.includes(currentWeek)) {
+      return
+    }
+    const unlocked = milestones.find(
+      (milestone) =>
+        milestone.threshold > totalGrowth &&
+        milestone.threshold <= totalGrowth + 15,
+    )
+    setWorld((current) => ({
+      ...current,
+      growth: {
+        ...current.growth,
+        [stream]: current.growth[stream] + 15,
+      },
+      activities: [
+        {
+          id: crypto.randomUUID(),
+          stream,
+          amount: 15,
+          note: `Weekly Minimum Win: ${minimum.text.trim()}`,
+          tags: ['minimum-win'],
+          createdAt: new Date().toISOString(),
+        },
+        ...current.activities,
+      ].slice(0, 100),
+      weeklyMinimums: {
+        ...current.weeklyMinimums,
+        [stream]: {
+          ...current.weeklyMinimums[stream],
+          completedWeeks: [
+            ...current.weeklyMinimums[stream].completedWeeks,
+            currentWeek,
+          ],
+        },
+      },
+    }))
+    if (unlocked) setNewUnlock(unlocked.name)
   }
 
   const trashActivityNote = (activityId: string) => {
@@ -1037,6 +1160,73 @@ function App() {
         ),
       },
     }))
+  }
+
+  const updateElementMinimum = (update: Partial<WeeklyMinimum>) => {
+    if (!activeNoteSource) return
+    updatePlacedElement(
+      activeNoteSource.page,
+      activeNoteSource.elementId,
+      (placement) => ({
+        ...placement,
+        weeklyMinimum: {
+          ...emptyWeeklyMinimum(),
+          ...placement.weeklyMinimum,
+          ...update,
+        },
+      }),
+    )
+  }
+
+  const completeElementMinimum = () => {
+    if (!activeNoteSource || !activePlacement?.weeklyMinimum) return
+    const minimum = activePlacement.weeklyMinimum
+    if (
+      !minimum.text.trim() ||
+      !minimum.stream ||
+      minimum.completedWeeks.includes(currentWeek)
+    ) {
+      return
+    }
+    const unlocked = milestones.find(
+      (milestone) =>
+        milestone.threshold > totalGrowth &&
+        milestone.threshold <= totalGrowth + 15,
+    )
+    const { page, elementId } = activeNoteSource
+    setWorld((current) => ({
+      ...current,
+      growth: {
+        ...current.growth,
+        [minimum.stream!]: current.growth[minimum.stream!] + 15,
+      },
+      activities: [
+        {
+          id: crypto.randomUUID(),
+          stream: minimum.stream!,
+          amount: 15,
+          note: `Weekly Minimum Win: ${minimum.text.trim()}`,
+          tags: ['minimum-win'],
+          createdAt: new Date().toISOString(),
+        },
+        ...current.activities,
+      ].slice(0, 100),
+      placements: {
+        ...current.placements,
+        [page]: current.placements[page].map((placement) =>
+          placement.elementId === elementId
+            ? {
+                ...placement,
+                weeklyMinimum: {
+                  ...minimum,
+                  completedWeeks: [...minimum.completedWeeks, currentWeek],
+                },
+              }
+            : placement,
+        ),
+      },
+    }))
+    if (unlocked) setNewUnlock(unlocked.name)
   }
 
   const startDragging = (
@@ -1536,7 +1726,9 @@ function App() {
         <div className="topbar-actions">
           {view === 'world' && (
           <>
-            <span className="growth-status">{totalGrowth} growth</span>
+            <span className="growth-status">
+              {totalGrowth} growth · <span aria-label={`${totalStars} successful weeks`}>★ {totalStars}</span>
+            </span>
             <button
               className="record-button"
               type="button"
@@ -1795,6 +1987,52 @@ function App() {
               />
               <p className="stream-prompt">{currentStream.prompt}</p>
             </div>
+            <section className="weekly-minimum" aria-label="Weekly Minimum Win">
+              <div className="weekly-minimum-heading">
+                <div>
+                  <span>This week's Minimum Win</span>
+                  <strong>★ {world.weeklyMinimums[currentStream.id].completedWeeks.length}</strong>
+                </div>
+                <label className="minimum-check">
+                  <input
+                    type="checkbox"
+                    checked={world.weeklyMinimums[
+                      currentStream.id
+                    ].completedWeeks.includes(currentWeek)}
+                    disabled={
+                      !world.weeklyMinimums[currentStream.id].text.trim() ||
+                      world.weeklyMinimums[
+                        currentStream.id
+                      ].completedWeeks.includes(currentWeek)
+                    }
+                    onChange={(event) => {
+                      if (event.target.checked) {
+                        completeStreamMinimum(currentStream.id)
+                      }
+                    }}
+                  />
+                  <span>Complete for +15</span>
+                </label>
+              </div>
+              <input
+                className="minimum-text"
+                value={world.weeklyMinimums[currentStream.id].text}
+                onChange={(event) =>
+                  updateStreamMinimum(currentStream.id, {
+                    text: event.target.value,
+                  })
+                }
+                placeholder="What is the smallest successful version this week?"
+                aria-label="Weekly Minimum Win"
+              />
+              <details className="points-guide">
+                <summary>How Growth works</summary>
+                <p>
+                  5 small step · 10 focused session · 15 weekly Minimum Win ·
+                  20 major milestone · 50 breakthrough
+                </p>
+              </details>
+            </section>
             <div className="new-growth-note">
               <span className="comic-panel-label">Write it down</span>
               <textarea
@@ -2012,6 +2250,73 @@ function App() {
                 aria-label="Element notes heading"
               />
             </div>
+            <section className="weekly-minimum" aria-label="Weekly Minimum Win">
+              <div className="weekly-minimum-heading">
+                <div>
+                  <span>This week's Minimum Win</span>
+                  <strong>
+                    ★ {activePlacement.weeklyMinimum?.completedWeeks.length ?? 0}
+                  </strong>
+                </div>
+                <label className="minimum-check">
+                  <input
+                    type="checkbox"
+                    checked={
+                      activePlacement.weeklyMinimum?.completedWeeks.includes(
+                        currentWeek,
+                      ) ?? false
+                    }
+                    disabled={
+                      !activePlacement.weeklyMinimum?.text.trim() ||
+                      !activePlacement.weeklyMinimum.stream ||
+                      activePlacement.weeklyMinimum.completedWeeks.includes(
+                        currentWeek,
+                      )
+                    }
+                    onChange={(event) => {
+                      if (event.target.checked) completeElementMinimum()
+                    }}
+                  />
+                  <span>Complete for +15</span>
+                </label>
+              </div>
+              <input
+                className="minimum-text"
+                value={activePlacement.weeklyMinimum?.text ?? ''}
+                onChange={(event) =>
+                  updateElementMinimum({ text: event.target.value })
+                }
+                placeholder="What is the smallest successful version this week?"
+                aria-label="Weekly Minimum Win"
+              />
+              <label className="minimum-stream">
+                <span>Add Growth to</span>
+                <select
+                  value={activePlacement.weeklyMinimum?.stream ?? ''}
+                  onChange={(event) =>
+                    updateElementMinimum({
+                      stream: event.target.value as StreamId,
+                    })
+                  }
+                >
+                  <option value="" disabled>
+                    Choose a life stream
+                  </option>
+                  {streams.map((stream) => (
+                    <option value={stream.id} key={stream.id}>
+                      {world.streamTitles[stream.id]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <details className="points-guide">
+                <summary>How Growth works</summary>
+                <p>
+                  5 small step · 10 focused session · 15 weekly Minimum Win ·
+                  20 major milestone · 50 breakthrough
+                </p>
+              </details>
+            </section>
 
             <div className="element-notes">
               {(activePlacement.notes ?? []).length === 0 ? (

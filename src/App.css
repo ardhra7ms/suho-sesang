@@ -244,6 +244,103 @@ textarea {
   font-size: 0.54rem;
 }
 
+.weekly-minimum {
+  padding: 14px 16px;
+  color: var(--comic-ink, var(--ink));
+  background: var(--comic-fill, rgba(255, 252, 239, 0.55));
+  border: 2px solid var(--comic-ink, var(--ink));
+}
+
+.weekly-minimum-heading,
+.weekly-minimum-heading > div,
+.minimum-check,
+.minimum-stream {
+  display: flex;
+  align-items: center;
+}
+
+.weekly-minimum-heading {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.weekly-minimum-heading > div {
+  gap: 10px;
+}
+
+.weekly-minimum-heading span,
+.minimum-stream span {
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.weekly-minimum-heading strong {
+  color: var(--comic-accent-ink, inherit);
+  padding: 4px 7px;
+  background: var(--comic-accent, transparent);
+  border: 1px solid currentColor;
+  font-size: 0.68rem;
+}
+
+.minimum-check {
+  gap: 7px;
+  cursor: pointer;
+}
+
+.minimum-check input {
+  width: 19px;
+  height: 19px;
+  margin: 0;
+  accent-color: var(--comic-ink, var(--ink));
+}
+
+.minimum-check input:disabled {
+  cursor: default;
+}
+
+.minimum-text {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  outline: 0;
+  color: inherit;
+  background: var(--comic-paper, transparent);
+}
+
+.minimum-stream {
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 9px;
+}
+
+.minimum-stream select {
+  min-height: 32px;
+  max-width: 60%;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  color: inherit;
+  background: var(--comic-paper, transparent);
+}
+
+.points-guide {
+  margin-top: 8px;
+  font-size: 0.58rem;
+}
+
+.points-guide summary {
+  width: fit-content;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.points-guide p {
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
 .app-shell {
   position: relative;
   width: 100%;

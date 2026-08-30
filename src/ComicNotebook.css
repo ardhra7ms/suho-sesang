@@ -73,9 +73,14 @@
   display: grid;
   grid-template-areas:
     'heading heading'
+    'minimum minimum'
     'entry history';
   grid-template-columns: minmax(0, 1.08fr) minmax(270px, 0.92fr);
   gap: 11px;
+}
+
+.comic-strip .weekly-minimum {
+  grid-area: minimum;
 }
 
 .comic-strip.stream-notebook .comic-heading-panel,
@@ -313,6 +318,7 @@
   display: grid;
   grid-template-areas:
     'title title'
+    'minimum minimum'
     'notes notes'
     'add add';
   grid-template-columns: 1fr 1fr;
