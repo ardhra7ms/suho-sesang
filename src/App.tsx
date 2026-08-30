@@ -7,8 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import './App.css'
-import './ComicNotebook.css'
+import './styles.css'
 
 type StreamId = 'knowledge' | 'language' | 'creation' | 'journey' | 'wellness'
 type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter'

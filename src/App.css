@@ -247,7 +247,7 @@ textarea {
 .weekly-minimum {
   padding: 14px 16px;
   color: var(--comic-ink, var(--ink));
-  font-family: 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
+  font-family: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
   background: var(--comic-fill, rgba(255, 252, 239, 0.55));
   border: 2px solid var(--comic-ink, var(--ink));
 }
