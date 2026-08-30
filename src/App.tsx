@@ -717,7 +717,7 @@ function App() {
       text: activity.note || 'A quiet step forward',
       tags: activity.tags ?? [],
       createdAt: activity.createdAt,
-      context: `+${activity.amount} Growth`,
+      context: `+${activity.amount} growth`,
     }))
     const elementResults = Object.entries(world.placements).flatMap(
       ([page, placements]) =>
@@ -885,7 +885,7 @@ function App() {
           id: crypto.randomUUID(),
           stream,
           amount: 15,
-          note: `Weekly Minimum Win: ${minimum.text.trim()}`,
+          note: `Weekly minimum win: ${minimum.text.trim()}`,
           tags: ['minimum-win'],
           createdAt: new Date().toISOString(),
         },
@@ -1204,7 +1204,7 @@ function App() {
           id: crypto.randomUUID(),
           stream: minimum.stream!,
           amount: 15,
-          note: `Weekly Minimum Win: ${minimum.text.trim()}`,
+          note: `Weekly minimum win: ${minimum.text.trim()}`,
           tags: ['minimum-win'],
           createdAt: new Date().toISOString(),
         },
@@ -1733,7 +1733,7 @@ function App() {
               type="button"
               onClick={() => setRecordOpen(true)}
             >
-              record
+              Record
             </button>
           </>
           )}
@@ -1748,7 +1748,7 @@ function App() {
             }
           }}
           >
-          {view === 'library' ? 'back' : 'elements'}
+          {view === 'library' ? 'Back' : 'Elements'}
           </button>
         </div>
       </header>
@@ -1757,7 +1757,7 @@ function App() {
         <section className="element-library" aria-labelledby="library-title">
           <header className="library-heading">
           <span className="library-eyebrow">Element library</span>
-          <h1 id="library-title">The World Drawer</h1>
+          <h1 id="library-title">The world drawer</h1>
           <p>
             Pieces to keep, rearrange, and eventually place into each season.
           </p>
@@ -1832,7 +1832,7 @@ function App() {
                 )}
               </div>
               {Object.values(defaultStreamElements).includes(item.id) ? (
-                <span className="default-element-mark">default</span>
+                <span className="default-element-mark">Default</span>
               ) : (
                 <button
                   className={
@@ -1986,10 +1986,10 @@ function App() {
               />
               <p className="stream-prompt">{currentStream.prompt}</p>
             </div>
-            <section className="weekly-minimum" aria-label="Weekly Minimum Win">
+            <section className="weekly-minimum" aria-label="Weekly minimum win">
               <div className="weekly-minimum-heading">
                 <div>
-                  <span>This week's Minimum Win</span>
+                  <span>This week's minimum win</span>
                   <strong>★ {world.weeklyMinimums[currentStream.id].completedWeeks.length}</strong>
                 </div>
                 <label className="minimum-check">
@@ -2022,12 +2022,12 @@ function App() {
                   })
                 }
                 placeholder="What is the smallest successful version this week?"
-                aria-label="Weekly Minimum Win"
+                aria-label="Weekly minimum win"
               />
               <details className="points-guide">
-                <summary>How Growth works</summary>
+                <summary>How growth works</summary>
                 <p>
-                  5 small step · 10 focused session · 15 weekly Minimum Win ·
+                  5 small step · 10 focused session · 15 weekly minimum win ·
                   20 major milestone · 50 breakthrough
                 </p>
               </details>
@@ -2102,7 +2102,7 @@ function App() {
                         onClick={() => trashActivityNote(activity.id)}
                         aria-label={`Move this ${world.streamTitles[currentStream.id]} note to trash`}
                       >
-                        remove
+                        Remove
                       </button>
                     </article>
                   ))
@@ -2249,10 +2249,10 @@ function App() {
                 aria-label="Element notes heading"
               />
             </div>
-            <section className="weekly-minimum" aria-label="Weekly Minimum Win">
+            <section className="weekly-minimum" aria-label="Weekly minimum win">
               <div className="weekly-minimum-heading">
                 <div>
-                  <span>This week's Minimum Win</span>
+                  <span>This week's minimum win</span>
                   <strong>
                     ★ {activePlacement.weeklyMinimum?.completedWeeks.length ?? 0}
                   </strong>
@@ -2286,10 +2286,10 @@ function App() {
                   updateElementMinimum({ text: event.target.value })
                 }
                 placeholder="What is the smallest successful version this week?"
-                aria-label="Weekly Minimum Win"
+                aria-label="Weekly minimum win"
               />
               <label className="minimum-stream">
-                <span>Add Growth to</span>
+                <span>Add growth to</span>
                 <select
                   value={activePlacement.weeklyMinimum?.stream ?? ''}
                   onChange={(event) =>
@@ -2309,9 +2309,9 @@ function App() {
                 </select>
               </label>
               <details className="points-guide">
-                <summary>How Growth works</summary>
+                <summary>How growth works</summary>
                 <p>
-                  5 small step · 10 focused session · 15 weekly Minimum Win ·
+                  5 small step · 10 focused session · 15 weekly minimum win ·
                   20 major milestone · 50 breakthrough
                 </p>
               </details>
@@ -2372,7 +2372,7 @@ function App() {
                       onClick={() => deleteElementNote(elementNote.id)}
                       aria-label={`Move ${elementNote.title || 'untitled note'} to trash`}
                     >
-                      remove
+                      Remove
                     </button>
                   </article>
                 ))
@@ -2380,7 +2380,7 @@ function App() {
             </div>
 
             <button className="add-note-button" type="button" onClick={addElementNote}>
-              + add a note
+              + Add a note
             </button>
           </section>
         </div>
@@ -2486,7 +2486,7 @@ function App() {
                             type="button"
                             onClick={() => restoreTrashedNote(trashed.id)}
                           >
-                            restore
+                            Restore
                           </button>
                         )}
                         <button
@@ -2494,7 +2494,7 @@ function App() {
                           type="button"
                           onClick={() => permanentlyDeleteNote(trashed.id)}
                         >
-                          delete forever
+                          Delete forever
                         </button>
                       </div>
                     </article>

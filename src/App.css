@@ -247,6 +247,7 @@ textarea {
 .weekly-minimum {
   padding: 14px 16px;
   color: var(--comic-ink, var(--ink));
+  font-family: 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
   background: var(--comic-fill, rgba(255, 252, 239, 0.55));
   border: 2px solid var(--comic-ink, var(--ink));
 }
@@ -271,7 +272,8 @@ textarea {
 .weekly-minimum-heading span,
 .minimum-stream span {
   font-size: 0.66rem;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .weekly-minimum-heading strong {
@@ -327,6 +329,7 @@ textarea {
 .points-guide {
   margin-top: 8px;
   font-size: 0.58rem;
+  line-height: 1.4;
 }
 
 .points-guide summary {
@@ -1662,6 +1665,10 @@ textarea {
     height: auto;
     min-height: var(--world-depth);
     overflow: visible;
+  }
+
+  .app-shell * {
+    text-transform: none !important;
   }
 
   .app-shell:not(.library-open) .painting-world {

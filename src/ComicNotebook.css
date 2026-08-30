@@ -9,7 +9,7 @@
   padding: 11px;
   overflow-x: hidden;
   color: var(--comic-ink);
-  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
   background: var(--comic-page);
   border: 2px solid var(--comic-ink);
   border-radius: 2px;
@@ -113,12 +113,12 @@
   padding: 0;
   border: 0;
   color: inherit;
-  font-family: 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif;
-  font-size: clamp(2.25rem, 6vw, 4.35rem);
+  font-family: 'Arial Rounded MT Bold', 'Avenir Next', 'Trebuchet MS', sans-serif;
+  font-size: clamp(2.15rem, 5.4vw, 3.8rem);
   font-style: normal;
   font-weight: 700;
-  letter-spacing: -0.055em;
-  line-height: 0.98;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
   text-align: left;
   text-transform: none;
   background: transparent;
@@ -132,10 +132,10 @@
   margin: 0 8px 12px 0;
   padding: 15px 22px;
   color: var(--comic-ink);
-  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
-  font-size: 0.96rem;
+  font-family: 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
+  font-size: 0.9rem;
   font-style: normal;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.3;
   background: var(--comic-paper);
   border: 2px solid var(--comic-ink);
@@ -169,12 +169,12 @@
   width: fit-content;
   padding: 6px 10px 5px;
   color: var(--comic-accent-ink);
-  font-size: 0.68rem;
-  font-style: italic;
+  font-size: 0.7rem;
+  font-style: normal;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.015em;
   line-height: 1;
-  text-transform: uppercase;
+  text-transform: none;
   background: var(--comic-accent);
   border: 2px solid var(--comic-ink);
   border-radius: 0;
@@ -214,7 +214,7 @@
   min-width: 0;
   padding: 6px 11px;
   color: inherit;
-  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
   font-size: 0.82rem;
   font-style: normal;
   font-weight: 700;
@@ -264,7 +264,7 @@
   margin: 10px 0;
   padding: 24px 18px;
   color: var(--comic-ink);
-  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
   font-style: normal;
   text-align: center;
   background: var(--comic-paper);
@@ -281,7 +281,7 @@
 }
 
 .comic-strip.stream-notebook .stream-note strong {
-  font-family: 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif;
+  font-family: 'Arial Rounded MT Bold', 'Avenir Next', 'Trebuchet MS', sans-serif;
 }
 
 .comic-strip.stream-notebook .stream-note textarea {
@@ -303,7 +303,7 @@
   place-items: center;
   padding: 0;
   color: var(--comic-ink);
-  font-family: 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif;
+  font-family: 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
   font-size: 1.45rem;
   font-weight: 700;
   line-height: 1;
@@ -357,8 +357,15 @@
 .comic-strip.element-notebook .element-note input,
 .comic-strip.element-notebook .element-note textarea {
   color: inherit;
-  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
   background: transparent;
+}
+
+.comic-strip.element-notebook .element-note > input {
+  font-family: 'Arial Rounded MT Bold', 'Avenir Next', 'Trebuchet MS', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .comic-strip.element-notebook .add-note-button {
@@ -402,7 +409,7 @@
   .comic-strip.stream-notebook .comic-heading-panel .stream-notebook-title,
   .comic-strip.element-notebook .notebook-source .notebook-title {
     padding-right: 30px;
-    font-size: clamp(2rem, 12vw, 3.3rem);
+    font-size: clamp(2rem, 11vw, 3.1rem);
   }
 
   .comic-strip.stream-notebook .comic-heading-panel .stream-prompt {
