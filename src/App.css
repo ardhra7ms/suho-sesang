@@ -1336,52 +1336,6 @@ textarea {
   text-transform: uppercase;
 }
 
-.organism-record {
-  padding-top: 18px;
-}
-
-.organism-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 7px;
-  margin: 11px 0;
-}
-
-.organism-summary div {
-  padding: 10px 6px;
-  text-align: center;
-  background: rgba(113, 93, 150, 0.1);
-  border-radius: 18px 8px 16px 10px;
-}
-
-.organism-summary div:nth-child(2) {
-  background: rgba(197, 142, 151, 0.15);
-  border-radius: 9px 18px 10px 16px;
-}
-
-.organism-summary strong,
-.organism-summary span {
-  display: block;
-}
-
-.organism-summary strong {
-  font-family: 'Bricolage Grotesque Variable', 'Arial Black', sans-serif;
-  font-size: 1.35rem;
-}
-
-.organism-summary span {
-  margin-top: 2px;
-  font-size: 0.54rem;
-  font-weight: 650;
-}
-
-.organism-record p {
-  margin: 0;
-  color: rgba(38, 53, 45, 0.72);
-  font-size: 0.68rem;
-  line-height: 1.45;
-}
-
 .record-section {
   padding: 14px 0;
   border-top: 1px solid rgba(38, 53, 45, 0.18);

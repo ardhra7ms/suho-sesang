@@ -673,12 +673,7 @@ function App() {
   const todayGrowth = world.activities
     .filter((activity) => new Date(activity.createdAt).toDateString() === today)
     .reduce((sum, activity) => sum + activity.amount, 0)
-  const earnedLeaves = Math.floor(totalGrowth / 5)
-  const organismGrowth = {
-    trees: Math.floor(earnedLeaves / 100),
-    branches: Math.floor((earnedLeaves % 100) / 10),
-    leaves: earnedLeaves % 10,
-  }
+  const level = Math.floor(totalGrowth / 100) + 1
   const currentStream = streams.find((stream) => stream.id === activeStream)
   const season = seasons.find((item) => item.id === activeSeason)!
   const worldDepth = useMemo(() => {
@@ -1667,7 +1662,7 @@ function App() {
         >
           <img
             className="bunny-logo"
-            src={`${import.meta.env.BASE_URL}bunny.svg`}
+            src={`${import.meta.env.BASE_URL}bunny-boxed.svg`}
             alt=""
           />
           <strong>suho's sesang</strong>
@@ -2107,22 +2102,12 @@ function App() {
             <span className="eyebrow">The garden record</span>
             <h2>What the water remembers</h2>
             <div className="summary-grid">
+              <div><strong>{level}</strong><span>Level</span></div>
               <div><strong>{totalGrowth}</strong><span>Growth</span></div>
               <div><strong>+{todayGrowth}</strong><span>Today</span></div>
               <div><strong>{totalStars}</strong><span>Successful weeks</span></div>
             </div>
-            <section className="record-section organism-record">
-              <h3>What your Growth has become</h3>
-              <div className="organism-summary">
-                <div><strong>{organismGrowth.trees}</strong><span>Trees</span></div>
-                <div><strong>{organismGrowth.branches}</strong><span>Branches</span></div>
-                <div><strong>{organismGrowth.leaves}</strong><span>Leaves</span></div>
-              </div>
-              <p>
-                Every 5 Growth makes a leaf. Ten leaves gather into a branch,
-                and ten branches grow into a tree.
-              </p>
-            </section>
+            <p className="level-rule">Every 100 Growth advances one level.</p>
             <section className="record-section memory-search">
               <h3>Find a memory</h3>
               <input
