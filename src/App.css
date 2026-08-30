@@ -2472,15 +2472,22 @@ textarea {
 
 .season-switcher button,
 .season-switcher button.active {
-  padding: 8px 0 5px;
-  border-radius: 0;
+  padding: 7px 10px;
+  border: 1.5px solid transparent;
+  border-radius: 2px;
   color: #211b0b;
   font-size: 0.8rem;
   background: transparent;
+  box-shadow: none;
+  text-decoration: none;
+  transform: none;
 }
 
 .season-switcher button.active {
-  border-bottom: 1px solid #211b0b;
+  border-color: #211b0b;
+  background: #fff4c8;
+  box-shadow: 3px 3px 0 #211b0b;
+  transform: translate(-1px, -1px) rotate(-1deg);
 }
 
 .topbar-actions {
@@ -2489,14 +2496,23 @@ textarea {
 
 .record-button,
 .library-button {
-  padding: 7px 0 5px;
-  border: 0;
-  border-bottom: 1px solid #211b0b;
-  border-radius: 0;
+  padding: 7px 10px;
+  border: 1.5px solid #211b0b;
+  border-radius: 2px;
   color: #211b0b;
   font: inherit;
   font-size: 0.8rem;
   background: transparent;
+  text-decoration: none;
+}
+
+.record-button:hover,
+.record-button:focus-visible,
+.library-button:hover,
+.library-button:focus-visible {
+  background: #fff4c8;
+  box-shadow: 2px 2px 0 #211b0b;
+  transform: translate(-1px, -1px);
 }
 
 .growth-status {
@@ -2522,9 +2538,8 @@ textarea {
 }
 
 .library-topbar .library-button {
-  border: 0;
-  border-bottom: 1px solid #211b0b;
-  border-radius: 0;
+  border: 1.5px solid #211b0b;
+  border-radius: 2px;
   background: transparent;
 }
 
