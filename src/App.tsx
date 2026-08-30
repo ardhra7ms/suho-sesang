@@ -1990,7 +1990,12 @@ function App() {
                 }
                 aria-label="Element heading"
               />
-              <p className="stream-prompt">{currentStream.prompt}</p>
+              <div className="stream-prompt-panel">
+                <span className="stream-prompt-kicker">Meanwhile, in your world…</span>
+                <p className="stream-prompt">{currentStream.prompt}</p>
+                <span className="stream-prompt-examples">{currentStream.examples}</span>
+                <span className="stream-prompt-spark" aria-hidden="true">✦</span>
+              </div>
             </div>
             <section className="weekly-minimum" aria-label="Weekly minimum win">
               <div className="weekly-minimum-heading">
