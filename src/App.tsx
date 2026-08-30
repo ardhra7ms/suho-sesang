@@ -329,15 +329,6 @@ function getWeekKey(date = new Date()): string {
   return `${utcDate.getUTCFullYear()}-W${String(week).padStart(2, '0')}`
 }
 
-const milestones = [
-  { name: 'a new reflection', threshold: 10 },
-  { name: 'a small ripple', threshold: 20 },
-  { name: 'a lotus bloom', threshold: 35 },
-  { name: 'a hidden visitor', threshold: 50 },
-  { name: 'a glimmer on the water', threshold: 75 },
-  { name: 'another bloom', threshold: 100 },
-]
-
 const libraryElements: LibraryElement[] = [
   {
     id: 'spring-lilies',
@@ -657,7 +648,6 @@ function App() {
     page: PageId
     elementId: string
   } | null>(null)
-  const [newUnlock, setNewUnlock] = useState<string | null>(null)
   const [activeSeason, setActiveSeason] = useState<SeasonId>(loadSeason)
   const dragMoved = useRef(false)
   const uploadInput = useRef<HTMLInputElement>(null)
@@ -668,30 +658,32 @@ function App() {
   )
   const currentWeek = getWeekKey()
   const totalStars = useMemo(
-    () =>
-      Object.values(world.weeklyMinimums).reduce(
-        (total, minimum) => total + minimum.completedWeeks.length,
-        0,
-      ) +
-      Object.values(world.placements).reduce(
-        (total, placements) =>
-          total +
-          placements.reduce(
-            (pageTotal, placement) =>
-              pageTotal + (placement.weeklyMinimum?.completedWeeks.length ?? 0),
-            0,
-          ),
-        0,
-      ),
+    () => {
+      const successfulWeeks = new Set<string>()
+      Object.values(world.weeklyMinimums).forEach((minimum) => {
+        minimum.completedWeeks.forEach((week) => successfulWeeks.add(week))
+      })
+      Object.values(world.placements).forEach((placements) => {
+        placements.forEach((placement) => {
+          placement.weeklyMinimum?.completedWeeks.forEach((week) =>
+            successfulWeeks.add(week),
+          )
+        })
+      })
+      return successfulWeeks.size
+    },
     [world.placements, world.weeklyMinimums],
   )
   const today = new Date().toDateString()
   const todayGrowth = world.activities
     .filter((activity) => new Date(activity.createdAt).toDateString() === today)
     .reduce((sum, activity) => sum + activity.amount, 0)
-  const level = Math.floor(totalGrowth / 100) + 1
-  const completion = Math.min(100, Math.round((totalGrowth / 300) * 100))
-  const nextUnlock = milestones.find((milestone) => milestone.threshold > totalGrowth)
+  const earnedLeaves = Math.floor(totalGrowth / 5)
+  const organismGrowth = {
+    trees: Math.floor(earnedLeaves / 100),
+    branches: Math.floor((earnedLeaves % 100) / 10),
+    leaves: earnedLeaves % 10,
+  }
   const currentStream = streams.find((stream) => stream.id === activeStream)
   const season = seasons.find((item) => item.id === activeSeason)!
   const worldDepth = useMemo(() => {
@@ -801,20 +793,7 @@ function App() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!newUnlock) return
-    const timer = window.setTimeout(() => setNewUnlock(null), 3000)
-    return () => window.clearTimeout(timer)
-  }, [newUnlock])
-
   const addGrowth = (stream: StreamId, amount: number) => {
-    const updatedGrowth = totalGrowth + amount
-    const unlocked = milestones.find(
-      (milestone) =>
-        milestone.threshold > totalGrowth &&
-        milestone.threshold <= updatedGrowth,
-    )
-
     setWorld((current) => {
       const activities = [
         {
@@ -835,7 +814,6 @@ function App() {
     })
     setNote('')
     setNoteTags('')
-    if (unlocked) setNewUnlock(unlocked.name)
   }
 
   const updateActivityNote = (activityId: string, value: string) => {
@@ -881,11 +859,6 @@ function App() {
     if (!minimum.text.trim() || minimum.completedWeeks.includes(currentWeek)) {
       return
     }
-    const unlocked = milestones.find(
-      (milestone) =>
-        milestone.threshold > totalGrowth &&
-        milestone.threshold <= totalGrowth + 15,
-    )
     setWorld((current) => {
       const activities = [
         {
@@ -914,7 +887,6 @@ function App() {
         },
       }
     })
-    if (unlocked) setNewUnlock(unlocked.name)
   }
 
   const trashActivityNote = (activityId: string) => {
@@ -1196,11 +1168,6 @@ function App() {
     ) {
       return
     }
-    const unlocked = milestones.find(
-      (milestone) =>
-        milestone.threshold > totalGrowth &&
-        milestone.threshold <= totalGrowth + 15,
-    )
     const { page, elementId } = activeNoteSource
     setWorld((current) => {
       const activities = [
@@ -1234,7 +1201,6 @@ function App() {
         },
       }
     })
-    if (unlocked) setNewUnlock(unlocked.name)
   }
 
   const startDragging = (
@@ -1678,7 +1644,9 @@ function App() {
               {world.streamTitles[stream.id]}
             </span>
             <span className="note-count" aria-hidden="true">
-              {noteCount || '+'}
+              {noteCount
+                ? `${noteCount} ${noteCount === 1 ? 'note' : 'notes'}`
+                : '+'}
             </span>
           </button>
         )
@@ -1963,7 +1931,7 @@ function App() {
           onClick={() => setActiveStream(null)}
         >
           <section
-            className={`stream-notebook themed-notebook comic-strip notebook-season-${activeSeason}`}
+            className={`stream-notebook themed-notebook comic-strip notebook-season-${activeSeason} notebook-stream-${currentStream.id}`}
             onClick={(event) => event.stopPropagation()}
             aria-label={`${world.streamTitles[currentStream.id]} notes`}
           >
@@ -2141,14 +2109,22 @@ function App() {
             <span className="eyebrow">The garden record</span>
             <h2>What the water remembers</h2>
             <div className="summary-grid">
-              <div><strong>{level}</strong><span>Level</span></div>
               <div><strong>{totalGrowth}</strong><span>Growth</span></div>
               <div><strong>+{todayGrowth}</strong><span>Today</span></div>
-              <div><strong>{completion}%</strong><span>{season.label}</span></div>
+              <div><strong>{totalStars}</strong><span>Successful weeks</span></div>
             </div>
-            <div className="completion-track">
-              <span style={{ width: `${completion}%` }} />
-            </div>
+            <section className="record-section organism-record">
+              <h3>What your Growth has become</h3>
+              <div className="organism-summary">
+                <div><strong>{organismGrowth.trees}</strong><span>Trees</span></div>
+                <div><strong>{organismGrowth.branches}</strong><span>Branches</span></div>
+                <div><strong>{organismGrowth.leaves}</strong><span>Leaves</span></div>
+              </div>
+              <p>
+                Every 5 Growth makes a leaf. Ten leaves gather into a branch,
+                and ten branches grow into a tree.
+              </p>
+            </section>
             <section className="record-section memory-search">
               <h3>Find a memory</h3>
               <input
@@ -2194,14 +2170,6 @@ function App() {
                   <strong>{world.growth[stream.id]}</strong>
                 </div>
               ))}
-            </section>
-            <section className="record-section">
-              <h3>Next change</h3>
-              <p>
-                {nextUnlock
-                  ? `${nextUnlock.name} at ${nextUnlock.threshold} growth`
-                  : 'The water is fully awake—for now.'}
-              </p>
             </section>
             <section className="record-section">
               <h3>Recent traces</h3>
@@ -2521,12 +2489,6 @@ function App() {
         </div>
       )}
 
-      {newUnlock && (
-        <div className="unlock-toast" role="status">
-          <small>The water changed</small>
-          <strong>{newUnlock} appeared</strong>
-        </div>
-      )}
     </main>
   )
 }

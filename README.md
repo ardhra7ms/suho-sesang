@@ -10,11 +10,12 @@ progress adds Growth to a calm palace garden, revealing new details over time.
 - One-tap `+5`, `+10`, `+20`, and `+50` Growth updates with optional notes
 - Five permanent visual elements that open the life-stream Growth notes
 - Four switchable seasonal worlds
-- Incremental discoveries tied to meaningful Growth milestones
+- A visible Growth hierarchy where every 5 Growth makes a leaf, 10 leaves make
+  a branch, and 10 branches make a tree
 - A filterable element library with page-specific placement and drag positioning
 - Local image uploads with four irregular frame choices and library deletion
 - Custom element notebooks with editable headings and multiple editable notes
-- Distinct seasonal notebook treatments for Spring, Summer, Autumn, and Winter
+- Distinct high-contrast comic palettes for each life-stream notebook
 - Drag-to-trash custom elements with restore and permanent deletion
 - Browser-only persistence with `localStorage`
 - Responsive, mobile-first layout and installable web app metadata

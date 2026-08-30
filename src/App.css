@@ -901,6 +901,7 @@ textarea {
   font-size: 0.62rem;
   font-weight: 600;
   line-height: 1;
+  white-space: nowrap;
   background: #405f4a;
   box-shadow: 0 3px 10px rgba(18, 27, 22, 0.3);
 }
@@ -1307,7 +1308,7 @@ textarea {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   border-top: 1px solid rgba(38, 53, 45, 0.22);
   border-bottom: 1px solid rgba(38, 53, 45, 0.22);
 }
@@ -1335,16 +1336,50 @@ textarea {
   text-transform: uppercase;
 }
 
-.completion-track {
-  height: 3px;
-  margin: 16px 0 23px;
-  background: rgba(38, 53, 45, 0.12);
+.organism-record {
+  padding-top: 18px;
 }
 
-.completion-track span {
-  height: 100%;
+.organism-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin: 11px 0;
+}
+
+.organism-summary div {
+  padding: 10px 6px;
+  text-align: center;
+  background: rgba(113, 93, 150, 0.1);
+  border-radius: 18px 8px 16px 10px;
+}
+
+.organism-summary div:nth-child(2) {
+  background: rgba(197, 142, 151, 0.15);
+  border-radius: 9px 18px 10px 16px;
+}
+
+.organism-summary strong,
+.organism-summary span {
   display: block;
-  background: var(--violet);
+}
+
+.organism-summary strong {
+  font-family: 'Bricolage Grotesque Variable', 'Arial Black', sans-serif;
+  font-size: 1.35rem;
+}
+
+.organism-summary span {
+  margin-top: 2px;
+  font-size: 0.54rem;
+  font-weight: 650;
+}
+
+.organism-record p {
+  margin: 0;
+  color: rgba(38, 53, 45, 0.72);
+  font-size: 0.68rem;
+  line-height: 1.45;
 }
 
 .record-section {
@@ -1838,6 +1873,7 @@ textarea {
   .note-count {
     min-width: 22px;
     height: 22px;
+    font-size: 0.52rem;
   }
 
   .stream-dock {
@@ -1880,11 +1916,11 @@ textarea {
   }
 
   .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .summary-grid div:nth-child(-n + 2) {
-    border-bottom: 1px solid rgba(38, 53, 45, 0.18);
+    border-bottom: 0;
   }
 
   .quick-sheet {
