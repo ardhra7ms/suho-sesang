@@ -16,58 +16,43 @@
 }
 
 .target-cloud {
-  --cloud-fill: #fff3a5;
   --cloud-ink: #173d2b;
+  --cloud-shadow: #f0c979;
+  --cloud-shadow-deep: #a66f54;
+  --cloud-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 120'%3E%3Cpath d='M38 107C20 107 8 97 8 82C8 67 19 55 35 52C36 29 54 12 77 12C94 12 109 21 116 35C126 23 141 17 158 18C181 19 199 36 201 59C218 62 230 74 230 90C230 101 220 108 204 109C157 112 87 112 38 107Z'/%3E%3C/svg%3E");
   position: absolute;
   isolation: isolate;
   top: 0;
   left: 0;
-  width: 164px;
-  min-height: 72px;
+  width: 178px;
+  min-height: 92px;
   display: grid;
   align-content: center;
-  padding: 22px 21px 13px;
+  padding: 26px 23px 16px;
   color: var(--cloud-ink);
   font-family: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
   text-align: center;
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--cloud-fill) 82%, white) 0 42%,
-      var(--cloud-fill) 43% 100%
-    );
+  background: transparent;
   border: 0;
-  border-radius: 48% 52% 45% 55% / 55% 60% 40% 45%;
-  box-shadow: inset 0 -5px 0 color-mix(in srgb, var(--cloud-ink) 10%, transparent);
-  filter:
-    drop-shadow(4px 6px 0 color-mix(in srgb, var(--cloud-ink) 34%, transparent))
-    drop-shadow(0 12px 16px rgba(8, 24, 20, 0.2));
   pointer-events: auto;
   cursor: pointer;
   will-change: transform;
 }
 
-.target-cloud::before,
-.target-cloud::after {
+.target-cloud::before {
   content: '';
   position: absolute;
   z-index: -1;
-  background: color-mix(in srgb, var(--cloud-fill) 88%, white);
-  border-radius: 50%;
-}
-
-.target-cloud::before {
-  top: -15px;
-  left: 29px;
-  width: 57px;
-  height: 43px;
-}
-
-.target-cloud::after {
-  top: -10px;
-  right: 25px;
-  width: 45px;
-  height: 34px;
+  inset: -8px -5px 0;
+  background:
+    radial-gradient(circle at 31% 24%, #fff 0 9%, transparent 28%),
+    linear-gradient(165deg, #fff 4%, #f7faf9 46%, #dce7e5 100%);
+  filter:
+    drop-shadow(0 7px 0 var(--cloud-shadow))
+    drop-shadow(0 7px 0 var(--cloud-shadow-deep))
+    drop-shadow(0 13px 13px rgba(8, 24, 20, 0.24));
+  -webkit-mask: var(--cloud-shape) center / 100% 100% no-repeat;
+  mask: var(--cloud-shape) center / 100% 100% no-repeat;
 }
 
 .target-cloud-title,
@@ -129,28 +114,28 @@
 }
 
 .target-cloud-creation {
-  --cloud-fill: #ff8a66;
-  --cloud-ink: #18214a;
+  --cloud-shadow: #ffad91;
+  --cloud-shadow-deep: #b85a55;
 }
 
 .target-cloud-knowledge {
-  --cloud-fill: #fff39b;
-  --cloud-ink: #123f32;
+  --cloud-shadow: #f3d672;
+  --cloud-shadow-deep: #a8853f;
 }
 
 .target-cloud-wellness {
-  --cloud-fill: #91eadc;
-  --cloud-ink: #152444;
+  --cloud-shadow: #8edfd2;
+  --cloud-shadow-deep: #3d938b;
 }
 
 .target-cloud-journey {
-  --cloud-fill: #d5c8ff;
-  --cloud-ink: #24184c;
+  --cloud-shadow: #cbbcf3;
+  --cloud-shadow-deep: #76669d;
 }
 
 .target-cloud-language {
-  --cloud-fill: #a9d3ff;
-  --cloud-ink: #102d4f;
+  --cloud-shadow: #a6cfee;
+  --cloud-shadow-deep: #557fa8;
 }
 
 .target-board {
@@ -545,23 +530,9 @@
   }
 
   .target-cloud {
-    width: 132px;
-    min-height: 62px;
-    padding: 19px 16px 10px;
-  }
-
-  .target-cloud::before {
-    top: -12px;
-    left: 23px;
-    width: 47px;
-    height: 35px;
-  }
-
-  .target-cloud::after {
-    top: -8px;
-    right: 20px;
-    width: 37px;
-    height: 28px;
+    width: 144px;
+    min-height: 76px;
+    padding: 22px 18px 12px;
   }
 
   .cloud-charge {
