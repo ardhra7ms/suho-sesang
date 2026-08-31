@@ -1,10 +1,10 @@
 .comic-strip {
-  --comic-page: #f3e8df;
-  --comic-ink: #173d2b;
-  --comic-fill: #fffaf0;
-  --comic-paper: #f3d5dc;
-  --comic-accent: #d95b7d;
-  --comic-accent-ink: #102b1e;
+  --comic-page: #f5e8e3;
+  --comic-ink: #18372b;
+  --comic-fill: #fffaf2;
+  --comic-paper: #f2d3db;
+  --comic-accent: #9c385d;
+  --comic-accent-ink: #fffaf2;
   position: relative;
   width: min(860px, calc(100vw - 32px));
   max-height: calc(100svh - 32px);
@@ -22,84 +22,30 @@
 }
 
 .comic-strip.notebook-season-summer {
-  --comic-page: #f8edc6;
-  --comic-ink: #2d280f;
+  --comic-page: #f4e8bd;
+  --comic-ink: #31290f;
   --comic-fill: #fffaf0;
-  --comic-paper: #f6d56b;
-  --comic-accent: #2189a5;
-  --comic-accent-ink: #102a32;
+  --comic-paper: #efcd68;
+  --comic-accent: #176c82;
+  --comic-accent-ink: #fffaf0;
 }
 
 .comic-strip.notebook-season-autumn {
-  --comic-page: #e9dcc7;
-  --comic-ink: #3e2418;
-  --comic-fill: #fff7e8;
-  --comic-paper: #e6ad61;
-  --comic-accent: #8f3f2e;
-  --comic-accent-ink: #fff7e8;
+  --comic-page: #eadcc6;
+  --comic-ink: #402318;
+  --comic-fill: #fff5e7;
+  --comic-paper: #dda35c;
+  --comic-accent: #843c2c;
+  --comic-accent-ink: #fff5e7;
 }
 
 .comic-strip.notebook-season-winter {
-  --comic-page: #dce7e8;
-  --comic-ink: #102731;
-  --comic-fill: #f4fbf9;
-  --comic-paper: #c2dfe1;
-  --comic-accent: #4ea98b;
-  --comic-accent-ink: #0b251d;
-}
-
-.comic-strip.notebook-stream-creation {
-  --comic-page: #ffd166;
-  --comic-ink: #18214a;
-  --comic-fill: #fff4cf;
-  --comic-paper: #ff8a66;
-  --comic-accent: #304ffe;
-  --comic-accent-ink: #fffdf3;
-}
-
-.comic-strip.notebook-stream-knowledge {
-  --comic-page: #ff8fc7;
-  --comic-ink: #123f32;
-  --comic-fill: #fff39b;
-  --comic-paper: #f8c5df;
-  --comic-accent: #126b54;
-  --comic-accent-ink: #fffdf3;
-}
-
-.comic-strip.notebook-stream-wellness {
-  --comic-page: #35d6c3;
-  --comic-ink: #152444;
-  --comic-fill: #dffcf4;
-  --comic-paper: #91eadc;
-  --comic-accent: #f05a28;
-  --comic-accent-ink: #17223d;
-}
-
-.comic-strip.notebook-stream-journey {
-  --comic-page: #a88cff;
-  --comic-ink: #24184c;
-  --comic-fill: #f4efff;
-  --comic-paper: #d5c8ff;
-  --comic-accent: #b8e600;
-  --comic-accent-ink: #202b00;
-}
-
-.comic-strip.notebook-stream-language {
-  --comic-page: #5ba8ff;
-  --comic-ink: #102d4f;
-  --comic-fill: #edf6ff;
-  --comic-paper: #a9d3ff;
-  --comic-accent: #ff7b22;
-  --comic-accent-ink: #2e1908;
-}
-
-.comic-strip.element-notebook {
-  --comic-page: #ff7b57;
-  --comic-ink: #17244f;
-  --comic-fill: #fff1a8;
-  --comic-paper: #cfc1ff;
-  --comic-accent: #2f55d4;
-  --comic-accent-ink: #fffdf3;
+  --comic-page: #dbe7e7;
+  --comic-ink: #122832;
+  --comic-fill: #f6fbf8;
+  --comic-paper: #bedbdd;
+  --comic-accent: #277a63;
+  --comic-accent-ink: #f6fbf8;
 }
 
 .comic-strip.stream-notebook {
@@ -592,10 +538,21 @@
 }
 
 @media (max-width: 700px) {
+  .notebook-overlay {
+    display: block;
+    padding: max(8svh, 52px) 0 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .comic-strip {
     width: 100%;
-    max-height: 90svh;
-    padding: 12px;
+    max-height: none;
+    min-height: 100svh;
+    padding: 12px 12px calc(28px + env(safe-area-inset-bottom));
+    overflow: visible;
     border-radius: 30px 30px 0 0;
     box-shadow: none;
   }

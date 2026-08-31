@@ -1676,7 +1676,7 @@ textarea {
   .app-shell:not(.library-open) .painting-world {
     position: relative;
     height: var(--world-depth);
-    min-height: 165svh;
+    min-height: 220svh;
     overflow: clip;
     background-image: var(--mobile-season-image);
     background-position: center top;
