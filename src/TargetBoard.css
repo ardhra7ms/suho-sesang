@@ -157,9 +157,9 @@
   --target-ink: #173d2b;
   --target-muted: #617168;
   position: relative;
-  width: min(880px, calc(100vw - 32px));
-  max-height: calc(100svh - 32px);
-  padding: 34px;
+  width: min(720px, calc(100vw - 40px));
+  max-height: calc(100svh - 48px);
+  padding: 24px;
   overflow-y: auto;
   color: var(--target-ink);
   font-family: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
@@ -172,17 +172,25 @@
 }
 
 .target-board > .close-button {
-  top: 20px;
-  right: 22px;
-  color: var(--target-ink);
-  font-size: 1.6rem;
-  background: transparent;
-  border: 0;
+  z-index: 20;
+  top: 11px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #fffdf3;
+  font-size: 1.25rem;
+  background: var(--target-ink);
+  border: 2px solid #fffdf3;
+  border-radius: 50%;
+  box-shadow: 3px 4px 0 rgba(23, 61, 43, 0.2);
 }
 
 .target-board-heading {
   position: relative;
-  padding: 28px 31px;
+  padding: 22px 25px;
   background: #ffd85f;
   border-radius: 30px 12px 28px 17px;
 }
@@ -196,7 +204,7 @@
   max-width: 600px;
   margin: 5px 45px 8px 0;
   font-family: 'DM Sans Variable', 'DM Sans', Helvetica, Arial, sans-serif;
-  font-size: clamp(2.4rem, 7vw, 4.25rem);
+  font-size: clamp(2.1rem, 5vw, 3rem);
   font-variation-settings: 'opsz' 48, 'wdth' 90;
   font-weight: 730;
   letter-spacing: -0.06em;
@@ -212,7 +220,7 @@
 }
 
 .target-board-heading button {
-  margin-top: 17px;
+  margin-top: 13px;
   padding: 9px 14px;
   color: #fffdf3;
   font-weight: 700;
@@ -222,7 +230,7 @@
 }
 
 .target-board-section {
-  margin-top: 25px;
+  margin-top: 19px;
 }
 
 .target-board-section > h3 {
@@ -562,18 +570,18 @@
 
   .target-board {
     width: 100%;
-    max-height: 92svh;
+    max-height: 88svh;
     padding: 12px;
     border-radius: 28px 28px 0 0;
     box-shadow: none;
   }
 
   .target-board-heading {
-    padding: 26px 19px 20px;
+    padding: 20px 17px 17px;
   }
 
   .target-board-heading h2 {
-    font-size: 2.65rem;
+    font-size: 2.2rem;
   }
 
   .target-card-summary {
