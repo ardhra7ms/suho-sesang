@@ -9,11 +9,11 @@ import {
 } from 'react'
 import {
   cloudConfigured,
+  connectGoogleDrive,
   deleteCloudElement,
   getCloudSession,
   loadCloudWorld,
   saveCloudWorld,
-  sendMagicLink,
   signOutCloud,
   syncCloudElements,
   watchCloudElements,
@@ -51,6 +51,9 @@ type WorldState = {
   trash: TrashedItem[]
   elementFrames: Record<string, ElementFrame>
   deletedElementIds: string[]
+  deletedActivityIds: string[]
+  deletedTargetIds: string[]
+  deletedPlacementIds: string[]
 }
 
 type ElementPosition = {
@@ -334,6 +337,9 @@ const initialState: WorldState = {
   trash: [],
   elementFrames: {},
   deletedElementIds: [],
+  deletedActivityIds: [],
+  deletedTargetIds: [],
+  deletedPlacementIds: [],
 }
 
 function getPlacedElementStyle(position: ElementPosition): PlacedElementStyle {
@@ -709,6 +715,15 @@ function normalizeWorld(value: unknown): WorldState {
     deletedElementIds: Array.isArray(parsed.deletedElementIds)
       ? parsed.deletedElementIds
       : [],
+    deletedActivityIds: Array.isArray(parsed.deletedActivityIds)
+      ? parsed.deletedActivityIds
+      : [],
+    deletedTargetIds: Array.isArray(parsed.deletedTargetIds)
+      ? parsed.deletedTargetIds
+      : [],
+    deletedPlacementIds: Array.isArray(parsed.deletedPlacementIds)
+      ? parsed.deletedPlacementIds
+      : [],
   }
 }
 
@@ -719,8 +734,21 @@ function mergeById<T extends { id: string }>(remote: T[], local: T[]): T[] {
 function mergeWorlds(localValue: unknown, remoteValue: unknown): WorldState {
   const local = normalizeWorld(localValue)
   const remote = normalizeWorld(remoteValue)
-  const activities = mergeById(remote.activities, local.activities)
-  const targets = mergeById(remote.targets, local.targets)
+  const deletedActivityIds = Array.from(
+    new Set([...remote.deletedActivityIds, ...local.deletedActivityIds]),
+  )
+  const deletedTargetIds = Array.from(
+    new Set([...remote.deletedTargetIds, ...local.deletedTargetIds]),
+  )
+  const deletedPlacementIds = Array.from(
+    new Set([...remote.deletedPlacementIds, ...local.deletedPlacementIds]),
+  )
+  const activities = mergeById(remote.activities, local.activities).filter(
+    (activity) => !deletedActivityIds.includes(activity.id),
+  )
+  const targets = mergeById(remote.targets, local.targets).filter(
+    (target) => !deletedTargetIds.includes(target.id),
+  )
   const placements = Object.fromEntries(
     seasons.map((season) => [
       season.id,
@@ -733,7 +761,14 @@ function mergeWorlds(localValue: unknown, remoteValue: unknown): WorldState {
           ...placement,
           id: placement.elementId,
         })),
-      ).map(({ id: _id, ...placement }) => placement),
+      )
+        .filter(
+          (placement) =>
+            !deletedPlacementIds.includes(
+              `${season.id}:${placement.elementId}`,
+            ),
+        )
+        .map(({ id: _id, ...placement }) => placement),
     ]),
   ) as Record<PageId, PlacedElement[]>
   const weeklyMinimums = Object.fromEntries(
@@ -782,6 +817,9 @@ function mergeWorlds(localValue: unknown, remoteValue: unknown): WorldState {
     deletedElementIds: Array.from(
       new Set([...remote.deletedElementIds, ...local.deletedElementIds]),
     ),
+    deletedActivityIds,
+    deletedTargetIds,
+    deletedPlacementIds,
   }
 }
 
@@ -973,7 +1011,7 @@ function App() {
     cloudConfigured ? 'connecting' : 'local',
   )
   const [syncOpen, setSyncOpen] = useState(false)
-  const [syncEmail, setSyncEmail] = useState('')
+  const [syncPassphrase, setSyncPassphrase] = useState('')
   const [syncMessage, setSyncMessage] = useState('')
   const dragMoved = useRef(false)
   const uploadInput = useRef<HTMLInputElement>(null)
@@ -1012,7 +1050,7 @@ function App() {
   const activeTargets = world.targets.filter((target) => !target.completedAt)
   const completedTargets = world.targets.filter((target) => target.completedAt)
   const syncLabel = !cloudConfigured
-    ? 'Local only'
+    ? 'Not connected'
     : cloudSession
       ? syncStatus === 'synced'
         ? 'Synced'
@@ -1183,6 +1221,7 @@ function App() {
     let active = true
     let stopWorld = () => {}
     let stopElements = () => {}
+    let syncRunning = false
 
     const replaceDisplayedElements = (elements: StoredUserElement[]) => {
       if (!active) return
@@ -1224,6 +1263,12 @@ function App() {
     refreshCloudElements.current = syncElements
 
     const syncNow = async () => {
+      if (syncRunning || !active) return
+      syncRunning = true
+      stopWorld()
+      stopElements()
+      stopWorld = () => {}
+      stopElements = () => {}
       setSyncStatus('syncing')
       try {
         const remoteValue = await loadCloudWorld(userId)
@@ -1236,40 +1281,54 @@ function App() {
         await syncElements()
         if (!active) return
 
-        stopWorld = watchCloudWorld(userId, (remoteWorld) => {
-          const nextWorld = normalizeWorld(remoteWorld)
-          if (
-            JSON.stringify(nextWorld) !== JSON.stringify(worldRef.current)
-          ) {
-            worldRef.current = nextWorld
-            setWorld(nextWorld)
-          }
-          setSyncStatus('synced')
-        })
-        stopElements = watchCloudElements(userId, () => {
-          void syncElements().catch(() => setSyncStatus('error'))
-        })
+        stopWorld = watchCloudWorld(
+          userId,
+          (remoteWorld) => {
+            const nextWorld = mergeWorlds(worldRef.current, remoteWorld)
+            if (
+              JSON.stringify(nextWorld) !== JSON.stringify(worldRef.current)
+            ) {
+              worldRef.current = nextWorld
+              setWorld(nextWorld)
+            }
+            setSyncStatus('synced')
+          },
+          () => {
+            cloudReady.current = false
+            setSyncStatus(navigator.onLine ? 'error' : 'offline')
+          },
+        )
+        stopElements = watchCloudElements(
+          userId,
+          () => {
+            void syncElements().catch(() => setSyncStatus('error'))
+          },
+          () => {
+            cloudReady.current = false
+            setSyncStatus(navigator.onLine ? 'error' : 'offline')
+          },
+        )
         cloudReady.current = true
         setSyncStatus('synced')
       } catch {
         if (active) {
+          cloudReady.current = false
           setSyncStatus(navigator.onLine ? 'error' : 'offline')
         }
+      } finally {
+        syncRunning = false
       }
     }
 
     const handleOffline = () => setSyncStatus('offline')
     const handleOnline = () => {
-      setSyncStatus('syncing')
-      void Promise.all([
-        saveCloudWorld(userId, worldRef.current),
-        syncElements(),
-      ])
-        .then(() => setSyncStatus('synced'))
-        .catch(() => setSyncStatus('error'))
+      void syncNow()
     }
     window.addEventListener('offline', handleOffline)
     window.addEventListener('online', handleOnline)
+    const retryInterval = window.setInterval(() => {
+      if (navigator.onLine && !cloudReady.current) void syncNow()
+    }, 60_000)
     void syncNow()
 
     return () => {
@@ -1278,6 +1337,7 @@ function App() {
       refreshCloudElements.current = null
       stopWorld()
       stopElements()
+      window.clearInterval(retryInterval)
       window.removeEventListener('offline', handleOffline)
       window.removeEventListener('online', handleOnline)
     }
@@ -1297,19 +1357,22 @@ function App() {
     return () => window.clearTimeout(timeout)
   }, [cloudSession?.user.id, world])
 
-  const requestMagicLink = async () => {
-    const email = syncEmail.trim()
-    if (!email) {
-      setSyncMessage('Enter your email address.')
+  const connectEncryptedDrive = async () => {
+    if (syncPassphrase.length < 10) {
+      setSyncMessage('Use an encryption passphrase with at least 10 characters.')
       return
     }
-    setSyncMessage('Sending sign-in link…')
+    setSyncMessage('Connecting to your private Google Drive space…')
+    setSyncStatus('connecting')
     try {
-      await sendMagicLink(email)
-      setSyncMessage('Check your email and open the sign-in link on this device.')
+      const session = await connectGoogleDrive(syncPassphrase)
+      setCloudSession(session)
+      setSyncPassphrase('')
+      setSyncMessage('')
     } catch (error) {
+      setSyncStatus('error')
       setSyncMessage(
-        error instanceof Error ? error.message : 'The sign-in link could not be sent.',
+        error instanceof Error ? error.message : 'Google Drive could not connect.',
       )
     }
   }
@@ -1317,6 +1380,9 @@ function App() {
   const disconnectCloud = async () => {
     try {
       await signOutCloud()
+      setCloudSession(null)
+      setSyncStatus('local')
+      setSyncPassphrase('')
       setSyncMessage('')
       setSyncOpen(false)
     } catch (error) {
@@ -1537,6 +1603,9 @@ function App() {
     setWorld((current) => ({
       ...current,
       targets: current.targets.filter((target) => target.id !== targetId),
+      deletedTargetIds: current.deletedTargetIds.includes(targetId)
+        ? current.deletedTargetIds
+        : [...current.deletedTargetIds, targetId],
     }))
     setActiveTargetId((current) => (current === targetId ? null : current))
   }
@@ -1637,6 +1706,9 @@ function App() {
         ...current,
         growth: calculateGrowth(activities),
         activities,
+        deletedActivityIds: current.deletedActivityIds.includes(activityId)
+          ? current.deletedActivityIds
+          : [...current.deletedActivityIds, activityId],
         trash: [
           {
             id: crypto.randomUUID(),
@@ -1763,6 +1835,7 @@ function App() {
       const isPlaced = currentPlacements.some(
         (placement) => placement.elementId === elementId,
       )
+      const placementId = `${targetPage}:${elementId}`
 
       return {
         ...current,
@@ -1786,6 +1859,11 @@ function App() {
                 },
               ],
         },
+        deletedPlacementIds: isPlaced
+          ? current.deletedPlacementIds.includes(placementId)
+            ? current.deletedPlacementIds
+            : [...current.deletedPlacementIds, placementId]
+          : current.deletedPlacementIds.filter((id) => id !== placementId),
         trash: isPlaced
           ? [
               {
@@ -1810,6 +1888,7 @@ function App() {
         (item) => item.elementId === elementId,
       )
       if (!placement) return current
+      const placementId = `${page}:${elementId}`
 
       return {
         ...current,
@@ -1819,6 +1898,9 @@ function App() {
             (item) => item.elementId !== elementId,
           ),
         },
+        deletedPlacementIds: current.deletedPlacementIds.includes(placementId)
+          ? current.deletedPlacementIds
+          : [...current.deletedPlacementIds, placementId],
         trash: [
           {
             id: crypto.randomUUID(),
@@ -2233,6 +2315,9 @@ function App() {
           ...current,
           growth: calculateGrowth(activities),
           activities,
+          deletedActivityIds: current.deletedActivityIds.filter(
+            (id) => id !== trashed.activity.id,
+          ),
           trash: current.trash.filter((item) => item.id !== trashId),
         }
       }
@@ -2253,6 +2338,10 @@ function App() {
               trashed.placement,
             ],
           },
+          deletedPlacementIds: current.deletedPlacementIds.filter(
+            (id) =>
+              id !== `${trashed.page}:${trashed.placement.elementId}`,
+          ),
           trash: current.trash.filter((item) => item.id !== trashId),
         }
       }
@@ -2404,22 +2493,27 @@ function App() {
       style={worldStyle}
     >
       <header className={`topbar ${view === 'library' ? 'library-topbar' : ''}`}>
-        <a
+        <div
           className="brand"
-          href="#"
-          aria-label="suho's sesang home"
-          onClick={(event) => {
-            event.preventDefault()
-            setView('world')
-          }}
         >
-          <img
-            className="bunny-logo"
-            src={`${import.meta.env.BASE_URL}bunny-simple.svg`}
-            alt=""
-          />
+          <button
+            className="bunny-account-button"
+            type="button"
+            onClick={() => setSyncOpen(true)}
+            aria-label={
+              cloudSession
+                ? `Open encrypted sync settings for ${cloudSession.user.email ?? 'Google Drive'}`
+                : 'Sign in for encrypted cross-device sync'
+            }
+          >
+            <img
+              className="bunny-logo"
+              src={`${import.meta.env.BASE_URL}bunny-simple.svg`}
+              alt=""
+            />
+          </button>
           <strong>suho's sesang</strong>
-        </a>
+        </div>
         <nav className="season-switcher" aria-label="Seasons">
           {seasons.map((item) => (
             <button
@@ -2460,15 +2554,6 @@ function App() {
             >
               Targets{activeTargets.length ? ` ${activeTargets.length}` : ''}
             </button>
-            <button
-              className="sync-button"
-              data-status={syncStatus}
-              type="button"
-              onClick={() => setSyncOpen(true)}
-              aria-label={`Cloud sync: ${syncLabel}`}
-            >
-              <span>{syncLabel}</span>
-            </button>
           </>
           )}
           <button
@@ -2506,8 +2591,8 @@ function App() {
             <h2 id="sync-title">Keep this world together.</h2>
             {!cloudConfigured ? (
               <p>
-                Cloud sync needs the Supabase project URL and publishable key
-                added to the site deployment.
+                Encrypted Google Drive sync needs the site's Google OAuth client
+                ID added to the deployment.
               </p>
             ) : cloudSession ? (
               <>
@@ -2515,7 +2600,7 @@ function App() {
                   <strong>{syncLabel}</strong>
                   <span>
                     {syncStatus === 'synced' &&
-                      'Notes, targets, Growth, layouts, and uploaded elements are saved.'}
+                      'Your encrypted notes, targets, Growth, layouts, and uploaded elements are saved.'}
                     {syncStatus === 'offline' &&
                       'Changes are safe on this device and will upload when you reconnect.'}
                     {syncStatus === 'error' &&
@@ -2555,26 +2640,27 @@ function App() {
               <form
                 onSubmit={(event) => {
                   event.preventDefault()
-                  void requestMagicLink()
+                  void connectEncryptedDrive()
                 }}
               >
                 <p>
-                  Use the same email on your phone and laptop. Existing data
-                  from both devices will be merged the first time each signs in.
+                  Connect the same Google account on your phone and laptop, then
+                  enter the same encryption passphrase. Google Drive receives
+                  encrypted files, not readable goals or notes.
                 </p>
                 <label>
-                  <span>Email</span>
+                  <span>Encryption passphrase</span>
                   <input
-                    type="email"
-                    value={syncEmail}
-                    onChange={(event) => setSyncEmail(event.target.value)}
-                    autoComplete="email"
-                    placeholder="you@example.com"
+                    type="password"
+                    value={syncPassphrase}
+                    onChange={(event) => setSyncPassphrase(event.target.value)}
+                    autoComplete="current-password"
+                    placeholder="At least 10 characters"
                     required
                   />
                 </label>
                 <button className="sync-primary-button" type="submit">
-                  Email me a sign-in link
+                  Connect encrypted Google Drive
                 </button>
               </form>
             )}

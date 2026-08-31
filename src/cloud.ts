@@ -1,23 +1,14 @@
-import { createClient, type Session } from '@supabase/supabase-js'
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim()
+const driveScope =
+  'openid email https://www.googleapis.com/auth/drive.appdata'
+const driveApi = 'https://www.googleapis.com/drive/v3'
+const driveUploadApi = 'https://www.googleapis.com/upload/drive/v3'
+const worldFileName = 'state-v1.bin'
+const keyInfoFileName = 'key-info-v1.json'
+const assetPrefix = 'asset-'
+const assetSuffix = '.bin'
 
-export type { Session } from '@supabase/supabase-js'
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
-const supabaseKey = (
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-)?.trim()
-
-export const cloudConfigured = Boolean(supabaseUrl && supabaseKey)
-export const supabase = cloudConfigured
-  ? createClient(supabaseUrl!, supabaseKey!, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    })
-  : null
+export const cloudConfigured = Boolean(googleClientId)
 
 export type SyncStatus =
   | 'local'
@@ -27,6 +18,13 @@ export type SyncStatus =
   | 'offline'
   | 'error'
 
+export type Session = {
+  user: {
+    id: string
+    email?: string
+  }
+}
+
 export type SyncedElement = {
   id: string
   name: string
@@ -34,207 +32,499 @@ export type SyncedElement = {
   createdAt: string
 }
 
-type CloudElementRow = {
-  id: string
-  name: string
-  storage_path: string
-  created_at: string
+type GoogleTokenResponse = {
+  access_token?: string
+  error?: string
+  error_description?: string
 }
 
-function requireSupabase() {
-  if (!supabase) throw new Error('Cloud sync is not configured.')
-  return supabase
+type GoogleTokenClient = {
+  requestAccessToken: (options?: { prompt?: string }) => void
 }
 
-export async function getCloudSession(): Promise<Session | null> {
-  const client = requireSupabase()
-  const { data, error } = await client.auth.getSession()
-  if (error) throw error
-  return data.session
-}
-
-export function watchCloudSession(
-  onSession: (session: Session | null) => void,
-) {
-  const client = requireSupabase()
-  const {
-    data: { subscription },
-  } = client.auth.onAuthStateChange((_event, session) => onSession(session))
-  return () => subscription.unsubscribe()
-}
-
-export async function sendMagicLink(email: string): Promise<void> {
-  const client = requireSupabase()
-  const redirectUrl = new URL(import.meta.env.BASE_URL, window.location.origin)
-  const { error } = await client.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: redirectUrl.toString() },
-  })
-  if (error) throw error
-}
-
-export async function signOutCloud(): Promise<void> {
-  const { error } = await requireSupabase().auth.signOut()
-  if (error) throw error
-}
-
-export async function loadCloudWorld(userId: string): Promise<unknown | null> {
-  const { data, error } = await requireSupabase()
-    .from('user_worlds')
-    .select('world')
-    .eq('user_id', userId)
-    .maybeSingle()
-  if (error) throw error
-  return data?.world ?? null
-}
-
-export async function saveCloudWorld(
-  userId: string,
-  world: unknown,
-): Promise<void> {
-  const { error } = await requireSupabase().from('user_worlds').upsert({
-    user_id: userId,
-    world,
-    updated_at: new Date().toISOString(),
-  })
-  if (error) throw error
-}
-
-export function watchCloudWorld(
-  userId: string,
-  onWorld: (world: unknown) => void,
-) {
-  const client = requireSupabase()
-  const channel = client
-    .channel(`world:${userId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'user_worlds',
-        filter: `user_id=eq.${userId}`,
-      },
-      (payload) => {
-        const updated = payload.new as { world?: unknown }
-        if (updated.world) onWorld(updated.world)
-      },
-    )
-    .subscribe()
-  return () => {
-    void client.removeChannel(channel)
+type GoogleIdentity = {
+  accounts: {
+    oauth2: {
+      initTokenClient: (options: {
+        client_id: string
+        scope: string
+        callback: (response: GoogleTokenResponse) => void
+        error_callback?: (error: { message?: string }) => void
+      }) => GoogleTokenClient
+      revoke: (token: string, callback: () => void) => void
+    }
   }
 }
 
-async function uploadCloudElement(
-  userId: string,
-  element: SyncedElement,
-): Promise<void> {
-  const client = requireSupabase()
-  const path = `${userId}/${element.id}`
-  const { error: storageError } = await client.storage
-    .from('user-elements')
-    .upload(path, element.blob, {
-      contentType: element.blob.type || 'application/octet-stream',
-      upsert: true,
-    })
-  if (storageError) throw storageError
+declare global {
+  interface Window {
+    google?: GoogleIdentity
+  }
+}
 
-  const { error: rowError } = await client.from('user_elements').upsert({
-    id: element.id,
-    user_id: userId,
-    name: element.name,
-    storage_path: path,
-    created_at: element.createdAt,
+type DriveFile = {
+  id: string
+  name: string
+  createdTime?: string
+  modifiedTime?: string
+}
+
+let accessToken = ''
+let encryptionKey: CryptoKey | null = null
+let activeSession: Session | null = null
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = ''
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte)
   })
-  if (rowError) throw rowError
+  return btoa(binary)
+}
+
+function base64ToBytes(value: string): Uint8Array<ArrayBuffer> {
+  const binary = atob(value)
+  const bytes = new Uint8Array(new ArrayBuffer(binary.length))
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+  return bytes
+}
+
+async function loadGoogleIdentity(): Promise<GoogleIdentity> {
+  if (window.google) return window.google
+  const existing = document.querySelector<HTMLScriptElement>(
+    'script[data-google-identity]',
+  )
+  if (existing) {
+    await new Promise<void>((resolve, reject) => {
+      existing.addEventListener('load', () => resolve(), { once: true })
+      existing.addEventListener('error', () => reject(new Error('Google sign-in could not load.')), {
+        once: true,
+      })
+    })
+  } else {
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      script.dataset.googleIdentity = 'true'
+      script.addEventListener('load', () => resolve(), { once: true })
+      script.addEventListener(
+        'error',
+        () => reject(new Error('Google sign-in could not load.')),
+        { once: true },
+      )
+      document.head.append(script)
+    })
+  }
+  if (!window.google) throw new Error('Google sign-in is unavailable.')
+  return window.google
+}
+
+async function requestAccessToken(prompt = 'consent'): Promise<string> {
+  if (!googleClientId) throw new Error('Google Drive sync is not configured.')
+  const google = await loadGoogleIdentity()
+  return new Promise((resolve, reject) => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: googleClientId,
+      scope: driveScope,
+      callback: (response) => {
+        if (response.access_token) resolve(response.access_token)
+        else {
+          reject(
+            new Error(
+              response.error_description ??
+                response.error ??
+                'Google authorization failed.',
+            ),
+          )
+        }
+      },
+      error_callback: (error) =>
+        reject(new Error(error.message ?? 'Google authorization failed.')),
+    })
+    client.requestAccessToken({ prompt })
+  })
+}
+
+async function googleFetch(
+  input: string,
+  init: RequestInit = {},
+  allowTokenRefresh = true,
+): Promise<Response> {
+  if (!accessToken) throw new Error('Connect Google Drive first.')
+  const headers = new Headers(init.headers)
+  headers.set('Authorization', `Bearer ${accessToken}`)
+  const response = await fetch(input, { ...init, headers })
+  if (response.status === 401 && allowTokenRefresh) {
+    accessToken = await requestAccessToken('')
+    return googleFetch(input, init, false)
+  }
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(detail || `Google Drive request failed (${response.status}).`)
+  }
+  return response
+}
+
+async function listDriveFiles(query?: string): Promise<DriveFile[]> {
+  const files: DriveFile[] = []
+  let pageToken = ''
+  do {
+    const params = new URLSearchParams({
+      spaces: 'appDataFolder',
+      fields: 'nextPageToken,files(id,name,createdTime,modifiedTime)',
+      orderBy: 'createdTime',
+      pageSize: '1000',
+    })
+    if (query) params.set('q', query)
+    if (pageToken) params.set('pageToken', pageToken)
+    const response = await googleFetch(`${driveApi}/files?${params}`)
+    const result = (await response.json()) as {
+      files?: DriveFile[]
+      nextPageToken?: string
+    }
+    files.push(...(result.files ?? []))
+    pageToken = result.nextPageToken ?? ''
+  } while (pageToken)
+  return files
+}
+
+async function findDriveFiles(name: string): Promise<DriveFile[]> {
+  const escapedName = name.replaceAll("'", "\\'")
+  return listDriveFiles(
+    `name = '${escapedName}' and trashed = false`,
+  )
+}
+
+async function findDriveFile(name: string): Promise<DriveFile | null> {
+  return (await findDriveFiles(name))[0] ?? null
+}
+
+async function readDriveFile(fileId: string): Promise<Blob> {
+  const response = await googleFetch(
+    `${driveApi}/files/${encodeURIComponent(fileId)}?alt=media`,
+  )
+  return response.blob()
+}
+
+async function createDriveFile(name: string): Promise<DriveFile> {
+  const response = await googleFetch(`${driveApi}/files?fields=id,name`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, parents: ['appDataFolder'] }),
+  })
+  return response.json() as Promise<DriveFile>
+}
+
+async function writeDriveFile(name: string, body: Blob): Promise<void> {
+  const existing = await findDriveFile(name)
+  const file = existing ?? (await createDriveFile(name))
+  await googleFetch(
+    `${driveUploadApi}/files/${encodeURIComponent(file.id)}?uploadType=media`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body,
+    },
+  )
+}
+
+async function deleteDriveFile(fileId: string): Promise<void> {
+  await googleFetch(`${driveApi}/files/${encodeURIComponent(fileId)}`, {
+    method: 'DELETE',
+  })
+}
+
+async function deriveEncryptionKey(
+  passphrase: string,
+  salt: Uint8Array<ArrayBuffer>,
+): Promise<CryptoKey> {
+  const material = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey'],
+  )
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      hash: 'SHA-256',
+      salt,
+      iterations: 600_000,
+    },
+    material,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  )
+}
+
+async function loadOrCreateEncryptionKey(passphrase: string) {
+  let salt: Uint8Array<ArrayBuffer>
+  const keyInfoFiles = await findDriveFiles(keyInfoFileName)
+  const keyInfo = keyInfoFiles[0]
+  if (keyInfo) {
+    const value = JSON.parse(await (await readDriveFile(keyInfo.id)).text()) as {
+      salt?: string
+      check?: string
+    }
+    if (!value.salt || !value.check) {
+      throw new Error('The cloud encryption metadata is invalid.')
+    }
+    salt = base64ToBytes(value.salt)
+    encryptionKey = await deriveEncryptionKey(passphrase, salt)
+    const check = await decryptBlob(
+      new Blob([base64ToBytes(value.check)], {
+        type: 'application/octet-stream',
+      }),
+    )
+    if ((await check.text()) !== 'suho-sesang-encryption-check-v1') {
+      throw new Error('The encryption passphrase is incorrect.')
+    }
+    await Promise.all(
+      keyInfoFiles.slice(1).map((duplicate) => deleteDriveFile(duplicate.id)),
+    )
+  } else {
+    salt = crypto.getRandomValues(new Uint8Array(16))
+    encryptionKey = await deriveEncryptionKey(passphrase, salt)
+    const check = await encryptBlob(
+      new Blob(['suho-sesang-encryption-check-v1'], { type: 'text/plain' }),
+    )
+    await writeDriveFile(
+      keyInfoFileName,
+      new Blob(
+        [
+          JSON.stringify({
+            version: 1,
+            salt: bytesToBase64(salt),
+            check: bytesToBase64(
+              new Uint8Array(await check.arrayBuffer()),
+            ),
+          }),
+        ],
+        { type: 'application/json' },
+      ),
+    )
+  }
+}
+
+async function encryptBlob(value: Blob): Promise<Blob> {
+  if (!encryptionKey) throw new Error('Enter the encryption passphrase first.')
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    encryptionKey,
+    await value.arrayBuffer(),
+  )
+  return new Blob([new TextEncoder().encode('SSG1'), iv, encrypted], {
+    type: 'application/octet-stream',
+  })
+}
+
+async function decryptBlob(value: Blob): Promise<Blob> {
+  if (!encryptionKey) throw new Error('Enter the encryption passphrase first.')
+  const bytes = new Uint8Array(await value.arrayBuffer())
+  const marker = new TextDecoder().decode(bytes.slice(0, 4))
+  if (marker !== 'SSG1') throw new Error('This cloud file is not a Suho backup.')
+  try {
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: bytes.slice(4, 16) },
+      encryptionKey,
+      bytes.slice(16),
+    )
+    return new Blob([decrypted])
+  } catch {
+    throw new Error('The encryption passphrase is incorrect.')
+  }
+}
+
+export async function connectGoogleDrive(
+  passphrase: string,
+): Promise<Session> {
+  if (passphrase.length < 10) {
+    throw new Error('Use an encryption passphrase with at least 10 characters.')
+  }
+  accessToken = await requestAccessToken()
+  const response = await googleFetch(
+    'https://openidconnect.googleapis.com/v1/userinfo',
+  )
+  const profile = (await response.json()) as { sub: string; email?: string }
+  await loadOrCreateEncryptionKey(passphrase)
+  activeSession = { user: { id: profile.sub, email: profile.email } }
+  return activeSession
+}
+
+export async function getCloudSession(): Promise<Session | null> {
+  return activeSession
+}
+
+export function watchCloudSession(
+  _onSession: (session: Session | null) => void,
+) {
+  return () => {}
+}
+
+export async function signOutCloud(): Promise<void> {
+  const token = accessToken
+  accessToken = ''
+  encryptionKey = null
+  activeSession = null
+  if (!token || !window.google) return
+  await new Promise<void>((resolve) => {
+    window.google!.accounts.oauth2.revoke(token, resolve)
+  })
+}
+
+export async function loadCloudWorld(
+  _userId: string,
+): Promise<unknown | null> {
+  const file = await findDriveFile(worldFileName)
+  if (!file) return null
+  const decrypted = await decryptBlob(await readDriveFile(file.id))
+  return JSON.parse(await decrypted.text()) as unknown
+}
+
+export async function saveCloudWorld(
+  _userId: string,
+  world: unknown,
+): Promise<void> {
+  const encrypted = await encryptBlob(
+    new Blob([JSON.stringify(world)], { type: 'application/json' }),
+  )
+  await writeDriveFile(worldFileName, encrypted)
+}
+
+export function watchCloudWorld(
+  _userId: string,
+  onWorld: (world: unknown) => void,
+  onError: () => void,
+) {
+  let lastModified = ''
+  const poll = async () => {
+    const file = await findDriveFile(worldFileName)
+    const modified = file?.modifiedTime ?? ''
+    if (file && lastModified && modified !== lastModified) {
+      const decrypted = await decryptBlob(await readDriveFile(file.id))
+      onWorld(JSON.parse(await decrypted.text()) as unknown)
+    }
+    lastModified = modified
+  }
+  void poll().catch(onError)
+  const interval = window.setInterval(() => void poll().catch(onError), 20_000)
+  return () => window.clearInterval(interval)
+}
+
+function assetFileName(elementId: string): string {
+  return `${assetPrefix}${elementId}${assetSuffix}`
+}
+
+async function encodeElement(element: SyncedElement): Promise<Blob> {
+  const data = bytesToBase64(new Uint8Array(await element.blob.arrayBuffer()))
+  return encryptBlob(
+    new Blob(
+      [
+        JSON.stringify({
+          id: element.id,
+          name: element.name,
+          createdAt: element.createdAt,
+          type: element.blob.type,
+          data,
+        }),
+      ],
+      { type: 'application/json' },
+    ),
+  )
+}
+
+async function decodeElement(file: DriveFile): Promise<SyncedElement> {
+  const decrypted = await decryptBlob(await readDriveFile(file.id))
+  const value = JSON.parse(await decrypted.text()) as {
+    id: string
+    name: string
+    createdAt: string
+    type: string
+    data: string
+  }
+  return {
+    id: value.id,
+    name: value.name,
+    createdAt: value.createdAt,
+    blob: new Blob([base64ToBytes(value.data)], { type: value.type }),
+  }
 }
 
 export async function deleteCloudElement(
-  userId: string,
+  _userId: string,
   elementId: string,
 ): Promise<void> {
-  const client = requireSupabase()
-  const path = `${userId}/${elementId}`
-  const { error: storageError } = await client.storage
-    .from('user-elements')
-    .remove([path])
-  if (storageError) throw storageError
-  const { error: rowError } = await client
-    .from('user_elements')
-    .delete()
-    .eq('user_id', userId)
-    .eq('id', elementId)
-  if (rowError) throw rowError
+  const file = await findDriveFile(assetFileName(elementId))
+  if (file) await deleteDriveFile(file.id)
 }
 
 export async function syncCloudElements(
-  userId: string,
+  _userId: string,
   localElements: SyncedElement[],
   deletedElementIds: string[],
 ): Promise<SyncedElement[]> {
-  const client = requireSupabase()
-  const { data, error } = await client
-    .from('user_elements')
-    .select('id, name, storage_path, created_at')
-    .eq('user_id', userId)
-  if (error) throw error
-
   const deletedIds = new Set(deletedElementIds)
-  const remoteRows = (data ?? []) as CloudElementRow[]
+  const remoteFiles = await listDriveFiles(
+    `name contains '${assetPrefix}' and trashed = false`,
+  )
+  const remoteById = new Map(
+    remoteFiles
+      .filter(
+        (file) =>
+          file.name.startsWith(assetPrefix) && file.name.endsWith(assetSuffix),
+      )
+      .map((file) => [
+        file.name.slice(assetPrefix.length, -assetSuffix.length),
+        file,
+      ]),
+  )
   const localById = new Map(
     localElements
       .filter((element) => !deletedIds.has(element.id))
       .map((element) => [element.id, element]),
   )
 
-  for (const row of remoteRows) {
-    if (deletedIds.has(row.id)) {
-      await deleteCloudElement(userId, row.id)
-    }
+  for (const id of deletedIds) {
+    const remote = remoteById.get(id)
+    if (remote) await deleteDriveFile(remote.id)
   }
-
-  const activeRemoteRows = remoteRows.filter((row) => !deletedIds.has(row.id))
-  const remoteIds = new Set(activeRemoteRows.map((row) => row.id))
   for (const element of localById.values()) {
-    if (!remoteIds.has(element.id)) {
-      await uploadCloudElement(userId, element)
+    if (!remoteById.has(element.id)) {
+      await writeDriveFile(assetFileName(element.id), await encodeElement(element))
     }
   }
-
-  for (const row of activeRemoteRows) {
-    if (localById.has(row.id)) continue
-    const { data: blob, error: downloadError } = await client.storage
-      .from('user-elements')
-      .download(row.storage_path)
-    if (downloadError) throw downloadError
-    localById.set(row.id, {
-      id: row.id,
-      name: row.name,
-      blob,
-      createdAt: row.created_at,
-    })
+  for (const [id, remote] of remoteById) {
+    if (!deletedIds.has(id) && !localById.has(id)) {
+      localById.set(id, await decodeElement(remote))
+    }
   }
-
   return [...localById.values()]
 }
 
-export function watchCloudElements(userId: string, onChange: () => void) {
-  const client = requireSupabase()
-  const channel = client
-    .channel(`elements:${userId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'user_elements',
-        filter: `user_id=eq.${userId}`,
-      },
-      onChange,
+export function watchCloudElements(
+  _userId: string,
+  onChange: () => void,
+  onError: () => void,
+) {
+  let signature = ''
+  const poll = async () => {
+    const files = await listDriveFiles(
+      `name contains '${assetPrefix}' and trashed = false`,
     )
-    .subscribe()
-  return () => {
-    void client.removeChannel(channel)
+    const nextSignature = files
+      .map((file) => `${file.id}:${file.modifiedTime}`)
+      .sort()
+      .join('|')
+    if (signature && nextSignature !== signature) onChange()
+    signature = nextSignature
   }
+  void poll().catch(onError)
+  const interval = window.setInterval(() => void poll().catch(onError), 20_000)
+  return () => window.clearInterval(interval)
 }

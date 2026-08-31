@@ -22,28 +22,31 @@ progress adds Growth to a calm palace garden, revealing new details over time.
 - Custom element notebooks with editable headings and multiple editable notes
 - Distinct high-contrast comic palettes for each life-stream notebook
 - Drag-to-trash custom elements with restore and permanent deletion
-- Offline-first persistence with local browser storage and private Supabase
-  synchronization across signed-in devices
+- Offline-first persistence with local browser storage and client-side encrypted
+  Google Drive synchronization across connected devices
 - Responsive, mobile-first layout and installable web app metadata
 
 World state remains available offline through `localStorage`, and uploaded
-images remain available through IndexedDB. Signing in with the same email on
-phone and laptop merges each device's existing records and then keeps notes,
-Growth, targets, layouts, and uploaded elements synchronized.
+images remain available through IndexedDB. Connecting the same Google account
+and encryption passphrase on phone and laptop merges each device's existing
+records and then keeps notes, Growth, targets, layouts, and uploaded elements
+synchronized.
 
 ## Configure cloud sync
 
-1. Create a Supabase project and run `supabase/schema.sql` in its SQL editor.
-2. Add the deployed site URL to Supabase Authentication's allowed redirect
-   URLs: `https://ardhra7ms.github.io/suho-sesang/`.
-3. Copy `.env.example` to `.env.local` and fill in the project URL and
-   browser-safe publishable key for local development.
-4. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` as GitHub
-   Actions repository variables for the Pages deployment.
+1. Create a Google Cloud project and enable the Google Drive API.
+2. Configure an OAuth consent screen and create a Web application OAuth client.
+3. Add `https://ardhra7ms.github.io` as an authorized JavaScript origin.
+4. Copy `.env.example` to `.env.local` and add the OAuth client ID for local
+   development.
+5. Add `VITE_GOOGLE_CLIENT_ID` as a GitHub Actions repository variable for the
+   Pages deployment.
 
-The `user_worlds` and `user_elements` tables use row-level security, and the
-`user-elements` storage bucket is private. Every policy is scoped to the signed
-in user's ID.
+The app requests only the narrow `drive.appdata` scope. World state and uploaded
+images are encrypted in the browser with AES-256-GCM before entering the hidden
+application-data folder in the user's Google Drive. The passphrase and
+encryption key are never uploaded; losing the passphrase means the cloud copy
+cannot be recovered.
 
 ## Run locally
 
