@@ -7,6 +7,21 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
+import {
+  cloudConfigured,
+  deleteCloudElement,
+  getCloudSession,
+  loadCloudWorld,
+  saveCloudWorld,
+  sendMagicLink,
+  signOutCloud,
+  syncCloudElements,
+  watchCloudElements,
+  watchCloudSession,
+  watchCloudWorld,
+  type Session,
+  type SyncStatus,
+} from './cloud'
 import './styles.css'
 
 type StreamId = 'knowledge' | 'language' | 'creation' | 'journey' | 'wellness'
@@ -601,91 +616,179 @@ async function prepareUploadedImage(file: File): Promise<Blob> {
   })
 }
 
+function normalizeWorld(value: unknown): WorldState {
+  const parsed =
+    typeof value === 'object' && value !== null
+      ? (value as Partial<WorldState>)
+      : {}
+  const activities = Array.isArray(parsed.activities) ? parsed.activities : []
+  return {
+    growth: calculateGrowth(activities),
+    activities,
+    targets: Array.isArray(parsed.targets)
+      ? parsed.targets.map((target, index) => {
+          const savedTarget = target as ProjectTarget & {
+            completionPoints?: TargetPoint
+          }
+          return {
+            ...savedTarget,
+            checklist: Array.isArray(savedTarget.checklist)
+              ? savedTarget.checklist
+              : [],
+            pointAwards: Array.isArray(savedTarget.pointAwards)
+              ? savedTarget.pointAwards
+              : savedTarget.completionPoints
+                ? [savedTarget.completionPoints]
+                : [],
+            awardedGrowth:
+              savedTarget.awardedGrowth ??
+              (savedTarget.completedAt
+                ? savedTarget.completionPoints
+                : undefined),
+            motion: savedTarget.motion ?? createTargetMotion(index),
+          }
+        })
+      : [],
+    streamTitles: {
+      ...initialState.streamTitles,
+      ...parsed.streamTitles,
+    },
+    weeklyMinimums: Object.fromEntries(
+      streams.map((stream) => {
+        const savedMinimum = parsed.weeklyMinimums?.[stream.id]
+        return [
+          stream.id,
+          {
+            text: savedMinimum?.text ?? '',
+            completedWeeks: Array.isArray(savedMinimum?.completedWeeks)
+              ? savedMinimum.completedWeeks
+              : [],
+            stream: savedMinimum?.stream,
+          },
+        ]
+      }),
+    ) as Record<StreamId, WeeklyMinimum>,
+    placements: {
+      spring: Array.isArray(parsed.placements?.spring)
+        ? parsed.placements.spring
+        : [],
+      summer: Array.isArray(parsed.placements?.summer)
+        ? parsed.placements.summer
+        : [],
+      autumn: Array.isArray(parsed.placements?.autumn)
+        ? parsed.placements.autumn
+        : [],
+      winter: Array.isArray(parsed.placements?.winter)
+        ? parsed.placements.winter
+        : [],
+    },
+    streamPlacements: {
+      spring: {
+        ...initialState.streamPlacements.spring,
+        ...parsed.streamPlacements?.spring,
+      },
+      summer: {
+        ...initialState.streamPlacements.summer,
+        ...parsed.streamPlacements?.summer,
+      },
+      autumn: {
+        ...initialState.streamPlacements.autumn,
+        ...parsed.streamPlacements?.autumn,
+      },
+      winter: {
+        ...initialState.streamPlacements.winter,
+        ...parsed.streamPlacements?.winter,
+      },
+    },
+    trash: Array.isArray(parsed.trash)
+      ? parsed.trash.filter(
+          (item) => !('page' in item) || String(item.page) !== 'tulip-room',
+        )
+      : [],
+    elementFrames: parsed.elementFrames ?? {},
+    deletedElementIds: Array.isArray(parsed.deletedElementIds)
+      ? parsed.deletedElementIds
+      : [],
+  }
+}
+
+function mergeById<T extends { id: string }>(remote: T[], local: T[]): T[] {
+  return [...new Map([...remote, ...local].map((item) => [item.id, item])).values()]
+}
+
+function mergeWorlds(localValue: unknown, remoteValue: unknown): WorldState {
+  const local = normalizeWorld(localValue)
+  const remote = normalizeWorld(remoteValue)
+  const activities = mergeById(remote.activities, local.activities)
+  const targets = mergeById(remote.targets, local.targets)
+  const placements = Object.fromEntries(
+    seasons.map((season) => [
+      season.id,
+      mergeById(
+        remote.placements[season.id].map((placement) => ({
+          ...placement,
+          id: placement.elementId,
+        })),
+        local.placements[season.id].map((placement) => ({
+          ...placement,
+          id: placement.elementId,
+        })),
+      ).map(({ id: _id, ...placement }) => placement),
+    ]),
+  ) as Record<PageId, PlacedElement[]>
+  const weeklyMinimums = Object.fromEntries(
+    streams.map((stream) => {
+      const localMinimum = local.weeklyMinimums[stream.id]
+      const remoteMinimum = remote.weeklyMinimums[stream.id]
+      return [
+        stream.id,
+        {
+          text: localMinimum.text.trim()
+            ? localMinimum.text
+            : remoteMinimum.text,
+          stream: localMinimum.stream ?? remoteMinimum.stream,
+          completedWeeks: Array.from(
+            new Set([
+              ...remoteMinimum.completedWeeks,
+              ...localMinimum.completedWeeks,
+            ]),
+          ),
+        },
+      ]
+    }),
+  ) as Record<StreamId, WeeklyMinimum>
+
+  return {
+    ...remote,
+    growth: calculateGrowth(activities),
+    activities,
+    targets,
+    placements,
+    weeklyMinimums,
+    streamTitles: {
+      ...remote.streamTitles,
+      ...Object.fromEntries(
+        streams
+          .filter(
+            (stream) =>
+              local.streamTitles[stream.id] !==
+              initialState.streamTitles[stream.id],
+          )
+          .map((stream) => [stream.id, local.streamTitles[stream.id]]),
+      ),
+    } as Record<StreamId, string>,
+    trash: mergeById(remote.trash, local.trash),
+    elementFrames: { ...remote.elementFrames, ...local.elementFrames },
+    deletedElementIds: Array.from(
+      new Set([...remote.deletedElementIds, ...local.deletedElementIds]),
+    ),
+  }
+}
+
 function loadWorld(): WorldState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) return initialState
-    const parsed = JSON.parse(saved) as Partial<WorldState>
-    const activities = Array.isArray(parsed.activities)
-      ? parsed.activities
-      : []
-    return {
-      growth: calculateGrowth(activities),
-      activities,
-      targets: Array.isArray(parsed.targets)
-        ? parsed.targets.map((target, index) => {
-            const savedTarget = target as ProjectTarget & {
-              completionPoints?: TargetPoint
-            }
-            return {
-              ...savedTarget,
-              checklist: Array.isArray(savedTarget.checklist)
-                ? savedTarget.checklist
-                : [],
-              pointAwards: Array.isArray(savedTarget.pointAwards)
-                ? savedTarget.pointAwards
-                : savedTarget.completionPoints
-                  ? [savedTarget.completionPoints]
-                  : [],
-              awardedGrowth:
-                savedTarget.awardedGrowth ??
-                (savedTarget.completedAt ? savedTarget.completionPoints : undefined),
-              motion: savedTarget.motion ?? createTargetMotion(index),
-            }
-          })
-        : [],
-      streamTitles: {
-        ...initialState.streamTitles,
-        ...parsed.streamTitles,
-      },
-      weeklyMinimums: Object.fromEntries(
-        streams.map((stream) => {
-          const savedMinimum = parsed.weeklyMinimums?.[stream.id]
-          return [
-            stream.id,
-            {
-              text: savedMinimum?.text ?? '',
-              completedWeeks: Array.isArray(savedMinimum?.completedWeeks)
-                ? savedMinimum.completedWeeks
-                : [],
-            },
-          ]
-        }),
-      ) as Record<StreamId, WeeklyMinimum>,
-      placements: {
-        spring: Array.isArray(parsed.placements?.spring) ? parsed.placements.spring : [],
-        summer: Array.isArray(parsed.placements?.summer) ? parsed.placements.summer : [],
-        autumn: Array.isArray(parsed.placements?.autumn) ? parsed.placements.autumn : [],
-        winter: Array.isArray(parsed.placements?.winter) ? parsed.placements.winter : [],
-      },
-      streamPlacements: {
-        spring: {
-          ...initialState.streamPlacements.spring,
-          ...parsed.streamPlacements?.spring,
-        },
-        summer: {
-          ...initialState.streamPlacements.summer,
-          ...parsed.streamPlacements?.summer,
-        },
-        autumn: {
-          ...initialState.streamPlacements.autumn,
-          ...parsed.streamPlacements?.autumn,
-        },
-        winter: {
-          ...initialState.streamPlacements.winter,
-          ...parsed.streamPlacements?.winter,
-        },
-      },
-      trash: Array.isArray(parsed.trash)
-        ? parsed.trash.filter(
-            (item) => !('page' in item) || String(item.page) !== 'tulip-room',
-          )
-        : [],
-      elementFrames: parsed.elementFrames ?? {},
-      deletedElementIds: Array.isArray(parsed.deletedElementIds)
-        ? parsed.deletedElementIds
-        : [],
-    }
+    return saved ? normalizeWorld(JSON.parse(saved)) : initialState
   } catch {
     return initialState
   }
@@ -865,8 +968,19 @@ function App() {
     elementId: string
   } | null>(null)
   const [activeSeason, setActiveSeason] = useState<SeasonId>(loadSeason)
+  const [cloudSession, setCloudSession] = useState<Session | null>(null)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(
+    cloudConfigured ? 'connecting' : 'local',
+  )
+  const [syncOpen, setSyncOpen] = useState(false)
+  const [syncEmail, setSyncEmail] = useState('')
+  const [syncMessage, setSyncMessage] = useState('')
   const dragMoved = useRef(false)
   const uploadInput = useRef<HTMLInputElement>(null)
+  const worldRef = useRef(world)
+  const cloudReady = useRef(false)
+  const elementSyncInFlight = useRef(false)
+  const refreshCloudElements = useRef<(() => Promise<void>) | null>(null)
 
   const totalGrowth = useMemo(
     () => Object.values(world.growth).reduce((sum, value) => sum + value, 0),
@@ -897,6 +1011,19 @@ function App() {
   const level = Math.floor(totalGrowth / 100) + 1
   const activeTargets = world.targets.filter((target) => !target.completedAt)
   const completedTargets = world.targets.filter((target) => target.completedAt)
+  const syncLabel = !cloudConfigured
+    ? 'Local only'
+    : cloudSession
+      ? syncStatus === 'synced'
+        ? 'Synced'
+        : syncStatus === 'offline'
+          ? 'Offline'
+          : syncStatus === 'error'
+            ? 'Sync error'
+            : 'Syncing…'
+      : syncStatus === 'connecting'
+        ? 'Connecting…'
+        : 'Sync'
   const currentStream = streams.find((stream) => stream.id === activeStream)
   const season = seasons.find((item) => item.id === activeSeason)!
   const worldDepth = useMemo(() => {
@@ -991,6 +1118,7 @@ function App() {
   ])
 
   useEffect(() => {
+    worldRef.current = world
     localStorage.setItem(STORAGE_KEY, JSON.stringify(world))
   }, [world])
 
@@ -1018,6 +1146,185 @@ function App() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!cloudConfigured) return
+    let active = true
+    getCloudSession()
+      .then((session) => {
+        if (active) {
+          setCloudSession(session)
+          if (!session) setSyncStatus('local')
+        }
+      })
+      .catch(() => {
+        if (active) setSyncStatus('error')
+      })
+    const stopWatching = watchCloudSession((session) => {
+      if (active) {
+        setCloudSession(session)
+        if (!session) setSyncStatus('local')
+      }
+    })
+    return () => {
+      active = false
+      stopWatching()
+    }
+  }, [])
+
+  useEffect(() => {
+    const userId = cloudSession?.user.id
+    cloudReady.current = false
+    if (!userId) {
+      refreshCloudElements.current = null
+      return
+    }
+
+    let active = true
+    let stopWorld = () => {}
+    let stopElements = () => {}
+
+    const replaceDisplayedElements = (elements: StoredUserElement[]) => {
+      if (!active) return
+      setUserElements((current) => {
+        current.forEach((element) => URL.revokeObjectURL(element.image))
+        return elements.map((element) => ({
+          id: element.id,
+          name: element.name,
+          image: URL.createObjectURL(element.blob),
+          alt: element.name,
+          category: 'photos',
+          detail: 'Synced upload',
+          userCreated: true,
+        }))
+      })
+    }
+
+    const syncElements = async () => {
+      if (elementSyncInFlight.current) return
+      elementSyncInFlight.current = true
+      try {
+        const localElements = await loadStoredElements()
+        const syncedElements = await syncCloudElements(
+          userId,
+          localElements,
+          worldRef.current.deletedElementIds,
+        )
+        await Promise.all(syncedElements.map((element) => storeElement(element)))
+        await Promise.all(
+          worldRef.current.deletedElementIds.map((id) =>
+            removeStoredElement(id),
+          ),
+        )
+        replaceDisplayedElements(syncedElements)
+      } finally {
+        elementSyncInFlight.current = false
+      }
+    }
+    refreshCloudElements.current = syncElements
+
+    const syncNow = async () => {
+      setSyncStatus('syncing')
+      try {
+        const remoteValue = await loadCloudWorld(userId)
+        const merged = remoteValue
+          ? mergeWorlds(worldRef.current, remoteValue)
+          : worldRef.current
+        worldRef.current = merged
+        if (active) setWorld(merged)
+        await saveCloudWorld(userId, merged)
+        await syncElements()
+        if (!active) return
+
+        stopWorld = watchCloudWorld(userId, (remoteWorld) => {
+          const nextWorld = normalizeWorld(remoteWorld)
+          if (
+            JSON.stringify(nextWorld) !== JSON.stringify(worldRef.current)
+          ) {
+            worldRef.current = nextWorld
+            setWorld(nextWorld)
+          }
+          setSyncStatus('synced')
+        })
+        stopElements = watchCloudElements(userId, () => {
+          void syncElements().catch(() => setSyncStatus('error'))
+        })
+        cloudReady.current = true
+        setSyncStatus('synced')
+      } catch {
+        if (active) {
+          setSyncStatus(navigator.onLine ? 'error' : 'offline')
+        }
+      }
+    }
+
+    const handleOffline = () => setSyncStatus('offline')
+    const handleOnline = () => {
+      setSyncStatus('syncing')
+      void Promise.all([
+        saveCloudWorld(userId, worldRef.current),
+        syncElements(),
+      ])
+        .then(() => setSyncStatus('synced'))
+        .catch(() => setSyncStatus('error'))
+    }
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline)
+    void syncNow()
+
+    return () => {
+      active = false
+      cloudReady.current = false
+      refreshCloudElements.current = null
+      stopWorld()
+      stopElements()
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', handleOnline)
+    }
+  }, [cloudSession?.user.id])
+
+  useEffect(() => {
+    const userId = cloudSession?.user.id
+    if (!userId || !cloudReady.current) return
+    setSyncStatus(navigator.onLine ? 'syncing' : 'offline')
+    const timeout = window.setTimeout(() => {
+      saveCloudWorld(userId, world)
+        .then(() => setSyncStatus('synced'))
+        .catch(() =>
+          setSyncStatus(navigator.onLine ? 'error' : 'offline'),
+        )
+    }, 700)
+    return () => window.clearTimeout(timeout)
+  }, [cloudSession?.user.id, world])
+
+  const requestMagicLink = async () => {
+    const email = syncEmail.trim()
+    if (!email) {
+      setSyncMessage('Enter your email address.')
+      return
+    }
+    setSyncMessage('Sending sign-in link…')
+    try {
+      await sendMagicLink(email)
+      setSyncMessage('Check your email and open the sign-in link on this device.')
+    } catch (error) {
+      setSyncMessage(
+        error instanceof Error ? error.message : 'The sign-in link could not be sent.',
+      )
+    }
+  }
+
+  const disconnectCloud = async () => {
+    try {
+      await signOutCloud()
+      setSyncMessage('')
+      setSyncOpen(false)
+    } catch (error) {
+      setSyncMessage(
+        error instanceof Error ? error.message : 'Sign-out failed.',
+      )
+    }
+  }
 
   const addGrowth = (stream: StreamId, amount: number) => {
     setWorld((current) => {
@@ -1377,6 +1684,9 @@ function App() {
           userCreated: true,
         },
       ])
+      void refreshCloudElements.current?.().catch(() => {
+        setSyncStatus(navigator.onLine ? 'error' : 'offline')
+      })
     } catch (error) {
       setUploadError(
         error instanceof Error ? error.message : 'The image could not be added.',
@@ -1437,6 +1747,11 @@ function App() {
             ),
         ),
       }))
+      if (cloudSession?.user.id) {
+        void deleteCloudElement(cloudSession.user.id, element.id).catch(() => {
+          setSyncStatus(navigator.onLine ? 'error' : 'offline')
+        })
+      }
     } catch {
       setUploadError('This element could not be deleted.')
     }
@@ -2145,6 +2460,15 @@ function App() {
             >
               Targets{activeTargets.length ? ` ${activeTargets.length}` : ''}
             </button>
+            <button
+              className="sync-button"
+              data-status={syncStatus}
+              type="button"
+              onClick={() => setSyncOpen(true)}
+              aria-label={`Cloud sync: ${syncLabel}`}
+            >
+              <span>{syncLabel}</span>
+            </button>
           </>
           )}
           <button
@@ -2162,6 +2486,106 @@ function App() {
           </button>
         </div>
       </header>
+
+      {syncOpen && (
+        <div className="overlay sync-overlay" onClick={() => setSyncOpen(false)}>
+          <section
+            className="sync-panel"
+            onClick={(event) => event.stopPropagation()}
+            aria-labelledby="sync-title"
+          >
+            <button
+              className="close-button"
+              type="button"
+              onClick={() => setSyncOpen(false)}
+              aria-label="Close sync settings"
+            >
+              ×
+            </button>
+            <span className="sync-kicker">Across your devices</span>
+            <h2 id="sync-title">Keep this world together.</h2>
+            {!cloudConfigured ? (
+              <p>
+                Cloud sync needs the Supabase project URL and publishable key
+                added to the site deployment.
+              </p>
+            ) : cloudSession ? (
+              <>
+                <div className={`sync-state sync-state-${syncStatus}`}>
+                  <strong>{syncLabel}</strong>
+                  <span>
+                    {syncStatus === 'synced' &&
+                      'Notes, targets, Growth, layouts, and uploaded elements are saved.'}
+                    {syncStatus === 'offline' &&
+                      'Changes are safe on this device and will upload when you reconnect.'}
+                    {syncStatus === 'error' &&
+                      'Cloud sync hit a problem. Local changes are still safe.'}
+                    {(syncStatus === 'connecting' ||
+                      syncStatus === 'syncing') &&
+                      'Bringing this device and your cloud copy together…'}
+                    {syncStatus === 'local' &&
+                      'This device is currently using its local copy.'}
+                  </span>
+                </div>
+                <p className="sync-account">{cloudSession.user.email}</p>
+                <button
+                  className="sync-primary-button"
+                  type="button"
+                  onClick={() => {
+                    setSyncStatus('syncing')
+                    void Promise.all([
+                      saveCloudWorld(cloudSession.user.id, worldRef.current),
+                      refreshCloudElements.current?.(),
+                    ])
+                      .then(() => setSyncStatus('synced'))
+                      .catch(() => setSyncStatus('error'))
+                  }}
+                >
+                  Sync now
+                </button>
+                <button
+                  className="sync-secondary-button"
+                  type="button"
+                  onClick={disconnectCloud}
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void requestMagicLink()
+                }}
+              >
+                <p>
+                  Use the same email on your phone and laptop. Existing data
+                  from both devices will be merged the first time each signs in.
+                </p>
+                <label>
+                  <span>Email</span>
+                  <input
+                    type="email"
+                    value={syncEmail}
+                    onChange={(event) => setSyncEmail(event.target.value)}
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                  />
+                </label>
+                <button className="sync-primary-button" type="submit">
+                  Email me a sign-in link
+                </button>
+              </form>
+            )}
+            {syncMessage && (
+              <p className="sync-message" role="status">
+                {syncMessage}
+              </p>
+            )}
+          </section>
+        </div>
+      )}
 
       {view === 'world' && activeTargets.length > 0 && (
         <TargetCloudLayer
