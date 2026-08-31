@@ -707,6 +707,22 @@ function createTargetMotion(index: number): TargetMotion {
   }
 }
 
+function getTargetCharge(checklist: TargetChecklistItem[]) {
+  const completed = checklist.filter((item) => item.done).length
+  const progress = checklist.length === 0 ? 0 : completed / checklist.length
+
+  if (progress >= 1) {
+    return { label: '100% complete', bolts: ['big', 'big'] as const }
+  }
+  if (progress >= 0.75) {
+    return { label: '75% complete', bolts: ['big', 'small'] as const }
+  }
+  if (progress >= 0.5) {
+    return { label: '50% complete', bolts: ['long'] as const }
+  }
+  return { label: 'Planning', bolts: ['small'] as const }
+}
+
 function TargetCloudLayer({
   targets,
   onOpen,
@@ -794,22 +810,36 @@ function TargetCloudLayer({
 
   return (
     <div className="target-cloud-layer" aria-label="Active project targets">
-      {targets.map((target) => (
-        <button
-          className={`target-cloud target-cloud-${target.stream}`}
-          type="button"
-          key={target.id}
-          ref={(element) => {
-            if (element) cloudElements.current.set(target.id, element)
-            else cloudElements.current.delete(target.id)
-          }}
-          onClick={() => onOpen(target.id)}
-          aria-label={`Open target: ${target.title || 'Untitled target'}`}
-        >
-          <span>{target.title || 'New target'}</span>
-          <small>{target.status || 'Active'}</small>
-        </button>
-      ))}
+      {targets.map((target) => {
+        const charge = getTargetCharge(target.checklist)
+        return (
+          <button
+            className={`target-cloud target-cloud-${target.stream}`}
+            type="button"
+            key={target.id}
+            ref={(element) => {
+              if (element) cloudElements.current.set(target.id, element)
+              else cloudElements.current.delete(target.id)
+            }}
+            onClick={() => onOpen(target.id)}
+            aria-label={`Open target: ${
+              target.title || 'Untitled target'
+            }. ${charge.label}.`}
+          >
+            <span className="target-cloud-title">
+              {target.title || 'New target'}
+            </span>
+            <span className="cloud-charge" aria-hidden="true">
+              {charge.bolts.map((size, index) => (
+                <i
+                  className={`cloud-bolt cloud-bolt-${size}`}
+                  key={`${size}-${index}`}
+                />
+              ))}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }
