@@ -9,9 +9,9 @@ progress adds Growth to a calm palace garden, revealing new details over time.
   wellness
 - One-tap `+5`, `+10`, `+20`, and `+50` Growth updates with optional notes
 - Five permanent visual elements that open the life-stream Growth notes
-- A persistent Target board for major projects, with gentle moving cloud
-  markers, custom statuses, checklists, reminders, and explicit completion
-  Growth
+- A persistent Target board for major projects, with smooth moving cloud
+  markers, a visible status lifecycle, reorderable checklists, reminders, and
+  repeatable/removable completion Growth units
 - Four switchable seasonal worlds
 - Clear progression where every 100 Growth advances the garden record by one
   level

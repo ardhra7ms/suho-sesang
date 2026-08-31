@@ -1,0 +1,13 @@
+:root,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'DM Sans Variable', 'DM Sans', Helvetica, Arial, sans-serif;
+}
+
+.app-shell,
+.app-shell * {
+  font-family: 'DM Sans Variable', 'DM Sans', Helvetica, Arial, sans-serif !important;
+}

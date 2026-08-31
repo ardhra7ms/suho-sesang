@@ -50,7 +50,7 @@
   max-width: 500px;
   margin: 0 48px 25px 0;
   color: var(--record-ink);
-  font-family: 'Bricolage Grotesque Variable', 'Arial Black', sans-serif;
+  font-family: 'DM Sans Variable', 'DM Sans', Helvetica, Arial, sans-serif;
   font-size: clamp(2.15rem, 6vw, 3.4rem);
   font-variation-settings: 'opsz' 48, 'wdth' 90;
   font-weight: 720;
@@ -93,7 +93,7 @@
 
 .garden-record .summary-grid strong {
   color: var(--record-ink);
-  font-family: 'Bricolage Grotesque Variable', 'Arial Black', sans-serif;
+  font-family: 'DM Sans Variable', 'DM Sans', Helvetica, Arial, sans-serif;
   font-size: 1.65rem;
   font-weight: 720;
   line-height: 1;
@@ -124,7 +124,7 @@
 .garden-record .record-section h3 {
   margin: 0 0 12px;
   color: var(--record-ink);
-  font-family: 'Bricolage Grotesque Variable', 'Arial Black', sans-serif;
+  font-family: 'DM Sans Variable', 'DM Sans', Helvetica, Arial, sans-serif;
   font-size: 1rem;
   font-weight: 680;
   letter-spacing: -0.025em;
@@ -164,7 +164,7 @@
 }
 
 .garden-record .stream-progress strong {
-  font-family: 'Bricolage Grotesque Variable', 'Arial Black', sans-serif;
+  font-family: 'DM Sans Variable', 'DM Sans', Helvetica, Arial, sans-serif;
   font-size: 0.92rem;
 }
 

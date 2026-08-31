@@ -601,9 +601,9 @@ textarea {
 .element-image {
   aspect-ratio: 1;
   overflow: hidden;
-  border: 1px solid rgba(38, 53, 45, 0.13);
+  border: 0;
   border-radius: 52% 48% 43% 57% / 44% 56% 46% 54%;
-  background: #d7d0bd;
+  background: #050505;
   box-shadow: 0 12px 28px rgba(40, 48, 37, 0.09);
 }
 
@@ -851,7 +851,7 @@ textarea {
   color: transparent;
   border: 0;
   border-radius: 50%;
-  background: transparent;
+  background: #050505;
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.34);
   cursor: grab;
   pointer-events: auto;
@@ -2633,7 +2633,7 @@ textarea {
 
 .element-image {
   border-color: transparent;
-  background: var(--mango);
+  background: #050505;
   box-shadow: none;
 }
 
@@ -2671,7 +2671,19 @@ textarea {
   background: #211b0b;
 }
 
-.element-check,
+.element-check {
+  border-color: #fdc51b;
+  color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.element-check.selected {
+  border-color: #e9ff80;
+  color: #fff;
+  background: #27854e;
+}
+
 .default-element-mark {
   border-color: #fdc51b;
   color: #fdc51b;

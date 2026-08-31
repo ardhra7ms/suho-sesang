@@ -56,6 +56,8 @@ type TargetMotion = {
   vy: number
 }
 
+type TargetPoint = 5 | 10 | 20 | 50
+
 type ProjectTarget = {
   id: string
   title: string
@@ -63,13 +65,12 @@ type ProjectTarget = {
   stream: StreamId
   month: string
   minimumSuccess: string
-  nextStep: string
   notes: string
-  tags: string[]
   checklist: TargetChecklistItem[]
   reminders: string
   status: string
-  completionPoints: 5 | 10 | 20 | 50
+  pointAwards: TargetPoint[]
+  awardedGrowth?: number
   motion: TargetMotion
   createdAt: string
   completedAt?: string
@@ -162,6 +163,16 @@ type StoredUserElement = {
 const STORAGE_KEY = 'suho-sesang-world-v1'
 const ELEMENT_DB_NAME = 'suho-sesang-elements'
 const ELEMENT_STORE_NAME = 'images'
+const targetStatuses = [
+  'Idea',
+  'Planning',
+  'Ready',
+  'Active',
+  'Blocked',
+  'Waiting',
+  'Paused',
+  'Reviewing',
+] as const
 
 const seasons: Array<{
   id: SeasonId
@@ -601,7 +612,28 @@ function loadWorld(): WorldState {
     return {
       growth: calculateGrowth(activities),
       activities,
-      targets: Array.isArray(parsed.targets) ? parsed.targets : [],
+      targets: Array.isArray(parsed.targets)
+        ? parsed.targets.map((target, index) => {
+            const savedTarget = target as ProjectTarget & {
+              completionPoints?: TargetPoint
+            }
+            return {
+              ...savedTarget,
+              checklist: Array.isArray(savedTarget.checklist)
+                ? savedTarget.checklist
+                : [],
+              pointAwards: Array.isArray(savedTarget.pointAwards)
+                ? savedTarget.pointAwards
+                : savedTarget.completionPoints
+                  ? [savedTarget.completionPoints]
+                  : [],
+              awardedGrowth:
+                savedTarget.awardedGrowth ??
+                (savedTarget.completedAt ? savedTarget.completionPoints : undefined),
+              motion: savedTarget.motion ?? createTargetMotion(index),
+            }
+          })
+        : [],
       streamTitles: {
         ...initialState.streamTitles,
         ...parsed.streamTitles,
@@ -670,8 +702,8 @@ function createTargetMotion(index: number): TargetMotion {
   return {
     x: 0.12 + ((index * 0.23) % 0.7),
     y: 0.14 + ((index * 0.19) % 0.64),
-    vx: index % 2 === 0 ? 13 : -11,
-    vy: index % 3 === 0 ? 8 : -7,
+    vx: index % 2 === 0 ? 8 : -7,
+    vy: index % 3 === 0 ? 5 : -4,
   }
 }
 
@@ -741,10 +773,10 @@ function TargetCloudLayer({
 
         motion.x = nextX / availableWidth
         motion.y = nextY / availableHeight
-        element.style.transform = `translate3d(${Math.round(nextX + 10)}px, ${Math.round(nextY + topEdge)}px, 0)`
+        element.style.transform = `translate3d(${nextX + 10}px, ${nextY + topEdge}px, 0)`
       })
 
-      if (time - lastCommit >= 4000 && motionState.size > 0) {
+      if (time - lastCommit >= 15000 && motionState.size > 0) {
         lastCommit = time
         commitRef.current(Object.fromEntries(motionState))
       }
@@ -894,10 +926,10 @@ function App() {
       id: `target-${target.id}`,
       title: target.title || 'Untitled target',
       text:
-        [target.outcome, target.nextStep, target.minimumSuccess, target.notes]
+        [target.outcome, target.minimumSuccess, target.notes, target.reminders]
           .filter(Boolean)
           .join(' · ') || 'Target details',
-      tags: target.tags,
+      tags: ['target', target.status],
       createdAt: target.createdAt,
       context: `${world.streamTitles[target.stream]} target · ${target.status}`,
     }))
@@ -994,13 +1026,11 @@ function App() {
           stream: 'creation',
           month,
           minimumSuccess: '',
-          nextStep: '',
           notes: '',
-          tags: [],
           checklist: [],
           reminders: '',
           status: 'Planning',
-          completionPoints: 20,
+          pointAwards: [],
           motion: createTargetMotion(current.targets.length),
           createdAt: new Date().toISOString(),
         },
@@ -1072,17 +1102,71 @@ function App() {
     }))
   }
 
+  const moveTargetChecklistItem = (
+    targetId: string,
+    itemId: string,
+    direction: -1 | 1,
+  ) => {
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.map((target) => {
+        if (target.id !== targetId) return target
+        const index = target.checklist.findIndex((item) => item.id === itemId)
+        const destination = index + direction
+        if (index < 0 || destination < 0 || destination >= target.checklist.length) {
+          return target
+        }
+        const checklist = [...target.checklist]
+        const [item] = checklist.splice(index, 1)
+        checklist.splice(destination, 0, item)
+        return { ...target, checklist }
+      }),
+    }))
+  }
+
+  const addTargetPoint = (targetId: string, amount: TargetPoint) => {
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.map((target) =>
+        target.id === targetId
+          ? { ...target, pointAwards: [...target.pointAwards, amount] }
+          : target,
+      ),
+    }))
+  }
+
+  const removeTargetPoint = (targetId: string, index: number) => {
+    setWorld((current) => ({
+      ...current,
+      targets: current.targets.map((target) =>
+        target.id === targetId
+          ? {
+              ...target,
+              pointAwards: target.pointAwards.filter(
+                (_, pointIndex) => pointIndex !== index,
+              ),
+            }
+          : target,
+      ),
+    }))
+  }
+
   const completeTarget = (targetId: string) => {
     setWorld((current) => {
       const target = current.targets.find((item) => item.id === targetId)
       if (!target || target.completedAt) return current
+      const awardedGrowth = target.pointAwards.reduce(
+        (total, amount) => total + amount,
+        0,
+      )
+      if (awardedGrowth === 0) return current
       const activities = [
         {
           id: crypto.randomUUID(),
           stream: target.stream,
-          amount: target.completionPoints,
+          amount: awardedGrowth,
           note: `Completed target: ${target.title.trim() || 'Untitled target'}`,
-          tags: parseTags(`target, ${target.tags.join(', ')}`),
+          tags: ['target'],
           createdAt: new Date().toISOString(),
         },
         ...current.activities,
@@ -1096,6 +1180,7 @@ function App() {
             ? {
                 ...item,
                 status: 'Complete',
+                awardedGrowth,
                 completedAt: new Date().toISOString(),
               }
             : item,
@@ -2540,14 +2625,6 @@ function App() {
               <button type="button" onClick={addTarget}>+ Add a target</button>
             </header>
 
-            <datalist id="target-status-options">
-              <option value="Planning" />
-              <option value="Active" />
-              <option value="Waiting" />
-              <option value="Paused" />
-              <option value="Reviewing" />
-            </datalist>
-
             <section className="target-board-section">
               <h3>Active clouds</h3>
               {activeTargets.length === 0 ? (
@@ -2643,16 +2720,20 @@ function App() {
                               </label>
                               <label className="target-field">
                                 <span>Status</span>
-                                <input
-                                  list="target-status-options"
+                                <select
                                   value={target.status}
                                   onChange={(event) =>
                                     updateTarget(target.id, {
                                       status: event.target.value,
                                     })
                                   }
-                                  placeholder="Add a status"
-                                />
+                                >
+                                  {targetStatuses.map((status) => (
+                                    <option value={status} key={status}>
+                                      {status}
+                                    </option>
+                                  ))}
+                                </select>
                               </label>
                             </div>
                             <label className="target-field target-field-wide">
@@ -2667,19 +2748,6 @@ function App() {
                                 placeholder="The smallest version that still counts"
                               />
                             </label>
-                            <label className="target-field target-field-wide">
-                              <span>Next concrete step</span>
-                              <input
-                                value={target.nextStep}
-                                onChange={(event) =>
-                                  updateTarget(target.id, {
-                                    nextStep: event.target.value,
-                                  })
-                                }
-                                placeholder="What happens next?"
-                              />
-                            </label>
-
                             <section className="target-checklist">
                               <div>
                                 <h4>Progress</h4>
@@ -2692,7 +2760,7 @@ function App() {
                                   + Add step
                                 </button>
                               </div>
-                              {target.checklist.map((item) => (
+                              {target.checklist.map((item, itemIndex) => (
                                 <label key={item.id}>
                                   <input
                                     type="checkbox"
@@ -2716,6 +2784,38 @@ function App() {
                                     }
                                     placeholder="A concrete step"
                                   />
+                                  <span className="step-order-controls">
+                                    <button
+                                      type="button"
+                                      disabled={itemIndex === 0}
+                                      onClick={() =>
+                                        moveTargetChecklistItem(
+                                          target.id,
+                                          item.id,
+                                          -1,
+                                        )
+                                      }
+                                      aria-label="Move step up"
+                                    >
+                                      ↑
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={
+                                        itemIndex === target.checklist.length - 1
+                                      }
+                                      onClick={() =>
+                                        moveTargetChecklistItem(
+                                          target.id,
+                                          item.id,
+                                          1,
+                                        )
+                                      }
+                                      aria-label="Move step down"
+                                    >
+                                      ↓
+                                    </button>
+                                  </span>
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -2744,58 +2844,63 @@ function App() {
                                 placeholder="Context, decisions, or ideas"
                               />
                             </label>
-                            <div className="target-field-row">
-                              <label className="target-field">
-                                <span>Tags</span>
-                                <input
-                                  value={target.tags.join(', ')}
-                                  onChange={(event) =>
-                                    updateTarget(target.id, {
-                                      tags: parseTags(event.target.value),
-                                    })
-                                  }
-                                  placeholder="work, writing"
-                                />
-                              </label>
-                              <label className="target-field">
-                                <span>Reminders</span>
-                                <input
-                                  value={target.reminders}
-                                  onChange={(event) =>
-                                    updateTarget(target.id, {
-                                      reminders: event.target.value,
-                                    })
-                                  }
-                                  placeholder="Friday review"
-                                />
-                              </label>
-                            </div>
+                            <label className="target-field target-field-wide">
+                              <span>Reminders</span>
+                              <input
+                                value={target.reminders}
+                                onChange={(event) =>
+                                  updateTarget(target.id, {
+                                    reminders: event.target.value,
+                                  })
+                                }
+                                placeholder="Friday review"
+                              />
+                            </label>
 
                             <footer className="target-card-actions">
-                              <label>
+                              <div className="target-point-builder">
                                 <span>Completion Growth</span>
-                                <select
-                                  value={target.completionPoints}
-                                  onChange={(event) =>
-                                    updateTarget(target.id, {
-                                      completionPoints: Number(
-                                        event.target.value,
-                                      ) as ProjectTarget['completionPoints'],
-                                    })
-                                  }
-                                >
-                                  <option value={5}>+5 small</option>
-                                  <option value={10}>+10 focused</option>
-                                  <option value={20}>+20 major</option>
-                                  <option value={50}>+50 breakthrough</option>
-                                </select>
-                              </label>
+                                <div className="target-point-buttons">
+                                  {([5, 10, 20, 50] as const).map((amount) => (
+                                    <button
+                                      type="button"
+                                      key={amount}
+                                      onClick={() =>
+                                        addTargetPoint(target.id, amount)
+                                      }
+                                    >
+                                      +{amount}
+                                    </button>
+                                  ))}
+                                </div>
+                                <div className="target-point-awards">
+                                  {target.pointAwards.map((amount, pointIndex) => (
+                                    <button
+                                      type="button"
+                                      key={`${amount}-${pointIndex}`}
+                                      onClick={() =>
+                                        removeTargetPoint(target.id, pointIndex)
+                                      }
+                                      aria-label={`Remove +${amount}`}
+                                    >
+                                      +{amount} ×
+                                    </button>
+                                  ))}
+                                  <strong>
+                                    Total +{target.pointAwards.reduce(
+                                      (total, amount) => total + amount,
+                                      0,
+                                    )}
+                                  </strong>
+                                </div>
+                              </div>
                               <button
                                 className="complete-target"
                                 type="button"
+                                disabled={target.pointAwards.length === 0}
                                 onClick={() => completeTarget(target.id)}
                               >
-                                ✓ Complete for +{target.completionPoints}
+                                ✓ Complete target
                               </button>
                               <button
                                 className="delete-target"
@@ -2822,7 +2927,7 @@ function App() {
                     <div>
                       <strong>{target.title || 'Untitled target'}</strong>
                       <small>
-                        {formatDate(target.completedAt!)} · +{target.completionPoints}{' '}
+                        {formatDate(target.completedAt!)} · +{target.awardedGrowth ?? 0}{' '}
                         Growth
                       </small>
                     </div>
@@ -2861,21 +2966,31 @@ function App() {
               ×
             </button>
             <div className="notebook-source">
-              <input
-                className="notebook-title"
-                value={activePlacement.title ?? activePlacementElement.name}
-                onChange={(event) =>
-                  updatePlacedElement(
-                    activeNoteSource.page,
-                    activeNoteSource.elementId,
-                    (placement) => ({
-                      ...placement,
-                      title: event.target.value,
-                    }),
-                  )
-                }
-                aria-label="Element notes heading"
-              />
+              <div className={`notebook-source-image frame-${activePlacement.frame}`}>
+                <img
+                  src={getElementImageSource(activePlacementElement.image)}
+                  alt=""
+                />
+              </div>
+              <div className="notebook-source-copy">
+                <span>Element notebook</span>
+                <input
+                  className="notebook-title"
+                  value={activePlacement.title ?? activePlacementElement.name}
+                  onChange={(event) =>
+                    updatePlacedElement(
+                      activeNoteSource.page,
+                      activeNoteSource.elementId,
+                      (placement) => ({
+                        ...placement,
+                        title: event.target.value,
+                      }),
+                    )
+                  }
+                  aria-label="Element notes heading"
+                />
+                <p>Keep the memories, ideas, and progress this element gathers.</p>
+              </div>
             </div>
             <section className="weekly-minimum" aria-label="Weekly minimum win">
               <div className="weekly-minimum-heading">
