@@ -19,7 +19,7 @@
   --cloud-ink: #173d2b;
   --cloud-shadow-start: #f7ca60;
   --cloud-shadow-end: #e98373;
-  --cloud-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 130'%3E%3Cpath d='M31 108C17 105 8 95 9 81C10 67 20 57 34 54C33 39 43 26 58 22C66 9 82 4 97 8C108 11 117 19 121 30C132 19 145 14 160 18C176 14 192 22 199 36C216 39 226 51 226 67C239 75 241 91 233 102C225 113 212 116 197 113C174 118 148 117 125 113C102 119 79 118 60 112C49 115 39 113 31 108Z'/%3E%3C/svg%3E");
+  --cloud-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 120'%3E%3Cpath d='M38 107C20 107 8 97 8 82C8 67 19 55 35 52C36 29 54 12 77 12C94 12 109 21 116 35C126 23 141 17 158 18C181 19 199 36 201 59C218 62 230 74 230 90C230 101 220 108 204 109C157 112 87 112 38 107Z'/%3E%3C/svg%3E");
   position: absolute;
   isolation: isolate;
   top: 0;
