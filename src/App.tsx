@@ -1014,6 +1014,7 @@ function App() {
   const [syncOpen, setSyncOpen] = useState(false)
   const [hasCloudConfig, setHasCloudConfig] = useState(cloudConfigured)
   const [oauthClientId, setOauthClientId] = useState('')
+  const [oauthSetupStep, setOauthSetupStep] = useState(0)
   const [syncPassphrase, setSyncPassphrase] = useState('')
   const [syncMessage, setSyncMessage] = useState('')
   const dragMoved = useRef(false)
@@ -2604,7 +2605,11 @@ function App() {
               ×
             </button>
             <span className="sync-kicker">Across your devices</span>
-            <h2 id="sync-title">Keep this world together.</h2>
+            <h2 id="sync-title">
+              {hasCloudConfig
+                ? 'Keep this world together.'
+                : 'Connect Google Drive.'}
+            </h2>
             {!hasCloudConfig ? (
               <form
                 className="sync-setup"
@@ -2613,64 +2618,134 @@ function App() {
                   saveGoogleSetup()
                 }}
               >
-                <p>
-                  Set up a private connection once. Your goals will be encrypted
-                  before Google Drive receives them.
-                </p>
-                <ol>
-                  <li>
-                    <a
-                      href="https://console.cloud.google.com/projectcreate"
-                      target="_blank"
-                      rel="noreferrer"
+                <div className="sync-carousel-status">
+                  <span>One-time setup</span>
+                  <div aria-label={`Step ${oauthSetupStep + 1} of 4`}>
+                    {[0, 1, 2, 3].map((step) => (
+                      <i
+                        className={step === oauthSetupStep ? 'active' : ''}
+                        key={step}
+                      />
+                    ))}
+                  </div>
+                  <strong>{oauthSetupStep + 1} / 4</strong>
+                </div>
+                <div
+                  className="sync-carousel-slide"
+                  key={oauthSetupStep}
+                  aria-live="polite"
+                >
+                  {oauthSetupStep === 0 && (
+                    <>
+                      <h3>Create your Google project</h3>
+                      <p>
+                        Start here. This creates the private connection Suho
+                        needs. Name the project anything you like.
+                      </p>
+                      <a
+                        className="sync-primary-button"
+                        href="https://console.cloud.google.com/projectcreate"
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => setOauthSetupStep(1)}
+                      >
+                        Create Google project ↗
+                      </a>
+                      <button
+                        className="sync-text-button"
+                        type="button"
+                        onClick={() => setOauthSetupStep(3)}
+                      >
+                        I already have a client ID
+                      </button>
+                    </>
+                  )}
+                  {oauthSetupStep === 1 && (
+                    <>
+                      <h3>Enable Google Drive</h3>
+                      <p>
+                        Select the project you just created, then enable its
+                        Google Drive API.
+                      </p>
+                      <a
+                        className="sync-primary-button"
+                        href="https://console.cloud.google.com/apis/library/drive.googleapis.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => setOauthSetupStep(2)}
+                      >
+                        Enable Drive API ↗
+                      </a>
+                    </>
+                  )}
+                  {oauthSetupStep === 2 && (
+                    <>
+                      <h3>Configure Google sign-in</h3>
+                      <p>
+                        Choose <strong>External</strong>, add your Google email
+                        as a test user, and create a Web application client.
+                      </p>
+                      <p className="sync-origin">
+                        Add this authorized JavaScript origin:
+                        <code>{window.location.origin}</code>
+                      </p>
+                      <a
+                        className="sync-primary-button"
+                        href="https://console.cloud.google.com/auth/overview"
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => setOauthSetupStep(3)}
+                      >
+                        Configure Google Auth ↗
+                      </a>
+                    </>
+                  )}
+                  {oauthSetupStep === 3 && (
+                    <>
+                      <h3>Paste your client ID</h3>
+                      <p>
+                        Copy the Web client ID Google created. It is a public
+                        identifier, not a password.
+                      </p>
+                      <label>
+                        <span>Google Web OAuth client ID</span>
+                        <input
+                          value={oauthClientId}
+                          onChange={(event) =>
+                            setOauthClientId(event.target.value)
+                          }
+                          placeholder="…apps.googleusercontent.com"
+                          autoComplete="off"
+                          required
+                        />
+                      </label>
+                      <button className="sync-primary-button" type="submit">
+                        Save and continue
+                      </button>
+                    </>
+                  )}
+                </div>
+                <div className="sync-carousel-nav">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOauthSetupStep((step) => Math.max(0, step - 1))
+                    }
+                    disabled={oauthSetupStep === 0}
+                  >
+                    ← Back
+                  </button>
+                  {oauthSetupStep < 3 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOauthSetupStep((step) => Math.min(3, step + 1))
+                      }
                     >
-                      Create a Google Cloud project
-                    </a>
-                    <span>Name it anything you like.</span>
-                  </li>
-                  <li>
-                    <a
-                      href="https://console.cloud.google.com/apis/library/drive.googleapis.com"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Enable the Google Drive API
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="https://console.cloud.google.com/auth/overview"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Configure Google Auth
-                    </a>
-                    <span>
-                      Choose External, add your Google email as a test user, and
-                      create an OAuth client for a Web application.
-                    </span>
-                  </li>
-                  <li>
-                    <span>Under Authorized JavaScript origins, add:</span>
-                    <code>{window.location.origin}</code>
-                  </li>
-                  <li>
-                    <span>Copy the generated Client ID and paste it below.</span>
-                  </li>
-                </ol>
-                <label>
-                  <span>Google Web OAuth client ID</span>
-                  <input
-                    value={oauthClientId}
-                    onChange={(event) => setOauthClientId(event.target.value)}
-                    placeholder="…apps.googleusercontent.com"
-                    autoComplete="off"
-                    required
-                  />
-                </label>
-                <button className="sync-primary-button" type="submit">
-                  Save and continue
-                </button>
+                      I did this · Next →
+                    </button>
+                  )}
+                </div>
               </form>
             ) : cloudSession ? (
               <>

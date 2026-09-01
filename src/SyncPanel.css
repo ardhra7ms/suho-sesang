@@ -63,39 +63,63 @@
   gap: 14px;
 }
 
-.sync-setup ol {
+.sync-carousel-status {
   display: grid;
-  gap: 10px;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  color: rgba(23, 61, 43, 0.68);
+  font-size: 0.62rem;
+  border-bottom: 1px solid rgba(23, 61, 43, 0.16);
+}
+
+.sync-carousel-status > div {
+  display: flex;
+  gap: 5px;
+}
+
+.sync-carousel-status i {
+  width: 7px;
+  height: 7px;
+  background: rgba(23, 61, 43, 0.18);
+  border-radius: 50%;
+}
+
+.sync-carousel-status i.active {
+  width: 20px;
+  background: #173d2b;
+  border-radius: 999px;
+}
+
+.sync-carousel-status strong {
+  color: #173d2b;
+}
+
+.sync-carousel-slide {
+  min-height: 260px;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px 0 10px;
+  animation: sync-slide-in 180ms ease-out;
+}
+
+.sync-carousel-slide h3 {
+  max-width: 350px;
   margin: 0;
-  padding: 0 0 0 21px;
+  font-size: 1.65rem;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
 }
 
-.sync-setup li {
-  padding-left: 3px;
-  color: #173d2b;
-  font-size: 0.72rem;
-  line-height: 1.35;
+.sync-carousel-slide p {
+  max-width: 390px;
+  margin: 0;
 }
 
-.sync-setup li a,
-.sync-setup li span {
-  display: block;
-}
-
-.sync-setup a {
-  width: fit-content;
-  color: #173d2b;
-  font-weight: 750;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-
-.sync-setup li span {
-  margin-top: 2px;
-  color: rgba(23, 61, 43, 0.7);
-}
-
-.sync-setup code {
+.sync-carousel-slide code {
   display: block;
   width: fit-content;
   max-width: 100%;
@@ -106,6 +130,62 @@
   font-size: 0.66rem;
   background: #fff0a8;
   border-radius: 7px;
+}
+
+.sync-carousel-slide .sync-primary-button {
+  display: inline-block;
+  margin-top: auto;
+  color: #fffdf3;
+  text-decoration: none;
+}
+
+.sync-carousel-slide label {
+  width: 100%;
+}
+
+.sync-origin {
+  padding: 11px 13px;
+  background: rgba(255, 240, 168, 0.52);
+  border-radius: 12px 6px 11px 8px;
+}
+
+.sync-text-button {
+  padding: 3px 0;
+  color: #173d2b;
+  font-size: 0.68rem;
+  font-weight: 680;
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sync-carousel-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(23, 61, 43, 0.16);
+}
+
+.sync-carousel-nav button {
+  padding: 5px 0;
+  color: #173d2b;
+  font-size: 0.66rem;
+  font-weight: 680;
+  background: transparent;
+  border: 0;
+}
+
+.sync-carousel-nav button:disabled {
+  visibility: hidden;
+}
+
+@keyframes sync-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
 }
 
 .sync-panel label span {
@@ -215,8 +295,7 @@
   .sync-panel h2 {
     font-size: 2.25rem;
   }
-
-  .sync-setup ol {
-    gap: 9px;
+  .sync-carousel-slide {
+    min-height: 280px;
   }
 }
