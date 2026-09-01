@@ -2682,10 +2682,11 @@ function App() {
                   )}
                   {oauthSetupStep === 2 && (
                     <>
-                      <h3>Configure Google sign-in</h3>
+                      <h3>Create the OAuth client</h3>
                       <p>
-                        Choose <strong>External</strong>, add your Google email
-                        as a test user, and create a Web application client.
+                        Choose <strong>Web application</strong>, name it{' '}
+                        <strong>Suho&apos;s Sesang Web</strong>, and leave
+                        redirect URIs empty.
                       </p>
                       <p className="sync-origin">
                         Add this authorized JavaScript origin:
@@ -2693,12 +2694,12 @@ function App() {
                       </p>
                       <a
                         className="sync-primary-button"
-                        href="https://console.cloud.google.com/auth/overview"
+                        href="https://console.cloud.google.com/auth/clients/create"
                         target="_blank"
                         rel="noreferrer"
                         onClick={() => setOauthSetupStep(3)}
                       >
-                        Configure Google Auth ↗
+                        Create OAuth client ↗
                       </a>
                     </>
                   )}
