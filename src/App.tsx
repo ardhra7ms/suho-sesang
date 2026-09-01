@@ -598,10 +598,12 @@ async function removeStoredElement(id: string): Promise<void> {
 }
 
 async function prepareUploadedImage(file: File): Promise<Blob> {
-  if (file.type === 'image/gif') return file
+  if (file.size > 20 * 1024 * 1024) {
+    throw new Error('Choose an image smaller than 20 MB.')
+  }
 
   const bitmap = await createImageBitmap(file)
-  const scale = Math.min(1, 1400 / Math.max(bitmap.width, bitmap.height))
+  const scale = Math.min(1, 1200 / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, Math.round(bitmap.width * scale))
   canvas.height = Math.max(1, Math.round(bitmap.height * scale))
@@ -618,7 +620,7 @@ async function prepareUploadedImage(file: File): Promise<Blob> {
       (blob) =>
         blob ? resolve(blob) : reject(new Error('The image could not be saved.')),
       'image/webp',
-      0.88,
+      0.82,
     )
   })
 }
@@ -1357,7 +1359,7 @@ function App() {
         .catch(() =>
           setSyncStatus(navigator.onLine ? 'error' : 'offline'),
         )
-    }, 700)
+    }, 1500)
     return () => window.clearTimeout(timeout)
   }, [cloudSession?.user.id, world])
 

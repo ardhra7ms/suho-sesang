@@ -92,6 +92,8 @@ type DriveFile = {
 let accessToken = ''
 let encryptionKey: CryptoKey | null = null
 let activeSession: Session | null = null
+let lastSavedWorldJson = ''
+let worldSaveQueue = Promise.resolve()
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = ''
@@ -239,8 +241,11 @@ async function createDriveFile(name: string): Promise<DriveFile> {
 }
 
 async function writeDriveFile(name: string, body: Blob): Promise<void> {
-  const existing = await findDriveFile(name)
-  const file = existing ?? (await createDriveFile(name))
+  const existing = await findDriveFiles(name)
+  const file = existing[0] ?? (await createDriveFile(name))
+  await Promise.all(
+    existing.slice(1).map((duplicate) => deleteDriveFile(duplicate.id)),
+  )
   await googleFetch(
     `${driveUploadApi}/files/${encodeURIComponent(file.id)}?uploadType=media`,
     {
@@ -411,10 +416,19 @@ export async function saveCloudWorld(
   _userId: string,
   world: unknown,
 ): Promise<void> {
-  const encrypted = await encryptBlob(
-    new Blob([JSON.stringify(world)], { type: 'application/json' }),
-  )
-  await writeDriveFile(worldFileName, encrypted)
+  const worldJson = JSON.stringify(world)
+  const save = worldSaveQueue
+    .catch(() => undefined)
+    .then(async () => {
+      if (worldJson === lastSavedWorldJson) return
+      const encrypted = await encryptBlob(
+        new Blob([worldJson], { type: 'application/json' }),
+      )
+      await writeDriveFile(worldFileName, encrypted)
+      lastSavedWorldJson = worldJson
+    })
+  worldSaveQueue = save
+  await save
 }
 
 export function watchCloudWorld(
@@ -442,25 +456,54 @@ function assetFileName(elementId: string): string {
 }
 
 async function encodeElement(element: SyncedElement): Promise<Blob> {
-  const data = bytesToBase64(new Uint8Array(await element.blob.arrayBuffer()))
+  const marker = new TextEncoder().encode('SSE2')
+  const header = new TextEncoder().encode(
+    JSON.stringify({
+      version: 2,
+      id: element.id,
+      name: element.name,
+      createdAt: element.createdAt,
+      type: element.blob.type,
+    }),
+  )
+  const headerLength = new Uint8Array(4)
+  new DataView(headerLength.buffer).setUint32(0, header.length)
   return encryptBlob(
-    new Blob(
-      [
-        JSON.stringify({
-          id: element.id,
-          name: element.name,
-          createdAt: element.createdAt,
-          type: element.blob.type,
-          data,
-        }),
-      ],
-      { type: 'application/json' },
-    ),
+    new Blob([marker, headerLength, header, element.blob], {
+      type: 'application/octet-stream',
+    }),
   )
 }
 
 async function decodeElement(file: DriveFile): Promise<SyncedElement> {
   const decrypted = await decryptBlob(await readDriveFile(file.id))
+  const bytes = new Uint8Array(await decrypted.arrayBuffer())
+  if (new TextDecoder().decode(bytes.slice(0, 4)) === 'SSE2') {
+    const headerLength = new DataView(
+      bytes.buffer,
+      bytes.byteOffset + 4,
+      4,
+    ).getUint32(0)
+    const dataOffset = 8 + headerLength
+    if (headerLength === 0 || dataOffset > bytes.length) {
+      throw new Error('This synced element is invalid.')
+    }
+    const value = JSON.parse(
+      new TextDecoder().decode(bytes.slice(8, dataOffset)),
+    ) as {
+      id: string
+      name: string
+      createdAt: string
+      type: string
+    }
+    return {
+      id: value.id,
+      name: value.name,
+      createdAt: value.createdAt,
+      blob: new Blob([bytes.slice(dataOffset)], { type: value.type }),
+    }
+  }
+
   const value = JSON.parse(await decrypted.text()) as {
     id: string
     name: string
@@ -480,8 +523,8 @@ export async function deleteCloudElement(
   _userId: string,
   elementId: string,
 ): Promise<void> {
-  const file = await findDriveFile(assetFileName(elementId))
-  if (file) await deleteDriveFile(file.id)
+  const files = await findDriveFiles(assetFileName(elementId))
+  await Promise.all(files.map((file) => deleteDriveFile(file.id)))
 }
 
 export async function syncCloudElements(
@@ -493,17 +536,19 @@ export async function syncCloudElements(
   const remoteFiles = await listDriveFiles(
     `name contains '${assetPrefix}' and trashed = false`,
   )
-  const remoteById = new Map(
-    remoteFiles
-      .filter(
-        (file) =>
-          file.name.startsWith(assetPrefix) && file.name.endsWith(assetSuffix),
-      )
-      .map((file) => [
-        file.name.slice(assetPrefix.length, -assetSuffix.length),
-        file,
-      ]),
-  )
+  const remoteById = new Map<string, DriveFile>()
+  const duplicateFiles: DriveFile[] = []
+  remoteFiles
+    .filter(
+      (file) =>
+        file.name.startsWith(assetPrefix) && file.name.endsWith(assetSuffix),
+    )
+    .forEach((file) => {
+      const id = file.name.slice(assetPrefix.length, -assetSuffix.length)
+      if (remoteById.has(id)) duplicateFiles.push(file)
+      else remoteById.set(id, file)
+    })
+  await Promise.all(duplicateFiles.map((file) => deleteDriveFile(file.id)))
   const localById = new Map(
     localElements
       .filter((element) => !deletedIds.has(element.id))
