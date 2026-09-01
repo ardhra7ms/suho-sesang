@@ -37,9 +37,10 @@ synchronized.
 1. Create a Google Cloud project and enable the Google Drive API.
 2. Configure an OAuth consent screen and create a Web application OAuth client.
 3. Add `https://ardhra7ms.github.io` as an authorized JavaScript origin.
-4. Copy `.env.example` to `.env.local` and add the OAuth client ID for local
-   development.
-5. Add `VITE_GOOGLE_CLIENT_ID` as a GitHub Actions repository variable for the
+4. Click the bunny in the app and paste the OAuth client ID into the guided
+   setup. It is stored only in that browser.
+5. Optionally copy `.env.example` to `.env.local` for local development.
+6. Add `VITE_GOOGLE_CLIENT_ID` as a GitHub Actions repository variable for the
    Pages deployment.
 
 The app requests only the narrow `drive.appdata` scope. World state and uploaded

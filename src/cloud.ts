@@ -1,4 +1,12 @@
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim()
+const configuredClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim()
+const storedClientId = (() => {
+  try {
+    return localStorage.getItem('suho-sesang-google-client-id')?.trim()
+  } catch {
+    return undefined
+  }
+})()
+let googleClientId = configuredClientId || storedClientId
 const driveScope =
   'openid email https://www.googleapis.com/auth/drive.appdata'
 const driveApi = 'https://www.googleapis.com/drive/v3'
@@ -9,6 +17,18 @@ const assetPrefix = 'asset-'
 const assetSuffix = '.bin'
 
 export const cloudConfigured = Boolean(googleClientId)
+
+export function configureGoogleClientId(value: string): void {
+  const clientId = value.trim()
+  if (
+    clientId.length < 30 ||
+    !clientId.endsWith('.apps.googleusercontent.com')
+  ) {
+    throw new Error('Paste a valid Google Web OAuth client ID.')
+  }
+  localStorage.setItem('suho-sesang-google-client-id', clientId)
+  googleClientId = clientId
+}
 
 export type SyncStatus =
   | 'local'

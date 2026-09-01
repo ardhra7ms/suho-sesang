@@ -1,7 +1,9 @@
 .sync-panel {
   position: relative;
   width: min(480px, calc(100vw - 32px));
+  max-height: calc(100svh - 32px);
   padding: 34px;
+  overflow-y: auto;
   color: #173d2b;
   background: #fff8e9;
   border-radius: 34px 18px 31px 22px;
@@ -59,6 +61,51 @@
 
 .sync-panel form {
   gap: 14px;
+}
+
+.sync-setup ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 0 21px;
+}
+
+.sync-setup li {
+  padding-left: 3px;
+  color: #173d2b;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.sync-setup li a,
+.sync-setup li span {
+  display: block;
+}
+
+.sync-setup a {
+  width: fit-content;
+  color: #173d2b;
+  font-weight: 750;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.sync-setup li span {
+  margin-top: 2px;
+  color: rgba(23, 61, 43, 0.7);
+}
+
+.sync-setup code {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 5px;
+  padding: 5px 8px;
+  overflow-wrap: anywhere;
+  color: #173d2b;
+  font-size: 0.66rem;
+  background: #fff0a8;
+  border-radius: 7px;
 }
 
 .sync-panel label span {
@@ -160,11 +207,16 @@
     width: 100%;
     align-self: end;
     padding: 28px 22px 30px;
+    overflow-y: auto;
     border-radius: 30px 30px 0 0;
     box-shadow: none;
   }
 
   .sync-panel h2 {
     font-size: 2.25rem;
+  }
+
+  .sync-setup ol {
+    gap: 9px;
   }
 }

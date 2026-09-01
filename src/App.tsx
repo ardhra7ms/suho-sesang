@@ -9,6 +9,7 @@ import {
 } from 'react'
 import {
   cloudConfigured,
+  configureGoogleClientId,
   connectGoogleDrive,
   deleteCloudElement,
   getCloudSession,
@@ -1011,6 +1012,8 @@ function App() {
     cloudConfigured ? 'connecting' : 'local',
   )
   const [syncOpen, setSyncOpen] = useState(false)
+  const [hasCloudConfig, setHasCloudConfig] = useState(cloudConfigured)
+  const [oauthClientId, setOauthClientId] = useState('')
   const [syncPassphrase, setSyncPassphrase] = useState('')
   const [syncMessage, setSyncMessage] = useState('')
   const dragMoved = useRef(false)
@@ -1049,7 +1052,7 @@ function App() {
   const level = Math.floor(totalGrowth / 100) + 1
   const activeTargets = world.targets.filter((target) => !target.completedAt)
   const completedTargets = world.targets.filter((target) => target.completedAt)
-  const syncLabel = !cloudConfigured
+  const syncLabel = !hasCloudConfig
     ? 'Not connected'
     : cloudSession
       ? syncStatus === 'synced'
@@ -1186,7 +1189,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!cloudConfigured) return
+    if (!hasCloudConfig) return
     let active = true
     getCloudSession()
       .then((session) => {
@@ -1208,7 +1211,7 @@ function App() {
       active = false
       stopWatching()
     }
-  }, [])
+  }, [hasCloudConfig])
 
   useEffect(() => {
     const userId = cloudSession?.user.id
@@ -1356,6 +1359,19 @@ function App() {
     }, 700)
     return () => window.clearTimeout(timeout)
   }, [cloudSession?.user.id, world])
+
+  const saveGoogleSetup = () => {
+    try {
+      configureGoogleClientId(oauthClientId)
+      setHasCloudConfig(true)
+      setSyncStatus('local')
+      setSyncMessage('')
+    } catch (error) {
+      setSyncMessage(
+        error instanceof Error ? error.message : 'The client ID is invalid.',
+      )
+    }
+  }
 
   const connectEncryptedDrive = async () => {
     if (syncPassphrase.length < 10) {
@@ -2589,11 +2605,73 @@ function App() {
             </button>
             <span className="sync-kicker">Across your devices</span>
             <h2 id="sync-title">Keep this world together.</h2>
-            {!cloudConfigured ? (
-              <p>
-                Encrypted Google Drive sync needs the site's Google OAuth client
-                ID added to the deployment.
-              </p>
+            {!hasCloudConfig ? (
+              <form
+                className="sync-setup"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  saveGoogleSetup()
+                }}
+              >
+                <p>
+                  Set up a private connection once. Your goals will be encrypted
+                  before Google Drive receives them.
+                </p>
+                <ol>
+                  <li>
+                    <a
+                      href="https://console.cloud.google.com/projectcreate"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Create a Google Cloud project
+                    </a>
+                    <span>Name it anything you like.</span>
+                  </li>
+                  <li>
+                    <a
+                      href="https://console.cloud.google.com/apis/library/drive.googleapis.com"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Enable the Google Drive API
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://console.cloud.google.com/auth/overview"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Configure Google Auth
+                    </a>
+                    <span>
+                      Choose External, add your Google email as a test user, and
+                      create an OAuth client for a Web application.
+                    </span>
+                  </li>
+                  <li>
+                    <span>Under Authorized JavaScript origins, add:</span>
+                    <code>{window.location.origin}</code>
+                  </li>
+                  <li>
+                    <span>Copy the generated Client ID and paste it below.</span>
+                  </li>
+                </ol>
+                <label>
+                  <span>Google Web OAuth client ID</span>
+                  <input
+                    value={oauthClientId}
+                    onChange={(event) => setOauthClientId(event.target.value)}
+                    placeholder="…apps.googleusercontent.com"
+                    autoComplete="off"
+                    required
+                  />
+                </label>
+                <button className="sync-primary-button" type="submit">
+                  Save and continue
+                </button>
+              </form>
             ) : cloudSession ? (
               <>
                 <div className={`sync-state sync-state-${syncStatus}`}>
@@ -2660,7 +2738,7 @@ function App() {
                   />
                 </label>
                 <button className="sync-primary-button" type="submit">
-                  Connect encrypted Google Drive
+                  Sign in with Google
                 </button>
               </form>
             )}
