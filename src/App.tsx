@@ -2622,15 +2622,15 @@ function App() {
               >
                 <div className="sync-carousel-status">
                   <span>One-time setup</span>
-                  <div aria-label={`Step ${oauthSetupStep + 1} of 4`}>
-                    {[0, 1, 2, 3].map((step) => (
+                  <div aria-label={`Step ${oauthSetupStep + 1} of 5`}>
+                    {[0, 1, 2, 3, 4].map((step) => (
                       <i
                         className={step === oauthSetupStep ? 'active' : ''}
                         key={step}
                       />
                     ))}
                   </div>
-                  <strong>{oauthSetupStep + 1} / 4</strong>
+                  <strong>{oauthSetupStep + 1} / 5</strong>
                 </div>
                 <div
                   className="sync-carousel-slide"
@@ -2656,7 +2656,7 @@ function App() {
                       <button
                         className="sync-text-button"
                         type="button"
-                        onClick={() => setOauthSetupStep(3)}
+                        onClick={() => setOauthSetupStep(4)}
                       >
                         I already have a client ID
                       </button>
@@ -2705,6 +2705,25 @@ function App() {
                   )}
                   {oauthSetupStep === 3 && (
                     <>
+                      <h3>Add yourself as a test user</h3>
+                      <p>
+                        Google keeps personal External apps private while they
+                        are being tested. Add the Google account you will use
+                        with Suho.
+                      </p>
+                      <a
+                        className="sync-primary-button"
+                        href="https://console.cloud.google.com/auth/audience"
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => setOauthSetupStep(4)}
+                      >
+                        Add test user ↗
+                      </a>
+                    </>
+                  )}
+                  {oauthSetupStep === 4 && (
+                    <>
                       <h3>Paste your client ID</h3>
                       <p>
                         Copy the Web client ID Google created. It is a public
@@ -2738,11 +2757,11 @@ function App() {
                   >
                     ← Back
                   </button>
-                  {oauthSetupStep < 3 && (
+                  {oauthSetupStep < 4 && (
                     <button
                       type="button"
                       onClick={() =>
-                        setOauthSetupStep((step) => Math.min(3, step + 1))
+                        setOauthSetupStep((step) => Math.min(4, step + 1))
                       }
                     >
                       I did this · Next →
