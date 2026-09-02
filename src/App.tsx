@@ -179,6 +179,81 @@ type StoredUserElement = {
   createdAt: string
 }
 
+const cosmicTiers = [
+  {
+    id: 'black-hole',
+    name: 'Black hole',
+    plural: 'Black holes',
+    icon: '●',
+    value: 10_000_000,
+  },
+  {
+    id: 'andromeda',
+    name: 'Andromeda',
+    plural: 'Andromeda',
+    icon: '✺',
+    value: 1_000_000,
+  },
+  { id: 'sun', name: 'Sun', plural: 'Suns', icon: '☀', value: 100_000 },
+  {
+    id: 'jupiter',
+    name: 'Jupiter',
+    plural: 'Jupiters',
+    icon: '♃',
+    value: 10_000,
+  },
+  { id: 'earth', name: 'Earth', plural: 'Earths', icon: '⊕', value: 1_000 },
+  { id: 'moon', name: 'Moon', plural: 'Moons', icon: '☾', value: 100 },
+  { id: 'growth', name: 'Growth', plural: 'Growth', icon: '✦', value: 1 },
+] as const
+
+function getCosmicGrowth(total: number) {
+  let remaining = Math.max(0, Math.floor(total))
+  const breakdown = cosmicTiers.flatMap((tier) => {
+    const count = Math.floor(remaining / tier.value)
+    remaining %= tier.value
+    return count > 0 ? [{ tier, count }] : []
+  })
+  return breakdown.length > 0
+    ? breakdown
+    : [{ tier: cosmicTiers[cosmicTiers.length - 1], count: 0 }]
+}
+
+function CosmicGrowth({
+  total,
+  labelled = false,
+}: {
+  total: number
+  labelled?: boolean
+}) {
+  const breakdown = getCosmicGrowth(total)
+  const description = breakdown
+    .map(
+      ({ tier, count }) =>
+        `${count} ${count === 1 ? tier.name : tier.plural}`,
+    )
+    .join(', ')
+
+  return (
+    <span
+      className={`cosmic-growth ${labelled ? 'cosmic-growth-labelled' : ''}`}
+      aria-label={`${total} Growth: ${description}`}
+    >
+      {breakdown.map(({ tier, count }) => (
+        <span className={`cosmic-unit cosmic-unit-${tier.id}`} key={tier.id}>
+          <i className="cosmic-icon" aria-hidden="true">
+            {tier.icon}
+          </i>
+          <strong>{count}</strong>
+          {labelled && (
+            <small>{count === 1 ? tier.name : tier.plural}</small>
+          )}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 const STORAGE_KEY = 'suho-sesang-world-v1'
 const ELEMENT_DB_NAME = 'suho-sesang-elements'
 const ELEMENT_STORE_NAME = 'images'
@@ -1052,7 +1127,6 @@ function App() {
   const todayGrowth = world.activities
     .filter((activity) => new Date(activity.createdAt).toDateString() === today)
     .reduce((sum, activity) => sum + activity.amount, 0)
-  const level = Math.floor(totalGrowth / 100) + 1
   const activeTargets = world.targets.filter((target) => !target.completedAt)
   const completedTargets = world.targets.filter((target) => target.completedAt)
   const syncLabel = !hasCloudConfig
@@ -2557,7 +2631,13 @@ function App() {
           {view === 'world' && (
           <>
             <span className="growth-status">
-              {totalGrowth} growth · <span aria-label={`${totalStars} successful weeks`}>★ {totalStars}</span>
+              <CosmicGrowth total={totalGrowth} />
+              <span
+                className="successful-weeks"
+                aria-label={`${totalStars} successful weeks`}
+              >
+                ★ {totalStars}
+              </span>
             </span>
             <button
               className="record-button"
@@ -3045,7 +3125,10 @@ function App() {
           </section>
 
           <footer className="painting-caption">
-          <span>{season.label.toLowerCase()} · {totalGrowth} growth</span>
+          <span>
+            {season.label.toLowerCase()} ·{' '}
+            <CosmicGrowth total={totalGrowth} />
+          </span>
           {season.source ? (
             <a href={season.source} target="_blank" rel="noreferrer">
               {season.artist}, <cite>{season.title}</cite>, {season.date} · {season.license}
@@ -3140,8 +3223,8 @@ function App() {
               <details className="points-guide">
                 <summary>How growth works</summary>
                 <p>
-                  5 small step · 10 focused session · 15 weekly minimum win ·
-                  20 major milestone · 50 breakthrough
+                  ✦ 5 small step · ✦ 10 focused session · ✦ 15 weekly minimum
+                  win · ✦ 20 major milestone · ✦ 50 breakthrough
                 </p>
               </details>
             </section>
@@ -3167,7 +3250,7 @@ function App() {
                     key={amount}
                     onClick={() => addGrowth(currentStream.id, amount)}
                   >
-                    +{amount}
+                    ✦ +{amount}
                   </button>
                 ))}
               </div>
@@ -3184,7 +3267,7 @@ function App() {
                   .map((activity) => (
                     <article className="stream-note" key={activity.id}>
                       <div>
-                        <strong>+{activity.amount}</strong>
+                        <strong>✦ +{activity.amount}</strong>
                         <time dateTime={activity.createdAt}>
                           {formatDate(activity.createdAt)}
                         </time>
@@ -3243,12 +3326,36 @@ function App() {
             <span className="eyebrow">The garden record</span>
             <h2>What the water remembers</h2>
             <div className="summary-grid">
-              <div><strong>{level}</strong><span>Level</span></div>
-              <div><strong>{totalGrowth}</strong><span>Growth</span></div>
-              <div><strong>+{todayGrowth}</strong><span>Today</span></div>
+              <div className="cosmic-total-card">
+                <CosmicGrowth total={totalGrowth} labelled />
+                <span>Total Growth</span>
+              </div>
+              <div>
+                <CosmicGrowth total={todayGrowth} />
+                <span>Today</span>
+              </div>
               <div><strong>{totalStars}</strong><span>Successful weeks</span></div>
             </div>
-            <p className="level-rule">Every 100 Growth advances one level.</p>
+            <p className="level-rule">
+              Every ten of one cosmic body becomes the next.
+            </p>
+            <section className="record-section cosmic-scale">
+              <h3>Cosmic scale</h3>
+              <div className="cosmic-tier-cards">
+                {[...cosmicTiers].reverse().slice(1).map((tier) => (
+                  <article key={tier.id}>
+                    <i
+                      className={`cosmic-icon cosmic-icon-${tier.id}`}
+                      aria-hidden="true"
+                    >
+                      {tier.icon}
+                    </i>
+                    <strong>{tier.name}</strong>
+                    <span>{tier.value.toLocaleString()} Growth</span>
+                  </article>
+                ))}
+              </div>
+            </section>
             <section className="record-section memory-search">
               <h3>Find a memory</h3>
               <input
@@ -3291,7 +3398,7 @@ function App() {
               {streams.map((stream) => (
                 <div className="stream-progress" key={stream.id}>
                   <span>{stream.name}</span>
-                  <strong>{world.growth[stream.id]}</strong>
+                  <CosmicGrowth total={world.growth[stream.id]} />
                 </div>
               ))}
             </section>
@@ -3304,7 +3411,7 @@ function App() {
                   const stream = streams.find((item) => item.id === activity.stream)!
                   return (
                     <div className="activity" key={activity.id}>
-                      <strong>+{activity.amount} · {stream.name}</strong>
+                      <strong>✦ +{activity.amount} · {stream.name}</strong>
                       <small>{activity.note || 'A quiet step forward'}</small>
                     </div>
                   )
@@ -3584,7 +3691,7 @@ function App() {
                                         addTargetPoint(target.id, amount)
                                       }
                                     >
-                                      +{amount}
+                                      ✦ +{amount}
                                     </button>
                                   ))}
                                 </div>
@@ -3598,11 +3705,11 @@ function App() {
                                       }
                                       aria-label={`Remove +${amount}`}
                                     >
-                                      +{amount} ×
+                                      ✦ +{amount} ×
                                     </button>
                                   ))}
                                   <strong>
-                                    Total +{target.pointAwards.reduce(
+                                    Total ✦ +{target.pointAwards.reduce(
                                       (total, amount) => total + amount,
                                       0,
                                     )}
@@ -3642,8 +3749,8 @@ function App() {
                     <div>
                       <strong>{target.title || 'Untitled target'}</strong>
                       <small>
-                        {formatDate(target.completedAt!)} · +{target.awardedGrowth ?? 0}{' '}
-                        Growth
+                        {formatDate(target.completedAt!)} · ✦ +
+                        {target.awardedGrowth ?? 0}
                       </small>
                     </div>
                     <button type="button" onClick={() => reopenTarget(target.id)}>
@@ -3769,8 +3876,8 @@ function App() {
               <details className="points-guide">
                 <summary>How growth works</summary>
                 <p>
-                  5 small step · 10 focused session · 15 weekly minimum win ·
-                  20 major milestone · 50 breakthrough
+                  ✦ 5 small step · ✦ 10 focused session · ✦ 15 weekly minimum
+                  win · ✦ 20 major milestone · ✦ 50 breakthrough
                 </p>
               </details>
             </section>

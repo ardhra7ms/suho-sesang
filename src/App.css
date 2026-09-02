@@ -837,9 +837,56 @@ textarea {
 }
 
 .growth-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   font-size: 0.62rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.cosmic-growth {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  vertical-align: middle;
+}
+
+.cosmic-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.cosmic-unit strong {
+  font: inherit;
+  font-weight: 720;
+}
+
+.cosmic-icon {
+  width: 1.05em;
+  display: inline-grid;
+  place-items: center;
+  color: currentColor;
+  font-family: Georgia, 'Times New Roman', serif !important;
+  font-size: 1.22em;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cosmic-unit-black-hole .cosmic-icon {
+  color: #151224;
+  text-shadow:
+    0 0 0.18em #bd82d8,
+    0 0 0.34em #ee9b75;
+}
+
+.successful-weeks {
+  padding-left: 9px;
+  border-left: 1px solid currentColor;
 }
 
 .painting-world {
@@ -2535,6 +2582,10 @@ textarea {
   font-size: 0.76rem;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.painting-caption .cosmic-growth {
+  gap: 5px;
 }
 
 .app-shell.library-open {

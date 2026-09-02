@@ -77,6 +77,29 @@
   border-radius: 22px 9px 19px 12px;
 }
 
+.garden-record .summary-grid .cosmic-total-card {
+  grid-column: span 2;
+  background: var(--record-yellow);
+}
+
+.garden-record .cosmic-total-card .cosmic-growth {
+  justify-content: center;
+  gap: 12px;
+}
+
+.garden-record .cosmic-total-card .cosmic-unit {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 1px 4px;
+}
+
+.garden-record .cosmic-total-card .cosmic-unit small {
+  grid-column: 1 / -1;
+  color: var(--record-muted);
+  font-size: 0.5rem;
+  font-weight: 650;
+}
+
 .garden-record .summary-grid div:nth-child(2) {
   background: var(--record-pink);
   border-radius: 10px 22px 12px 19px;
@@ -113,6 +136,47 @@
   color: var(--record-muted);
   font-size: 0.67rem;
   line-height: 1.4;
+}
+
+.garden-record .cosmic-tier-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.garden-record .cosmic-tier-cards article {
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  gap: 3px 8px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--record-blue) 45%, white);
+  border-radius: 18px 8px 16px 10px;
+}
+
+.garden-record .cosmic-tier-cards article:nth-child(3n + 2) {
+  background: color-mix(in srgb, var(--record-pink) 55%, white);
+}
+
+.garden-record .cosmic-tier-cards article:nth-child(3n) {
+  background: color-mix(in srgb, var(--record-yellow) 58%, white);
+}
+
+.garden-record .cosmic-tier-cards .cosmic-icon {
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 1.65rem;
+}
+
+.garden-record .cosmic-tier-cards strong {
+  align-self: end;
+  font-size: 0.72rem;
+}
+
+.garden-record .cosmic-tier-cards span {
+  color: var(--record-muted);
+  font-size: 0.52rem;
 }
 
 .garden-record .record-section {
@@ -209,5 +273,9 @@
 
   .garden-record .summary-grid div {
     min-height: 76px;
+  }
+
+  .garden-record .cosmic-tier-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
