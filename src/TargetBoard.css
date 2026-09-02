@@ -473,10 +473,24 @@
   background: var(--target-ink);
 }
 
+.target-point-buttons .cosmic-award-button {
+  min-width: 38px;
+  padding: 6px 9px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji',
+    sans-serif;
+  font-size: 0.95rem;
+}
+
 .target-point-awards button {
   padding: 6px 9px;
   color: var(--target-ink);
   background: #ffd85f;
+}
+
+.target-point-awards button .cosmic-growth,
+.target-point-awards strong .cosmic-growth,
+.completed-targets .cosmic-growth {
+  display: inline-flex;
 }
 
 .target-point-awards strong {

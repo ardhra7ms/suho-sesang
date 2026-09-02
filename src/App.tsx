@@ -75,7 +75,17 @@ type TargetMotion = {
   vy: number
 }
 
-type TargetPoint = 5 | 10 | 20 | 50
+type TargetPoint =
+  | 5
+  | 10
+  | 20
+  | 50
+  | 100
+  | 1_000
+  | 10_000
+  | 100_000
+  | 1_000_000
+  | 10_000_000
 
 type ProjectTarget = {
   id: string
@@ -206,6 +216,23 @@ const cosmicTiers = [
   { id: 'moon', name: 'Moon', plural: 'Moons', icon: '🌙', value: 100 },
   { id: 'growth', name: 'Growth', plural: 'Growth', icon: '✨', value: 1 },
 ] as const
+
+const targetPointOptions: ReadonlyArray<{
+  amount: TargetPoint
+  icon: string
+  label: string
+}> = [
+  { amount: 5, icon: '✨', label: '5 Growth' },
+  { amount: 10, icon: '✨', label: '10 Growth' },
+  { amount: 20, icon: '✨', label: '20 Growth' },
+  { amount: 50, icon: '✨', label: '50 Growth' },
+  { amount: 100, icon: '🌙', label: '1 Moon' },
+  { amount: 1_000, icon: '🌍', label: '1 Earth' },
+  { amount: 10_000, icon: '🪐', label: '1 Jupiter' },
+  { amount: 100_000, icon: '☀️', label: '1 Sun' },
+  { amount: 1_000_000, icon: '🌌', label: '1 Andromeda' },
+  { amount: 10_000_000, icon: '🕳️', label: '1 Black hole' },
+]
 
 function getCosmicGrowth(total: number) {
   let remaining = Math.max(0, Math.floor(total))
@@ -3671,15 +3698,24 @@ function App() {
                               <div className="target-point-builder">
                                 <span>Completion Growth</span>
                                 <div className="target-point-buttons">
-                                  {([5, 10, 20, 50] as const).map((amount) => (
+                                  {targetPointOptions.map((option) => (
                                     <button
-                                      type="button"
-                                      key={amount}
-                                      onClick={() =>
-                                        addTargetPoint(target.id, amount)
+                                      className={
+                                        option.amount >= 100
+                                          ? 'cosmic-award-button'
+                                          : ''
                                       }
+                                      type="button"
+                                      key={option.amount}
+                                      onClick={() =>
+                                        addTargetPoint(target.id, option.amount)
+                                      }
+                                      aria-label={`Add ${option.label}`}
+                                      title={option.label}
                                     >
-                                      ✨ +{amount}
+                                      {option.amount < 100
+                                        ? `✨ +${option.amount}`
+                                        : `+ ${option.icon}`}
                                     </button>
                                   ))}
                                 </div>
@@ -3691,16 +3727,23 @@ function App() {
                                       onClick={() =>
                                         removeTargetPoint(target.id, pointIndex)
                                       }
-                                      aria-label={`Remove +${amount}`}
+                                      aria-label={`Remove ${
+                                        targetPointOptions.find(
+                                          (option) => option.amount === amount,
+                                        )?.label ?? `${amount} Growth`
+                                      }`}
                                     >
-                                      ✨ +{amount} ×
+                                      <CosmicGrowth total={amount} /> ×
                                     </button>
                                   ))}
                                   <strong>
-                                    Total ✨ +{target.pointAwards.reduce(
-                                      (total, amount) => total + amount,
-                                      0,
-                                    )}
+                                    Total{' '}
+                                    <CosmicGrowth
+                                      total={target.pointAwards.reduce(
+                                        (total, amount) => total + amount,
+                                        0,
+                                      )}
+                                    />
                                   </strong>
                                 </div>
                               </div>
@@ -3737,8 +3780,8 @@ function App() {
                     <div>
                       <strong>{target.title || 'Untitled target'}</strong>
                       <small>
-                        {formatDate(target.completedAt!)} · ✨ +
-                        {target.awardedGrowth ?? 0}
+                        {formatDate(target.completedAt!)} ·{' '}
+                        <CosmicGrowth total={target.awardedGrowth ?? 0} />
                       </small>
                     </div>
                     <button type="button" onClick={() => reopenTarget(target.id)}>
