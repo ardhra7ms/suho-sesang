@@ -882,6 +882,12 @@ textarea {
   background: transparent !important;
 }
 
+.cosmic-unit-growth .cosmic-icon {
+  color: #49504d;
+  font-family: Georgia, 'Times New Roman', serif !important;
+  font-size: 1.05em;
+}
+
 .painting-world {
   position: absolute;
   inset: 0;

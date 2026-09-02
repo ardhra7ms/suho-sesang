@@ -214,7 +214,7 @@ const cosmicTiers = [
   },
   { id: 'earth', name: 'Earth', plural: 'Earths', icon: '🌍', value: 1_000 },
   { id: 'moon', name: 'Moon', plural: 'Moons', icon: '🌙', value: 100 },
-  { id: 'growth', name: 'Growth', plural: 'Growth', icon: '✨', value: 1 },
+  { id: 'growth', name: 'Growth', plural: 'Growth', icon: '✦', value: 1 },
 ] as const
 
 const targetPointOptions: ReadonlyArray<{
