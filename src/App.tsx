@@ -184,27 +184,27 @@ const cosmicTiers = [
     id: 'black-hole',
     name: 'Black hole',
     plural: 'Black holes',
-    icon: '●',
+    icon: '🕳️',
     value: 10_000_000,
   },
   {
     id: 'andromeda',
     name: 'Andromeda',
     plural: 'Andromeda',
-    icon: '✺',
+    icon: '🌌',
     value: 1_000_000,
   },
-  { id: 'sun', name: 'Sun', plural: 'Suns', icon: '☀', value: 100_000 },
+  { id: 'sun', name: 'Sun', plural: 'Suns', icon: '☀️', value: 100_000 },
   {
     id: 'jupiter',
     name: 'Jupiter',
     plural: 'Jupiters',
-    icon: '♃',
+    icon: '🪐',
     value: 10_000,
   },
-  { id: 'earth', name: 'Earth', plural: 'Earths', icon: '⊕', value: 1_000 },
-  { id: 'moon', name: 'Moon', plural: 'Moons', icon: '☾', value: 100 },
-  { id: 'growth', name: 'Growth', plural: 'Growth', icon: '✦', value: 1 },
+  { id: 'earth', name: 'Earth', plural: 'Earths', icon: '🌍', value: 1_000 },
+  { id: 'moon', name: 'Moon', plural: 'Moons', icon: '🌙', value: 100 },
+  { id: 'growth', name: 'Growth', plural: 'Growth', icon: '✨', value: 1 },
 ] as const
 
 function getCosmicGrowth(total: number) {
@@ -219,13 +219,7 @@ function getCosmicGrowth(total: number) {
     : [{ tier: cosmicTiers[cosmicTiers.length - 1], count: 0 }]
 }
 
-function CosmicGrowth({
-  total,
-  labelled = false,
-}: {
-  total: number
-  labelled?: boolean
-}) {
+function CosmicGrowth({ total }: { total: number }) {
   const breakdown = getCosmicGrowth(total)
   const description = breakdown
     .map(
@@ -236,7 +230,7 @@ function CosmicGrowth({
 
   return (
     <span
-      className={`cosmic-growth ${labelled ? 'cosmic-growth-labelled' : ''}`}
+      className="cosmic-growth"
       aria-label={`${total} Growth: ${description}`}
     >
       {breakdown.map(({ tier, count }) => (
@@ -245,9 +239,6 @@ function CosmicGrowth({
             {tier.icon}
           </i>
           <strong>{count}</strong>
-          {labelled && (
-            <small>{count === 1 ? tier.name : tier.plural}</small>
-          )}
         </span>
       ))}
     </span>
@@ -2632,12 +2623,6 @@ function App() {
           <>
             <span className="growth-status">
               <CosmicGrowth total={totalGrowth} />
-              <span
-                className="successful-weeks"
-                aria-label={`${totalStars} successful weeks`}
-              >
-                ★ {totalStars}
-              </span>
             </span>
             <button
               className="record-button"
@@ -3223,8 +3208,8 @@ function App() {
               <details className="points-guide">
                 <summary>How growth works</summary>
                 <p>
-                  ✦ 5 small step · ✦ 10 focused session · ✦ 15 weekly minimum
-                  win · ✦ 20 major milestone · ✦ 50 breakthrough
+                  ✨ 5 small step · ✨ 10 focused session · ✨ 15 weekly minimum
+                  win · ✨ 20 major milestone · ✨ 50 breakthrough
                 </p>
               </details>
             </section>
@@ -3250,7 +3235,7 @@ function App() {
                     key={amount}
                     onClick={() => addGrowth(currentStream.id, amount)}
                   >
-                    ✦ +{amount}
+                    ✨ +{amount}
                   </button>
                 ))}
               </div>
@@ -3267,7 +3252,7 @@ function App() {
                   .map((activity) => (
                     <article className="stream-note" key={activity.id}>
                       <div>
-                        <strong>✦ +{activity.amount}</strong>
+                        <strong>✨ +{activity.amount}</strong>
                         <time dateTime={activity.createdAt}>
                           {formatDate(activity.createdAt)}
                         </time>
@@ -3327,14 +3312,17 @@ function App() {
             <h2>What the water remembers</h2>
             <div className="summary-grid">
               <div className="cosmic-total-card">
-                <CosmicGrowth total={totalGrowth} labelled />
+                <CosmicGrowth total={totalGrowth} />
                 <span>Total Growth</span>
               </div>
               <div>
                 <CosmicGrowth total={todayGrowth} />
                 <span>Today</span>
               </div>
-              <div><strong>{totalStars}</strong><span>Successful weeks</span></div>
+              <div>
+                <strong>⭐ {totalStars}</strong>
+                <span>Successful weeks</span>
+              </div>
             </div>
             <p className="level-rule">
               Every ten of one cosmic body becomes the next.
@@ -3411,7 +3399,7 @@ function App() {
                   const stream = streams.find((item) => item.id === activity.stream)!
                   return (
                     <div className="activity" key={activity.id}>
-                      <strong>✦ +{activity.amount} · {stream.name}</strong>
+                      <strong>✨ +{activity.amount} · {stream.name}</strong>
                       <small>{activity.note || 'A quiet step forward'}</small>
                     </div>
                   )
@@ -3691,7 +3679,7 @@ function App() {
                                         addTargetPoint(target.id, amount)
                                       }
                                     >
-                                      ✦ +{amount}
+                                      ✨ +{amount}
                                     </button>
                                   ))}
                                 </div>
@@ -3705,11 +3693,11 @@ function App() {
                                       }
                                       aria-label={`Remove +${amount}`}
                                     >
-                                      ✦ +{amount} ×
+                                      ✨ +{amount} ×
                                     </button>
                                   ))}
                                   <strong>
-                                    Total ✦ +{target.pointAwards.reduce(
+                                    Total ✨ +{target.pointAwards.reduce(
                                       (total, amount) => total + amount,
                                       0,
                                     )}
@@ -3749,7 +3737,7 @@ function App() {
                     <div>
                       <strong>{target.title || 'Untitled target'}</strong>
                       <small>
-                        {formatDate(target.completedAt!)} · ✦ +
+                        {formatDate(target.completedAt!)} · ✨ +
                         {target.awardedGrowth ?? 0}
                       </small>
                     </div>
@@ -3876,8 +3864,8 @@ function App() {
               <details className="points-guide">
                 <summary>How growth works</summary>
                 <p>
-                  ✦ 5 small step · ✦ 10 focused session · ✦ 15 weekly minimum
-                  win · ✦ 20 major milestone · ✦ 50 breakthrough
+                  ✨ 5 small step · ✨ 10 focused session · ✨ 15 weekly minimum
+                  win · ✨ 20 major milestone · ✨ 50 breakthrough
                 </p>
               </details>
             </section>

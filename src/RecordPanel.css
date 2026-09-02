@@ -60,7 +60,7 @@
 
 .garden-record .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
   padding: 0;
   border: 0;
@@ -78,26 +78,26 @@
 }
 
 .garden-record .summary-grid .cosmic-total-card {
-  grid-column: span 2;
+  grid-column: auto;
   background: var(--record-yellow);
 }
 
-.garden-record .cosmic-total-card .cosmic-growth {
+.garden-record .summary-grid .cosmic-growth {
+  display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
+  margin: 0;
 }
 
-.garden-record .cosmic-total-card .cosmic-unit {
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 1px 4px;
+.garden-record .summary-grid .cosmic-unit {
+  display: inline-flex;
+  gap: 5px;
+  margin: 0;
 }
 
-.garden-record .cosmic-total-card .cosmic-unit small {
-  grid-column: 1 / -1;
-  color: var(--record-muted);
-  font-size: 0.5rem;
-  font-weight: 650;
+.garden-record .summary-grid .cosmic-icon {
+  margin: 0;
+  font-size: 1.35rem;
 }
 
 .garden-record .summary-grid div:nth-child(2) {
@@ -122,7 +122,7 @@
   line-height: 1;
 }
 
-.garden-record .summary-grid span {
+.garden-record .summary-grid > div > span:last-child {
   margin-top: 6px;
   color: var(--record-ink);
   font-size: 0.58rem;
