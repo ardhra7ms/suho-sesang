@@ -192,9 +192,9 @@ type StoredUserElement = {
 
 const cosmicTiers = [
   {
-    id: 'black-hole',
-    name: 'Black hole',
-    plural: 'Black holes',
+    id: 'singularity',
+    name: 'Singularity',
+    plural: 'Singularities',
     icon: '🌠',
     value: 10_000_000,
   },
@@ -232,7 +232,7 @@ const targetPointOptions: ReadonlyArray<{
   { amount: 10_000, icon: '🪐', label: '1 Jupiter' },
   { amount: 100_000, icon: '☀️', label: '1 Sun' },
   { amount: 1_000_000, icon: '🌌', label: '1 Andromeda' },
-  { amount: 10_000_000, icon: '🌠', label: '1 Black hole' },
+  { amount: 10_000_000, icon: '🌠', label: '1 Singularity' },
 ]
 
 function getCosmicGrowth(total: number) {
@@ -247,8 +247,18 @@ function getCosmicGrowth(total: number) {
     : [{ tier: cosmicTiers[cosmicTiers.length - 1], count: 0 }]
 }
 
-function CosmicGrowth({ total }: { total: number }) {
+function CosmicGrowth({
+  total,
+  maxUnits,
+}: {
+  total: number
+  maxUnits?: number
+}) {
   const breakdown = getCosmicGrowth(total)
+  const visibleBreakdown = maxUnits
+    ? breakdown.slice(0, maxUnits)
+    : breakdown
+  const hasHiddenUnits = visibleBreakdown.length < breakdown.length
   const description = breakdown
     .map(
       ({ tier, count }) =>
@@ -261,7 +271,7 @@ function CosmicGrowth({ total }: { total: number }) {
       className="cosmic-growth"
       aria-label={`${total} growth: ${description}`}
     >
-      {breakdown.map(({ tier, count }) => (
+      {visibleBreakdown.map(({ tier, count }) => (
         <span className={`cosmic-unit cosmic-unit-${tier.id}`} key={tier.id}>
           <i className="cosmic-icon" aria-hidden="true">
             {tier.icon}
@@ -269,6 +279,11 @@ function CosmicGrowth({ total }: { total: number }) {
           <strong>{count}</strong>
         </span>
       ))}
+      {hasHiddenUnits && (
+        <span className="cosmic-more" aria-hidden="true">
+          …
+        </span>
+      )}
     </span>
   )
 }
@@ -2782,7 +2797,7 @@ function App() {
           {view === 'world' && (
           <>
             <span className="growth-status">
-              <CosmicGrowth total={totalGrowth} />
+              <CosmicGrowth total={totalGrowth} maxUnits={3} />
             </span>
             <button
               className="record-button"
@@ -2824,7 +2839,7 @@ function App() {
           aria-label="Open the garden record"
         >
           <span>Total growth</span>
-          <CosmicGrowth total={totalGrowth} />
+          <CosmicGrowth total={totalGrowth} maxUnits={3} />
         </button>
       )}
 
