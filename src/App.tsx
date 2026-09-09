@@ -194,7 +194,7 @@ const cosmicTiers = [
     id: 'black-hole',
     name: 'Black hole',
     plural: 'Black holes',
-    icon: '🕳️',
+    icon: '🌠',
     value: 10_000_000,
   },
   {
@@ -231,7 +231,7 @@ const targetPointOptions: ReadonlyArray<{
   { amount: 10_000, icon: '🪐', label: '1 Jupiter' },
   { amount: 100_000, icon: '☀️', label: '1 Sun' },
   { amount: 1_000_000, icon: '🌌', label: '1 Andromeda' },
-  { amount: 10_000_000, icon: '🕳️', label: '1 Black hole' },
+  { amount: 10_000_000, icon: '🌠', label: '1 Black hole' },
 ]
 
 function getCosmicGrowth(total: number) {
@@ -972,6 +972,8 @@ function TargetCloudLayer({
   const cloudElements = useRef(new Map<string, HTMLButtonElement>())
   const motions = useRef(new Map<string, TargetMotion>())
   const commitRef = useRef(onMotionCommit)
+  const draggingId = useRef<string | null>(null)
+  const suppressClickId = useRef<string | null>(null)
 
   useEffect(() => {
     commitRef.current = onMotionCommit
@@ -999,12 +1001,20 @@ function TargetCloudLayer({
       const elapsed = Math.min(0.05, (time - previousTime) / 1000)
       previousTime = time
       const isPhone = window.innerWidth <= 640
+      const canHover = window.matchMedia('(hover: hover)').matches
       const topEdge = isPhone ? 112 : 82
       const bottomEdge = 76
 
       motionState.forEach((motion, id) => {
         const element = cloudElements.current.get(id)
-        if (!element || element.matches(':hover, :focus-visible')) return
+        if (
+          !element ||
+          draggingId.current === id ||
+          element.matches(':focus-visible') ||
+          (canHover && element.matches(':hover'))
+        ) {
+          return
+        }
         const width = element.offsetWidth
         const height = element.offsetHeight
         const availableWidth = Math.max(1, window.innerWidth - width - 20)
@@ -1045,6 +1055,70 @@ function TargetCloudLayer({
     }
   }, [])
 
+  const startCloudDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    targetId: string,
+  ) => {
+    const element = event.currentTarget
+    const motion = motions.current.get(targetId)
+    if (!motion) return
+
+    event.preventDefault()
+    element.setPointerCapture(event.pointerId)
+    draggingId.current = targetId
+    suppressClickId.current = null
+    element.classList.add('is-dragging')
+    const startX = event.clientX
+    const startY = event.clientY
+
+    const moveCloud = (clientX: number, clientY: number) => {
+      const isPhone = window.innerWidth <= 640
+      const topEdge = isPhone ? 112 : 82
+      const bottomEdge = 76
+      const availableWidth = Math.max(
+        1,
+        window.innerWidth - element.offsetWidth - 20,
+      )
+      const availableHeight = Math.max(
+        1,
+        window.innerHeight - topEdge - bottomEdge - element.offsetHeight,
+      )
+      const x = Math.min(availableWidth, Math.max(0, clientX - element.offsetWidth / 2 - 10))
+      const y = Math.min(
+        availableHeight,
+        Math.max(0, clientY - element.offsetHeight / 2 - topEdge),
+      )
+      motion.x = x / availableWidth
+      motion.y = y / availableHeight
+      element.style.transform = `translate3d(${x + 10}px, ${y + topEdge}px, 0)`
+    }
+
+    const handleMove = (pointerEvent: PointerEvent) => {
+      if (
+        Math.hypot(
+          pointerEvent.clientX - startX,
+          pointerEvent.clientY - startY,
+        ) > 5
+      ) {
+        suppressClickId.current = targetId
+      }
+      moveCloud(pointerEvent.clientX, pointerEvent.clientY)
+    }
+
+    const stopDragging = () => {
+      element.classList.remove('is-dragging')
+      draggingId.current = null
+      element.removeEventListener('pointermove', handleMove)
+      element.removeEventListener('pointerup', stopDragging)
+      element.removeEventListener('pointercancel', stopDragging)
+      commitRef.current(Object.fromEntries(motions.current))
+    }
+
+    element.addEventListener('pointermove', handleMove)
+    element.addEventListener('pointerup', stopDragging)
+    element.addEventListener('pointercancel', stopDragging)
+  }
+
   return (
     <div className="target-cloud-layer" aria-label="Active project targets">
       {targets.map((target) => {
@@ -1058,7 +1132,14 @@ function TargetCloudLayer({
               if (element) cloudElements.current.set(target.id, element)
               else cloudElements.current.delete(target.id)
             }}
-            onClick={() => onOpen(target.id)}
+            onPointerDown={(event) => startCloudDrag(event, target.id)}
+            onClick={() => {
+              if (suppressClickId.current === target.id) {
+                suppressClickId.current = null
+                return
+              }
+              onOpen(target.id)
+            }}
             aria-label={`Open target: ${
               target.title || 'Untitled target'
             }. ${charge.label}.`}
@@ -3480,39 +3561,48 @@ function App() {
                         className={`target-card target-card-${target.stream} ${expanded ? 'expanded' : ''}`}
                         key={target.id}
                       >
-                        <button
+                        <div
                           className="target-card-summary"
-                          type="button"
-                          onClick={() =>
-                            setActiveTargetId(expanded ? null : target.id)
-                          }
-                          aria-expanded={expanded}
                         >
                           <span>
                             {world.streamTitles[target.stream]} · {target.status}
                           </span>
-                          <strong>{target.title || 'Untitled target'}</strong>
+                          <input
+                            className="target-card-title"
+                            value={target.title}
+                            onChange={(event) =>
+                              updateTarget(target.id, {
+                                title: event.target.value,
+                              })
+                            }
+                            onFocus={() => setActiveTargetId(target.id)}
+                            placeholder="Untitled target"
+                            aria-label="Target title"
+                          />
                           <small>
                             {target.checklist.length
                               ? `${completedSteps}/${target.checklist.length} steps`
                               : 'No steps yet'}
                           </small>
-                        </button>
+                          <button
+                            className="target-card-toggle"
+                            type="button"
+                            onClick={() =>
+                              setActiveTargetId(expanded ? null : target.id)
+                            }
+                            aria-expanded={expanded}
+                            aria-label={
+                              expanded
+                                ? 'Collapse target details'
+                                : 'Expand target details'
+                            }
+                          >
+                            {expanded ? '−' : '+'}
+                          </button>
+                        </div>
 
                         {expanded && (
                           <div className="target-card-editor">
-                            <label className="target-field target-field-wide">
-                              <span>Project name</span>
-                              <input
-                                value={target.title}
-                                onChange={(event) =>
-                                  updateTarget(target.id, {
-                                    title: event.target.value,
-                                  })
-                                }
-                                placeholder="Name this target"
-                              />
-                            </label>
                             <label className="target-field target-field-wide">
                               <span>Target outcome</span>
                               <textarea
