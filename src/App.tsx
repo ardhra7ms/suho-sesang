@@ -222,10 +222,10 @@ const targetPointOptions: ReadonlyArray<{
   icon: string
   label: string
 }> = [
-  { amount: 5, icon: '✨', label: '5 Growth' },
-  { amount: 10, icon: '✨', label: '10 Growth' },
-  { amount: 20, icon: '✨', label: '20 Growth' },
-  { amount: 50, icon: '✨', label: '50 Growth' },
+  { amount: 5, icon: '✨', label: '5 growth' },
+  { amount: 10, icon: '✨', label: '10 growth' },
+  { amount: 20, icon: '✨', label: '20 growth' },
+  { amount: 50, icon: '✨', label: '50 growth' },
   { amount: 100, icon: '🌙', label: '1 Moon' },
   { amount: 1_000, icon: '🌍', label: '1 Earth' },
   { amount: 10_000, icon: '🪐', label: '1 Jupiter' },
@@ -258,7 +258,7 @@ function CosmicGrowth({ total }: { total: number }) {
   return (
     <span
       className="cosmic-growth"
-      aria-label={`${total} Growth: ${description}`}
+      aria-label={`${total} growth: ${description}`}
     >
       {breakdown.map(({ tier, count }) => (
         <span className={`cosmic-unit cosmic-unit-${tier.id}`} key={tier.id}>
@@ -2867,7 +2867,7 @@ function App() {
                   <strong>{syncLabel}</strong>
                   <span>
                     {syncStatus === 'synced' &&
-                      'Your encrypted notes, targets, Growth, layouts, and uploaded elements are saved.'}
+                      'Your encrypted notes, targets, growth, layouts, and uploaded elements are saved.'}
                     {syncStatus === 'offline' &&
                       'Changes are safe on this device and will upload when you reconnect.'}
                     {syncStatus === 'error' &&
@@ -3340,7 +3340,7 @@ function App() {
             <div className="summary-grid">
               <div className="cosmic-total-card">
                 <CosmicGrowth total={totalGrowth} />
-                <span>Total Growth</span>
+                <span>Total growth</span>
               </div>
               <div>
                 <CosmicGrowth total={todayGrowth} />
@@ -3366,7 +3366,7 @@ function App() {
                       {tier.icon}
                     </i>
                     <strong>{tier.name}</strong>
-                    <span>{tier.value.toLocaleString()} Growth</span>
+                    <span>{tier.value.toLocaleString()} growth</span>
                   </article>
                 ))}
               </div>
@@ -3696,7 +3696,7 @@ function App() {
 
                             <footer className="target-card-actions">
                               <div className="target-point-builder">
-                                <span>Completion Growth</span>
+                                <span>Completion growth</span>
                                 <div className="target-point-buttons">
                                   {targetPointOptions.map((option) => (
                                     <button
@@ -3730,7 +3730,7 @@ function App() {
                                       aria-label={`Remove ${
                                         targetPointOptions.find(
                                           (option) => option.amount === amount,
-                                        )?.label ?? `${amount} Growth`
+                                        )?.label ?? `${amount} growth`
                                       }`}
                                     >
                                       <CosmicGrowth total={amount} /> ×
