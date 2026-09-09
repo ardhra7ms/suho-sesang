@@ -187,6 +187,23 @@
     10px 12px 0 rgba(23, 61, 43, 0.17);
 }
 
+.target-board.target-board-focused {
+  width: min(680px, calc(100vw - 40px));
+  padding: 0;
+  overflow-y: auto;
+  background: transparent;
+  border-radius: 24px 11px 22px 15px;
+  box-shadow: 0 26px 75px rgba(8, 24, 20, 0.32);
+}
+
+.target-board-focused .target-board-section {
+  margin: 0;
+}
+
+.target-board-focused .target-card {
+  box-shadow: none;
+}
+
 .target-board > .close-button {
   z-index: 20;
   top: 11px;

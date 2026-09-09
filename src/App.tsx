@@ -1206,6 +1206,7 @@ function App() {
   const [recordOpen, setRecordOpen] = useState(false)
   const [targetsOpen, setTargetsOpen] = useState(false)
   const [activeTargetId, setActiveTargetId] = useState<string | null>(null)
+  const [focusedTargetId, setFocusedTargetId] = useState<string | null>(null)
   const [trashOpen, setTrashOpen] = useState(false)
   const [activeNoteSource, setActiveNoteSource] = useState<{
     page: PageId
@@ -1269,6 +1270,9 @@ function App() {
       )
   const activeTargets = world.targets.filter((target) => !target.completedAt)
   const completedTargets = world.targets.filter((target) => target.completedAt)
+  const displayedTargets = focusedTargetId
+    ? activeTargets.filter((target) => target.id === focusedTargetId)
+    : activeTargets
   const syncLabel = !hasCloudConfig
     ? 'Not connected'
     : cloudSession
@@ -1836,6 +1840,10 @@ function App() {
       }
     })
     setActiveTargetId(null)
+    if (focusedTargetId === targetId) {
+      setFocusedTargetId(null)
+      setTargetsOpen(false)
+    }
   }
 
   const reopenTarget = (targetId: string) => {
@@ -1853,6 +1861,10 @@ function App() {
         : [...current.deletedTargetIds, targetId],
     }))
     setActiveTargetId((current) => (current === targetId ? null : current))
+    if (focusedTargetId === targetId) {
+      setFocusedTargetId(null)
+      setTargetsOpen(false)
+    }
   }
 
   const commitTargetMotions = (motions: Record<string, TargetMotion>) => {
@@ -2809,7 +2821,11 @@ function App() {
             <button
               className="targets-button"
               type="button"
-              onClick={() => setTargetsOpen(true)}
+              onClick={() => {
+                setFocusedTargetId(null)
+                setActiveTargetId(null)
+                setTargetsOpen(true)
+              }}
             >
               Targets{activeTargets.length ? ` ${activeTargets.length}` : ''}
             </button>
@@ -3104,6 +3120,7 @@ function App() {
         <TargetCloudLayer
           targets={activeTargets}
           onOpen={(targetId) => {
+            setFocusedTargetId(targetId)
             setActiveTargetId(targetId)
             setTargetsOpen(true)
           }}
@@ -3618,39 +3635,54 @@ function App() {
       )}
 
       {targetsOpen && view === 'world' && (
-        <div className="overlay" onClick={() => setTargetsOpen(false)}>
+        <div
+          className="overlay"
+          onClick={() => {
+            setTargetsOpen(false)
+            setFocusedTargetId(null)
+          }}
+        >
           <aside
-            className="target-board"
+            className={`target-board ${
+              focusedTargetId ? 'target-board-focused' : ''
+            }`}
             onClick={(event) => event.stopPropagation()}
-            aria-label="Target board"
+            aria-label={focusedTargetId ? 'Target details' : 'Target board'}
           >
             <button
               className="close-button"
               type="button"
-              onClick={() => setTargetsOpen(false)}
-              aria-label="Close Target board"
+              onClick={() => {
+                setTargetsOpen(false)
+                setFocusedTargetId(null)
+              }}
+              aria-label={
+                focusedTargetId ? 'Close target details' : 'Close Target board'
+              }
             >
               ×
             </button>
-            <header className="target-board-heading">
-              <span>Major projects</span>
-              <h2>Target board</h2>
-              <p>
-                Shape the outcome here. Active targets become drifting clouds
-                in every season.
-              </p>
-              <button type="button" onClick={addTarget}>+ Add a target</button>
-            </header>
+            {!focusedTargetId && (
+              <header className="target-board-heading">
+                <span>Major projects</span>
+                <h2>Target board</h2>
+                <p>
+                  Shape the outcome here. Active targets become drifting clouds
+                  in every season.
+                </p>
+                <button type="button" onClick={addTarget}>+ Add a target</button>
+              </header>
+            )}
 
             <section className="target-board-section">
-              <h3>Active clouds</h3>
-              {activeTargets.length === 0 ? (
+              {!focusedTargetId && <h3>Active clouds</h3>}
+              {displayedTargets.length === 0 ? (
                 <p className="empty-targets">
                   Add a major project and its cloud will enter the world.
                 </p>
               ) : (
                 <div className="target-card-list">
-                  {activeTargets.map((target) => {
+                  {displayedTargets.map((target) => {
                     const expanded = activeTargetId === target.id
                     const completedSteps = target.checklist.filter(
                       (item) => item.done,
@@ -3961,7 +3993,7 @@ function App() {
               )}
             </section>
 
-            {completedTargets.length > 0 && (
+            {!focusedTargetId && completedTargets.length > 0 && (
               <section className="target-board-section completed-targets">
                 <h3>Completed targets</h3>
                 {completedTargets.map((target) => (
