@@ -135,6 +135,7 @@ type ElementNote = {
   id: string
   title: string
   text: string
+  amount?: number
   tags?: string[]
   createdAt: string
 }
@@ -474,6 +475,19 @@ function calculateGrowth(activities: Activity[]): Record<StreamId, number> {
       [activity.stream]: growth[activity.stream] + activity.amount,
     }),
     { ...initialState.growth },
+  )
+}
+
+function getElementNotes(placements: WorldState['placements']): ElementNote[] {
+  return Object.values(placements).flatMap((pagePlacements) =>
+    pagePlacements.flatMap((placement) => placement.notes ?? []),
+  )
+}
+
+function calculateCustomGrowth(placements: WorldState['placements']): number {
+  return getElementNotes(placements).reduce(
+    (total, elementNote) => total + (elementNote.amount ?? 5),
+    0,
   )
 }
 
@@ -1002,7 +1016,7 @@ function TargetCloudLayer({
       previousTime = time
       const isPhone = window.innerWidth <= 640
       const canHover = window.matchMedia('(hover: hover)').matches
-      const topEdge = isPhone ? 112 : 82
+      const topEdge = isPhone ? 160 : 82
       const bottomEdge = 76
 
       motionState.forEach((motion, id) => {
@@ -1073,7 +1087,7 @@ function TargetCloudLayer({
 
     const moveCloud = (clientX: number, clientY: number) => {
       const isPhone = window.innerWidth <= 640
-      const topEdge = isPhone ? 112 : 82
+      const topEdge = isPhone ? 160 : 82
       const bottomEdge = 76
       const availableWidth = Math.max(
         1,
@@ -1201,8 +1215,10 @@ function App() {
   const refreshCloudElements = useRef<(() => Promise<void>) | null>(null)
 
   const totalGrowth = useMemo(
-    () => Object.values(world.growth).reduce((sum, value) => sum + value, 0),
-    [world.growth],
+    () =>
+      world.activities.reduce((sum, activity) => sum + activity.amount, 0) +
+      calculateCustomGrowth(world.placements),
+    [world.activities, world.placements],
   )
   const currentWeek = getWeekKey()
   const totalStars = useMemo(
@@ -1223,9 +1239,19 @@ function App() {
     [world.placements, world.weeklyMinimums],
   )
   const today = new Date().toDateString()
-  const todayGrowth = world.activities
-    .filter((activity) => new Date(activity.createdAt).toDateString() === today)
-    .reduce((sum, activity) => sum + activity.amount, 0)
+  const todayGrowth =
+    world.activities
+      .filter((activity) => new Date(activity.createdAt).toDateString() === today)
+      .reduce((sum, activity) => sum + activity.amount, 0) +
+    getElementNotes(world.placements)
+      .filter(
+        (elementNote) =>
+          new Date(elementNote.createdAt).toDateString() === today,
+      )
+      .reduce(
+        (sum, elementNote) => sum + (elementNote.amount ?? 5),
+        0,
+      )
   const activeTargets = world.targets.filter((target) => !target.completedAt)
   const completedTargets = world.targets.filter((target) => target.completedAt)
   const syncLabel = !hasCloudConfig
@@ -1269,6 +1295,18 @@ function App() {
     elementFilter === 'all'
       ? allElements
       : allElements.filter((item) => item.category === elementFilter)
+  const memoryTags = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...world.activities.flatMap((activity) => activity.tags ?? []),
+          ...getElementNotes(world.placements).flatMap(
+            (elementNote) => elementNote.tags ?? [],
+          ),
+        ]),
+      ).sort((left, right) => left.localeCompare(right)),
+    [world.activities, world.placements],
+  )
   const memoryResults = useMemo(() => {
     const query = memorySearch.trim().toLowerCase()
     if (!query) return []
@@ -2181,34 +2219,31 @@ function App() {
     const minimum = activePlacement.weeklyMinimum
     if (
       !minimum.text.trim() ||
-      !minimum.stream ||
       minimum.completedWeeks.includes(currentWeek)
     ) {
       return
     }
     const { page, elementId } = activeNoteSource
     setWorld((current) => {
-      const activities = [
-        {
-          id: crypto.randomUUID(),
-          stream: minimum.stream!,
-          amount: 15,
-          note: `Weekly minimum win: ${minimum.text.trim()}`,
-          tags: ['minimum-win'],
-          createdAt: new Date().toISOString(),
-        },
-        ...current.activities,
-      ]
       return {
         ...current,
-        growth: calculateGrowth(activities),
-        activities,
         placements: {
           ...current.placements,
           [page]: current.placements[page].map((placement) =>
             placement.elementId === elementId
               ? {
                   ...placement,
+                  notes: [
+                    {
+                      id: crypto.randomUUID(),
+                      title: 'Weekly minimum win',
+                      text: minimum.text.trim(),
+                      amount: 15,
+                      tags: ['minimum-win'],
+                      createdAt: new Date().toISOString(),
+                    },
+                    ...(placement.notes ?? []),
+                  ],
                   weeklyMinimum: {
                     ...minimum,
                     completedWeeks: [...minimum.completedWeeks, currentWeek],
@@ -2411,6 +2446,7 @@ function App() {
             id: crypto.randomUUID(),
             title: 'New note',
             text: '',
+            amount: 5,
             createdAt: new Date().toISOString(),
           },
         ],
@@ -2448,6 +2484,22 @@ function App() {
         notes: (placement.notes ?? []).map((elementNote) =>
           elementNote.id === noteId
             ? { ...elementNote, tags: parseTags(value) }
+            : elementNote,
+        ),
+      }),
+    )
+  }
+
+  const updateElementNoteGrowth = (noteId: string, amount: number) => {
+    if (!activeNoteSource) return
+    updatePlacedElement(
+      activeNoteSource.page,
+      activeNoteSource.elementId,
+      (placement) => ({
+        ...placement,
+        notes: (placement.notes ?? []).map((elementNote) =>
+          elementNote.id === noteId
+            ? { ...elementNote, amount }
             : elementNote,
         ),
       }),
@@ -2763,6 +2815,18 @@ function App() {
           </button>
         </div>
       </header>
+
+      {view === 'world' && (
+        <button
+          className="mobile-growth-caption"
+          type="button"
+          onClick={() => setRecordOpen(true)}
+          aria-label="Open the garden record"
+        >
+          <span>Total growth</span>
+          <CosmicGrowth total={totalGrowth} />
+        </button>
+      )}
 
       {syncOpen && (
         <div className="overlay sync-overlay" onClick={() => setSyncOpen(false)}>
@@ -3461,6 +3525,26 @@ function App() {
                 placeholder="Search notes, elements, or tags"
                 aria-label="Search all memories"
               />
+              {memoryTags.length > 0 && (
+                <div className="memory-tag-filter" aria-label="Filter by tag">
+                  <span>Tags</span>
+                  {memoryTags.map((tag) => (
+                    <button
+                      className={memorySearch === tag ? 'active' : ''}
+                      type="button"
+                      key={tag}
+                      onClick={() =>
+                        setMemorySearch((current) =>
+                          current === tag ? '' : tag,
+                        )
+                      }
+                      aria-pressed={memorySearch === tag}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              )}
               {memorySearch.trim() && (
                 <div className="memory-results" aria-live="polite">
                   {memoryResults.length === 0 ? (
@@ -3953,7 +4037,6 @@ function App() {
                     }
                     disabled={
                       !activePlacement.weeklyMinimum?.text.trim() ||
-                      !activePlacement.weeklyMinimum.stream ||
                       activePlacement.weeklyMinimum.completedWeeks.includes(
                         currentWeek,
                       )
@@ -3974,26 +4057,10 @@ function App() {
                 placeholder="What is the smallest successful version this week?"
                 aria-label="Weekly minimum win"
               />
-              <label className="minimum-stream">
-                <span>Add growth to</span>
-                <select
-                  value={activePlacement.weeklyMinimum?.stream ?? ''}
-                  onChange={(event) =>
-                    updateElementMinimum({
-                      stream: event.target.value as StreamId,
-                    })
-                  }
-                >
-                  <option value="" disabled>
-                    Choose a life stream
-                  </option>
-                  {streams.map((stream) => (
-                    <option value={stream.id} key={stream.id}>
-                      {world.streamTitles[stream.id]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <p className="custom-growth-note">
+                This custom win adds directly to your total. It does not need a
+                life stream.
+              </p>
               <details className="points-guide">
                 <summary>How growth works</summary>
                 <p>
@@ -4035,6 +4102,29 @@ function App() {
                       rows={3}
                       aria-label={`${elementNote.title || 'Untitled'} note`}
                     />
+                    <div
+                      className="custom-note-growth"
+                      aria-label="Growth for this custom note"
+                    >
+                      <span>Counts toward total</span>
+                      {[5, 10, 20, 50].map((amount) => (
+                        <button
+                          className={
+                            (elementNote.amount ?? 5) === amount
+                              ? 'active'
+                              : ''
+                          }
+                          type="button"
+                          key={amount}
+                          onClick={() =>
+                            updateElementNoteGrowth(elementNote.id, amount)
+                          }
+                          aria-pressed={(elementNote.amount ?? 5) === amount}
+                        >
+                          +{amount}
+                        </button>
+                      ))}
+                    </div>
                     <div className="element-note-meta">
                       <time dateTime={elementNote.createdAt}>
                         {formatDate(elementNote.createdAt)}

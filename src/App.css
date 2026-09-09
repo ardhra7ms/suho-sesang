@@ -5,6 +5,35 @@
   --water: #4b665f;
 }
 
+.memory-tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.memory-tag-filter > span {
+  margin-right: 2px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.memory-tag-filter button {
+  padding: 5px 8px;
+  color: inherit;
+  font-size: 0.6rem;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.memory-tag-filter button.active {
+  color: #fff8df;
+  background: #211b0b;
+}
+
 .default-stream-elements {
   z-index: 9;
 }
@@ -81,6 +110,10 @@
   font-size: 0.58rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.mobile-growth-caption {
+  display: none;
 }
 
 .empty-stream-notes {
@@ -2879,6 +2912,44 @@ textarea {
   .topbar {
     height: 58px;
     padding: 0 18px;
+  }
+
+  .mobile-growth-caption {
+    position: fixed;
+    z-index: 19;
+    top: 104px;
+    left: 18px;
+    width: auto;
+    max-width: calc(100vw - 36px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 11px 8px;
+    color: #211b0b;
+    font-size: 0.62rem;
+    font-weight: 700;
+    background: #fffdf5;
+    border: 2px solid #211b0b;
+    border-radius: 1px;
+    box-shadow: 3px 3px 0 rgba(33, 27, 11, 0.85);
+    transform: rotate(-1deg);
+  }
+
+  .mobile-growth-caption::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    left: 13px;
+    width: 10px;
+    height: 10px;
+    background: #fffdf5;
+    border-top: 2px solid #211b0b;
+    border-left: 2px solid #211b0b;
+    transform: rotate(45deg);
+  }
+
+  .mobile-growth-caption .cosmic-growth {
+    gap: 5px;
   }
 
   .topbar-actions {

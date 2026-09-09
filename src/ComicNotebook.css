@@ -520,6 +520,40 @@
   resize: vertical;
 }
 
+.comic-strip .custom-note-growth {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.comic-strip .custom-note-growth span,
+.comic-strip .custom-growth-note {
+  color: color-mix(in srgb, var(--comic-ink) 68%, transparent);
+  font-size: 0.58rem;
+}
+
+.comic-strip .custom-note-growth button {
+  padding: 4px 7px;
+  color: var(--comic-ink);
+  font-size: 0.58rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--comic-ink) 32%, transparent);
+  border-radius: 999px;
+}
+
+.comic-strip .custom-note-growth button.active {
+  color: var(--comic-accent-ink);
+  background: var(--comic-accent);
+  border-color: var(--comic-accent);
+}
+
+.comic-strip .custom-growth-note {
+  margin: 10px 0 0;
+}
+
 .comic-strip .element-note-meta {
   margin-top: 10px;
 }
