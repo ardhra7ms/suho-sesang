@@ -1202,6 +1202,7 @@ function App() {
   const [activeStream, setActiveStream] = useState<StreamId | null>(null)
   const [note, setNote] = useState('')
   const [noteTags, setNoteTags] = useState('')
+  const [customGrowthNotice, setCustomGrowthNotice] = useState('')
   const [memorySearch, setMemorySearch] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
   const [targetsOpen, setTargetsOpen] = useState(false)
@@ -1326,6 +1327,39 @@ function App() {
       ).sort((left, right) => left.localeCompare(right)),
     [world.activities, world.placements],
   )
+  const recentTraces = useMemo(
+    () =>
+      [
+        ...world.activities.map((activity) => ({
+          id: `activity-${activity.id}`,
+          amount: activity.amount,
+          label: world.streamTitles[activity.stream],
+          text: activity.note || 'A quiet step forward',
+          createdAt: activity.createdAt,
+        })),
+        ...Object.values(world.placements).flatMap((pagePlacements) =>
+          pagePlacements.flatMap((placement) =>
+            (placement.notes ?? []).map((elementNote) => ({
+              id: `element-${placement.elementId}-${elementNote.id}`,
+              amount: elementNote.amount ?? 5,
+              label: placement.title || 'Custom tracker',
+              text:
+                elementNote.text ||
+                elementNote.title ||
+                'A custom note',
+              createdAt: elementNote.createdAt,
+            })),
+          ),
+        ),
+      ]
+        .sort(
+          (left, right) =>
+            new Date(right.createdAt).getTime() -
+            new Date(left.createdAt).getTime(),
+        )
+        .slice(0, 3),
+    [world.activities, world.placements, world.streamTitles],
+  )
   const memoryResults = useMemo(() => {
     const query = memorySearch.trim().toLowerCase()
     if (!query) return []
@@ -1395,6 +1429,12 @@ function App() {
     worldRef.current = world
     localStorage.setItem(STORAGE_KEY, JSON.stringify(world))
   }, [world])
+
+  useEffect(() => {
+    if (!customGrowthNotice) return
+    const timeout = window.setTimeout(() => setCustomGrowthNotice(''), 3000)
+    return () => window.clearTimeout(timeout)
+  }, [customGrowthNotice])
 
   useEffect(() => {
     let active = true
@@ -2281,6 +2321,7 @@ function App() {
         },
       }
     })
+    setCustomGrowthNotice('Added')
   }
 
   const startDragging = (
@@ -2459,6 +2500,10 @@ function App() {
   const activePlacementElement = activePlacement
     ? allElements.find((item) => item.id === activePlacement.elementId)
     : undefined
+  const activePlacementGrowth = (activePlacement?.notes ?? []).reduce(
+    (total, elementNote) => total + (elementNote.amount ?? 5),
+    0,
+  )
 
   const addElementNote = () => {
     if (!activeNoteSource) return
@@ -2479,6 +2524,7 @@ function App() {
         ],
       }),
     )
+    setCustomGrowthNotice('Added')
   }
 
   const updateElementNote = (
@@ -2531,6 +2577,7 @@ function App() {
         ),
       }),
     )
+    setCustomGrowthNotice('Added')
   }
 
   const deleteElementNote = (noteId: string) => {
@@ -3616,18 +3663,15 @@ function App() {
             </section>
             <section className="record-section">
               <h3>Recent traces</h3>
-              {world.activities.length === 0 ? (
+              {recentTraces.length === 0 ? (
                 <p>Your first trace will appear here.</p>
               ) : (
-                world.activities.slice(0, 3).map((activity) => {
-                  const stream = streams.find((item) => item.id === activity.stream)!
-                  return (
-                    <div className="activity" key={activity.id}>
-                      <strong>✨ +{activity.amount} · {stream.name}</strong>
-                      <small>{activity.note || 'A quiet step forward'}</small>
-                    </div>
-                  )
-                })
+                recentTraces.map((trace) => (
+                  <div className="activity" key={trace.id}>
+                    <strong>✨ +{trace.amount} · {trace.label}</strong>
+                    <small>{trace.text}</small>
+                  </div>
+                ))
               )}
             </section>
           </aside>
@@ -4066,6 +4110,21 @@ function App() {
                 <p>Keep the memories, ideas, and progress this element gathers.</p>
               </div>
             </div>
+            <div className="custom-tracker-summary">
+              <span>
+                This tracker
+                <CosmicGrowth total={activePlacementGrowth} />
+              </span>
+              <span>
+                Overall total
+                <CosmicGrowth total={totalGrowth} />
+              </span>
+            </div>
+            {customGrowthNotice && (
+              <p className="custom-growth-confirmation" role="status">
+                {customGrowthNotice}
+              </p>
+            )}
             <section className="weekly-minimum" aria-label="Weekly minimum win">
               <div className="weekly-minimum-heading">
                 <div>
