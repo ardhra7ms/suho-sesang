@@ -131,6 +131,66 @@
   line-height: 1.15;
 }
 
+.garden-record .quick-growth {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 13px 15px;
+  color: var(--record-ink);
+  background: #ffffff;
+  border-radius: 16px 8px 15px 10px;
+}
+
+.garden-record .quick-growth > div:first-child {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.garden-record .quick-growth strong,
+.garden-record .quick-growth span {
+  display: block;
+}
+
+.garden-record .quick-growth strong {
+  font-size: 0.76rem;
+}
+
+.garden-record .quick-growth > div:first-child span {
+  margin-top: 2px;
+  color: var(--record-muted);
+  font-size: 0.54rem;
+}
+
+.garden-record .quick-growth-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.garden-record .quick-growth-buttons button {
+  min-width: 34px;
+  padding: 6px 7px;
+  color: var(--record-ink);
+  font-size: 0.62rem;
+  font-weight: 750;
+  background: var(--record-yellow);
+  border: 0;
+  border-radius: 999px;
+}
+
+.garden-record .quick-growth-notice {
+  position: absolute;
+  right: 15px;
+  bottom: -8px;
+  padding: 3px 7px;
+  color: var(--record-ink);
+  font-size: 0.52rem;
+  font-weight: 750;
+  background: var(--record-blue);
+  border-radius: 999px;
+}
+
 .garden-record .level-rule {
   margin: 11px 2px 24px;
   color: var(--record-muted);
@@ -265,6 +325,20 @@
   .garden-record h2 {
     margin-right: 35px;
     font-size: clamp(2rem, 12vw, 2.8rem);
+  }
+
+  .garden-record .quick-growth {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .garden-record .quick-growth-buttons {
+    width: 100%;
+  }
+
+  .garden-record .quick-growth-buttons button {
+    flex: 1;
   }
 
   .garden-record .summary-grid {

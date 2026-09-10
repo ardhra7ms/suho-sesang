@@ -34,7 +34,7 @@ type ElementFrame = 'pebble' | 'puddle' | 'sprout' | 'cloud'
 
 type Activity = {
   id: string
-  stream: StreamId
+  stream?: StreamId
   amount: number
   note?: string
   tags?: string[]
@@ -485,10 +485,13 @@ function getElementImageSource(image: string): string {
 
 function calculateGrowth(activities: Activity[]): Record<StreamId, number> {
   return activities.reduce<Record<StreamId, number>>(
-    (growth, activity) => ({
-      ...growth,
-      [activity.stream]: growth[activity.stream] + activity.amount,
-    }),
+    (growth, activity) =>
+      activity.stream
+        ? {
+            ...growth,
+            [activity.stream]: growth[activity.stream] + activity.amount,
+          }
+        : growth,
     { ...initialState.growth },
   )
 }
@@ -1203,6 +1206,7 @@ function App() {
   const [note, setNote] = useState('')
   const [noteTags, setNoteTags] = useState('')
   const [customGrowthNotice, setCustomGrowthNotice] = useState('')
+  const [quickGrowthNotice, setQuickGrowthNotice] = useState('')
   const [memorySearch, setMemorySearch] = useState('')
   const [recordOpen, setRecordOpen] = useState(false)
   const [targetsOpen, setTargetsOpen] = useState(false)
@@ -1333,7 +1337,9 @@ function App() {
         ...world.activities.map((activity) => ({
           id: `activity-${activity.id}`,
           amount: activity.amount,
-          label: world.streamTitles[activity.stream],
+          label: activity.stream
+            ? world.streamTitles[activity.stream]
+            : 'Quick growth',
           text: activity.note || 'A quiet step forward',
           createdAt: activity.createdAt,
         })),
@@ -1366,8 +1372,10 @@ function App() {
     const words = query.split(/\s+/)
     const activityResults = world.activities.map((activity) => ({
       id: `activity-${activity.id}`,
-      title: world.streamTitles[activity.stream],
-      text: activity.note || 'A quiet step forward',
+      title: activity.stream
+        ? world.streamTitles[activity.stream]
+        : 'Quick growth',
+      text: activity.note || 'No note needed',
       tags: activity.tags ?? [],
       createdAt: activity.createdAt,
       context: `+${activity.amount} growth`,
@@ -1435,6 +1443,12 @@ function App() {
     const timeout = window.setTimeout(() => setCustomGrowthNotice(''), 3000)
     return () => window.clearTimeout(timeout)
   }, [customGrowthNotice])
+
+  useEffect(() => {
+    if (!quickGrowthNotice) return
+    const timeout = window.setTimeout(() => setQuickGrowthNotice(''), 2000)
+    return () => window.clearTimeout(timeout)
+  }, [quickGrowthNotice])
 
   useEffect(() => {
     let active = true
@@ -1702,6 +1716,25 @@ function App() {
     })
     setNote('')
     setNoteTags('')
+  }
+
+  const addQuickGrowth = (amount: number) => {
+    setWorld((current) => {
+      const activities = [
+        {
+          id: crypto.randomUUID(),
+          amount,
+          createdAt: new Date().toISOString(),
+        },
+        ...current.activities,
+      ]
+      return {
+        ...current,
+        growth: calculateGrowth(activities),
+        activities,
+      }
+    })
+    setQuickGrowthNotice('Added')
   }
 
   const addTarget = () => {
@@ -2739,9 +2772,6 @@ function App() {
               alt=""
               draggable="false"
             />
-            <span className="note-count" aria-hidden="true">
-              {placement.notes?.length || '+'}
-            </span>
           </button>
         )
       })}
@@ -2758,10 +2788,6 @@ function App() {
           (element) => element.id === defaultStreamElements[stream.id],
         )!
         const position = world.streamPlacements[page][stream.id]
-        const noteCount = world.activities.filter(
-          (activity) => activity.stream === stream.id,
-        ).length
-
         return (
           <button
             className={`placed-element default-note-element placed-${item.category} frame-${defaultStreamFrames[stream.id]}`}
@@ -2793,11 +2819,6 @@ function App() {
             />
             <span className="stream-element-name" aria-hidden="true">
               {world.streamTitles[stream.id]}
-            </span>
-            <span className="note-count" aria-hidden="true">
-              {noteCount
-                ? `${noteCount} ${noteCount === 1 ? 'note' : 'notes'}`
-                : '+'}
             </span>
           </button>
         )
@@ -3575,6 +3596,28 @@ function App() {
                 <span>Successful weeks</span>
               </div>
             </div>
+            <section className="quick-growth" aria-label="Add quick growth">
+              <div>
+                <strong>Quick growth</strong>
+                <span>For small things that do not need a note.</span>
+              </div>
+              <div className="quick-growth-buttons">
+                {[5, 10, 20, 50].map((amount) => (
+                  <button
+                    type="button"
+                    key={amount}
+                    onClick={() => addQuickGrowth(amount)}
+                  >
+                    +{amount}
+                  </button>
+                ))}
+              </div>
+              {quickGrowthNotice && (
+                <span className="quick-growth-notice" role="status">
+                  {quickGrowthNotice}
+                </span>
+              )}
+            </section>
             <p className="level-rule">
               Every ten of one cosmic body becomes the next.
             </p>
@@ -4325,7 +4368,9 @@ function App() {
                       : undefined
                   const title =
                     trashed.kind === 'activity'
-                      ? world.streamTitles[trashed.activity.stream]
+                      ? trashed.activity.stream
+                        ? world.streamTitles[trashed.activity.stream]
+                        : 'Quick growth'
                       : trashed.kind === 'placed-element'
                         ? trashed.placement.title ||
                           placedItem?.name ||
@@ -4354,7 +4399,11 @@ function App() {
                       <div>
                         <span>
                           {trashed.kind === 'activity'
-                            ? `Growth note · +${trashed.activity.amount}`
+                            ? `${
+                                trashed.activity.stream
+                                  ? 'Growth note'
+                                  : 'Quick growth'
+                              } · +${trashed.activity.amount}`
                             : trashed.kind === 'placed-element'
                               ? 'Element and notebook'
                               : trashed.elementName}
